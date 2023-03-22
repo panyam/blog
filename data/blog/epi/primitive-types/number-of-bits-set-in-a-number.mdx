@@ -1,0 +1,43 @@
+---
+title: EPI 5.1 - Find the number of bits set in a number (and Parity)
+date: 2014-01-23T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'haskell']
+draft: false
+images: []
+---
+
+The goal is to find the number of set bits in a number, when converted to binary.
+
+So 4 (dec) -> 100 (bin)  –  has 1 bit set.
+
+Similarly 7 -> 111 -> 3
+
+The straightforward solution shown below has complexity of O(n) where n is the length of the input ie 8 bits for char, 16 bits for short, and 32 bits for int (ignoring hardware and compiler specific sizes here).
+
+```haskell showLineNumbers
+import Data.Bits
+
+num_set_bits_simple 0 = 0
+num_set_bits_simple x = case x .&. 1 of
+                          1 -> 1 + num_set_bits_simple (x `shiftR` 1)
+                          0 -> num_set_bits_simple (x `shiftR` 1)
+```
+
+Apart from being O(n) this also has the disadvantage of not being tail-call recursive and requires a conditional check in each “iteration”.
+
+A solution that depends is O(s) where is the number of set bits is:
+
+
+```haskell showLineNumbers
+num_set_bits 0 = 0
+num_set_bits x = 1 + num_set_bits (clear_lowest_set_bit x)
+```
+
+where
+
+```haskell showLineNumbers
+clear_lowest_set_bit x = x .&. (x - 1)
+```
+
+Here x & (x – 1) clears the lowest set bit in a number!
+

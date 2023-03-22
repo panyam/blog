@@ -1,0 +1,44 @@
+---
+title: 'Building a GRPC plugin with buf and protogen'
+date: 2023-02-01T15:32:14Z
+lastmod: '2023-02-01'
+tags: ['grpc', 'protogen', 'buf', 'guide']
+draft: false
+summary: 'A guide to create custom grpc plugins in Go with protogen and buf'
+layout: PostSimple
+bibliography: references-data.bib
+---
+
+## Building a GRPC plugin with buf and protogen
+
+gRPC is a great framework for creating RPC services.  gRPC offers a clean human readable source-of-truth of your service specs without needing further tools to understand them.    What makes the gRPC ecosystem shinte is its plugin facility for extending it on several fronts.   With plugins you can:
+
+* Generate server stubs to implement your service logic
+* Generate clients to talk to these servers
+* Target several languages (golang, python, typescript etc) 
+* Even targeting several transport types (http, tcp etc)
+
+Here is an [awesome list](https://github.com/grpc-ecosystem/awesome-grpc) of curated plugins for the grpc ecosystem.   You can even generate an http proxy gateway along with its own OpenAPI spec for those still needing them to consume your APIs!
+
+As developers, few things are more comforting than the mighty command-line.   For generated APIs (whether rpc or http) while generic CLIs can provide access (eg curl for a generated HTTP gateway) these still need a user to know (or atleast remember) the http semantics etc.   A CLI exec/binary with simpler structure, some predefined conventions and more targeted documentation etc can significantly ease accessing the APIs from the command line.  These can even be useful tools/artifacts to offer the consumers of your services.
+
+Without further Ado let us dive into building a grpc plugin that generates one or more CLIs from custom annotations (defined in this tutorial) added to your protobuf definitions for your grpc services.   
+
+Note - this tutorial is **NOT** a generic tutorial for creating a grpc based service or creating http gateways for the grpc service.   Though the demo/example service ([grpcdemo](github.com/panyam/grpcdemo)) contains a full-fledge grpc service and its associated REST based http gateway, this tutorial will focus on
+
+
+1. Creating a plugin using buf and protogen that will generate a python application that can be used as a CLI interface to our service.
+2. Highlight some options to configure the fields, method and services in our demo.
+
+If you are in a rush, check out the [plugin's source code](github.com/panyam/proto2cli).
+
+A quick primer on generating services, clients etc with grpc specs:
+
+1. The protoc utility provided by the grpc/protobuf team takes as input protobuf files (.proto) that contain service descriptions (services, methods, models etc).  The command looks a bit like:
+
+```
+protoc --go_out="./gen" --go-grpc_out="./gen" --go_opt=paths=source_relative \
+       --go-grpc_opt=paths=surce_relative
+```
+
+2. The magic of the protoc utility is that it does not do any generation on its 

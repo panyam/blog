@@ -1,0 +1,54 @@
+---
+title: EPI 6.1 - Dutch Flag Partitioning
+date: 2014-01-26T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'haskell', 'dutch flag partitioning']
+draft: false
+images: []
+---
+
+###  Problem:
+
+Write a function that taks an Array A and an index i into A, and rearranges the elements such that all elements less than A[i] appear first, followed by elements equal to A[i], followed by elements greater than A[i].
+
+### Solution:
+
+First we define a couple of auxiliary helper functions to create haskell Arrays from haskell lists and a method to swap elements at two indexes in an Array:
+
+```haskell showLineNumbers
+import Data.Array
+
+arrayFromList input startIndex = array bounds [(i + startIndex, x) | (i,x) <- (zip indexes input)]
+            where
+                bounds = (startIndex, startIndex + (length input) - 1)
+                indexes = [0 .. length input]
+
+swapItems xs a b = xs // [(b, xa)] // [(a, xb)]
+            where
+                xa = xs!a
+                xb = xs!b
+```
+
+Now the algorithm. The core of the algorithm is to start with 4 partitions (with in the original Array):
+
+smaller – All items smaller than the pivot element (originally A[i])
+equal – All items equal to the pivot item
+larger – All items larger than the pivot item
+unclassified – Items that have not yet been classified into one of the above arrays.
+
+Intuitively #unclassified = |A| – #smaller + #equal + #larger and this will become 0 at the end.
+
+Initially #smaller, #equal and #larger = 0, 0 and |A| – 1 respectively. The following tail recursive solution updates one or more of these regions in each step as it iterates through the array (and stopping when the “equal” region “hits” the “larger” region).
+
+```haskell showLineNumbers
+dutch_flag_partition xs i = elems (dutch_flag_partition' arrayXS i 0 0 ((length xs) - 1))
+    where
+        arrayXS = (arrayFromList xs 0)
+        pivot = arrayXS ! i
+        dutch_flag_partition' xs i s e l
+            | e > l = xs
+            | (xs!e) < pivot = dutch_flag_partition' (swapItems xs s e) i (s + 1) (e + 1) l
+            | (xs!e) == pivot = dutch_flag_partition' xs i s (e + 1) l
+            | otherwise = dutch_flag_partition' (swapItems xs e l) i s e (l - 1)
+```
+
+A quick note. In this example (and others) we are using immutable collections. From an efficiency point of view using mutable collections would result in, well more efficiency. However we are striving for a balance between efficiency and reasonably simple code that is close enough to the guaranteed algorithmic complexities when these subtle differences (such as immutable vs mutable) are ignored.

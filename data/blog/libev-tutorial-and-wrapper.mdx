@@ -1,0 +1,175 @@
+---
+title: A libev tutorial and wrapper
+date: 2015-12-12T15:32:08Z
+tags: ['async', 'networking', 'linux', 'sockets', 'libev']
+draft: false
+summary: A simple tutorial implementing libev for building custom servers as well as an easier wrapper for it.
+---
+
+I’ve been asked to help people out with libev example code and usage for a while but I never got around to it since I hadnt used libev in ages.  However I have a need for a simple server framework (more on this in another post).   So I figured I’d publish a simple libev tutorial.  More importantly I will create a C library that is a wrapper on top of libev to handle and maintain multiple connections in a clean and extendible way.
+
+A quick introduction to libev is in order.  Back in the day, handling multiple network client connections was either done using multiple threads (one thread per connuction) or via asynchronous apis that multiplexed between several io events across the various connections.  Several APIs existed to enable the later (select/poll, epoll, kqueue etc).  Each of the methods had their own performance guarantees and worse still had platform dependant compatibility issues.  To get around this libevent was developed to provide a uniform interface hiding platform specific details.  Libev developed later was designed to simplify and cleanup several aspects of libevent (eg stripped down, threadsafe, low watcher overhead etc).
+
+The core concept in libev is that of an event loop – a loop that runs continuously listening registered events and calling the associated callback functions.   Events could be io events like file descriptors ready for reads/writes, socket connections accepted etc.
+
+With that it is time to dive in.
+
+Let us first start with a socket server structure that is the context for all things related to a multi client TCP server:
+
+```c showLineNumbers
+struct LEWSocketServer {
+    // A pointer to the event loop that is handling event on 
+    // this server socket.
+    struct ev_loop *eventLoop;
+
+    // Host the server socket is bound to (not used for now)
+    char *host;
+
+    // Port the server is running on
+    int port;
+
+    // The socket associated with the server.
+    int serverSocket;
+    struct ev_io acceptWatcher;
+
+    // A listener structure for events on this socket.
+    LEWSocketServerListener *listener;
+};
+```
+
+A simple server socket API would begin with being able to start a server:
+
+```c showLineNumbers
+typedef struct LEWSocketServerListener {
+    /**
+     * Called when a connection was accepted.  This is an opportunity
+     * for the handler of this method to create any connection specific data
+     * to be created and returned so that any further activities on the connection
+     * will be invoked on this object.
+     *
+     * This method must NOT return NULL.  If it returns NULL, then the connection is refused.
+     */
+    void *(*createConnectionContext)();
+
+    /**
+     * Called when data has been received for this connection from a client.
+     */
+    void (*processData)(LEWConnection *connection, const char *data, size_t length);
+
+    /**
+     * Called to indicate connection was closed.
+     */
+    void (*connectionClosed)(LEWConnection *connection);
+
+    /**
+     * Called to ask the connection handler for data that can be written.
+     * The buffer is an output parameters to be updated by the listener.
+     * Return the number of bytes available in the buffer.
+     */
+    size_t (*writeDataRequested)(LEWConnection *connection, const char **buffer);
+
+    /**
+     * Called to indicate that nWritten bytes of data has been written and that the connection
+     * object should update its write buffers to discard this data.
+     */
+    void (*dataWritten)(LEWConnection *connection, size_t nWritten);
+} LEWSocketServerListener;
+```
+
+
+The general structure of a connection follows:
+
+
+
+1. Server socket is in listen state
+2. When a new connection is accepted, a client socket is created and added libev’s eventloop for read events.
+3. write events for the client socket are not enabled. The level-triggered nature of libev (by default) will cause unnecessary write event callbacks even when there is no data to be sent. So a design choice made was to make the api caller responsible to initiate writes when it had data to be sent.
+4. When data is available to be read, it is sent via the listener’s processData callback (along with the connection object associated with the client).
+5. When the caller has data to write it invokes the connection’s writeable attribute.
+6. When the writeable attribute on a connection is set, the write events on the client socket are enabled which invokes the writeDataRequested method on the caller until it return 0 (bytes).
+7. Additionally the library calls the dataWritten callback on the listener so that the client can update its own write data buffers (to pop off the written/sent data).
+
+With this the echo server now looks like:
+
+```c showLineNumbers
+#include "server.h"
+
+typedef struct EchoConnection {
+    char readBuffer[4096];
+    int length;
+} EchoConnection;
+
+/**
+ * Called when a connection was accepted.  This is an opportunity
+ * for the handler of this method to create any connection specific data
+ * to be created and returned so that any further activities on the connection
+ * will be invoked on this object.
+ *
+ * This method must NOT return NULL.  If it returns NULL, then the connection is refused.
+ */
+void *createConnectionContextCallback()
+{
+    EchoConnection *out = calloc(1, sizeof(EchoConnection));
+    return out;
+}
+
+/** 
+ * Called when data has been received for this connection from a client.
+ */ 
+void processDataCallback(LEWConnection *connection, const char *data, size_t length)
+{   
+    EchoConnection *echoconn = (EchoConnection *)lew_connection_get_context(connection);
+    memcpy(echoconn->readBuffer, data, length);
+    echoconn->length = length;
+    lew_connection_set_writeable(connection);
+}   
+
+/**
+ * Called to indicate connection was closed.
+ */
+void connectionClosedCallback(LEWConnection *connection)
+{
+    printf("Connection closed...\n");
+} 
+
+/**
+ * Called to ask the connection handler for data that can be written.
+ * The buffer is an output parameters to be updated by the listener.
+ * Return the number of bytes available in the buffer.
+ */
+size_t writeDataRequestedCallback(LEWConnection *connection, const char **buffer)
+{
+    printf("Write data requested...\n");
+    EchoConnection *echoconn = (EchoConnection *)lew_connection_get_context(connection);
+    *buffer = echoconn->readBuffer;
+    return echoconn->length;
+}
+
+/**
+ * Called to indicate that nWritten bytes of data has been written and that the connection
+ * object should update its write buffers to discard this data.
+ */
+void dataWrittenCallback(LEWConnection *connection, size_t nWritten)
+{
+    EchoConnection *echoconn = (EchoConnection *)lew_connection_get_context(connection);
+    echoconn->length -= nWritten;
+}
+
+int main(void)
+{
+    LEWSocketServerListener listener;
+    listener.createConnectionContext = createConnectionContextCallback;
+    listener.processData = processDataCallback;
+    listener.connectionClosed = connectionClosedCallback;
+    listener.writeDataRequested = writeDataRequestedCallback;
+    listener.dataWritten = dataWrittenCallback;
+
+    lew_start_server(NULL, 9999, &listener);
+}
+```
+
+
+While there is still some work to be done to handle edge cases this would be relegated to the library rather than leaking out to the client code and most the client code is actually to do with connection logic rather than messing about with event loops.
+
+Full source code is available at: [https://github.com/panyam/LibEvWrapper](https://github.com/panyam/LibEvWrapper)
+
