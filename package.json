@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "rm -Rf build && next build",
     "buildall": "npm run build && npm run copystatic",
-    "copystatic": "rm -Rf build/public && cp app.yaml build && cp .gcloudignore build && cp -r public build",
+    "copystatic": "cp app.yaml build && cp .gcloudignore build && cp -r public build",
     "postbuild": "npm run sitemap && npm run rss",
     "sitemap": "cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/generate-sitemap.mjs",
     "rss": "cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/generate-rss.mjs",
