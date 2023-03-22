@@ -65,6 +65,9 @@ module.exports = withContentlayer(
     eslint: {
       dirs: ['pages', 'components', 'lib', 'layouts', 'scripts'],
     },
+    images: {
+      loaderFile: './components/Loader.js',
+    },
     async headers() {
       return [
         {
