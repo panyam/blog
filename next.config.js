@@ -66,7 +66,7 @@ module.exports = withContentlayer(
       dirs: ['pages', 'components', 'lib', 'layouts', 'scripts'],
     },
     images: {
-      loaderFile: './components/Loader.js',
+      unoptimized: true,
     },
     async headers() {
       return [

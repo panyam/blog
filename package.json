@@ -5,7 +5,9 @@
   "scripts": {
     "start": "next dev",
     "dev": "next dev",
-    "build": "next build",
+    "build": "rm -Rf build && next build",
+    "buildall": "npm run build && npm run copystatic",
+    "copystatic": "rm -Rf build/public && cp app.yaml build && cp .gcloudignore build && cp -r public build",
     "postbuild": "npm run sitemap && npm run rss",
     "sitemap": "cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/generate-sitemap.mjs",
     "rss": "cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/generate-rss.mjs",
@@ -13,9 +15,8 @@
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "next lint --fix --dir pages --dir components --dir lib --dir layouts --dir scripts",
     "prepare": "husky install",
-    "copystatic": "rm -Rf build/public && cp app.yaml build && cp .gcloudignore build && cp -r public build",
-    "upload": "npm run copystatic && cd build ; gcloud app deploy --project maniacalbuilder --verbosity=info",
-    "predeploy": "rm -Rf build && npm run build",
+    "upload": "cd build ; gcloud app deploy --project maniacalbuilder --verbosity=info",
+    "predeploy": "npm run buildall",
     "deploy": "npm run upload"
   },
   "dependencies": {
