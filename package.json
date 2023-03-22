@@ -1,5 +1,5 @@
 {
-  "name": "tailwind-nextjs-starter-blog",
+  "name": "maniacalbuilder",
   "version": "1.5.3",
   "private": true,
   "scripts": {
@@ -12,7 +12,10 @@
     "serve": "next start",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "next lint --fix --dir pages --dir components --dir lib --dir layouts --dir scripts",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "predeploy": "npm run build && cp app.yaml build && cp .gcloudignore build",
+    "upload": "cp app.yaml build && cp .gcloudignore build && cd build ; gcloud app deploy --project maniacalbuilder --verbosity=info",
+    "deploy": "npm run upload"
   },
   "dependencies": {
     "@fontsource/inter": "4.5.2",
