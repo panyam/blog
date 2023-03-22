@@ -13,8 +13,9 @@
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "next lint --fix --dir pages --dir components --dir lib --dir layouts --dir scripts",
     "prepare": "husky install",
-    "predeploy": "npm run build && cp app.yaml build && cp .gcloudignore build",
-    "upload": "cp app.yaml build && cp .gcloudignore build && cd build ; gcloud app deploy --project maniacalbuilder --verbosity=info",
+    "copystatic": "rm -Rf build/public && cp app.yaml build && cp .gcloudignore build && cp -r public build",
+    "upload": "npm run copystatic && cd build ; gcloud app deploy --project maniacalbuilder --verbosity=info",
+    "predeploy": "rm -Rf build && npm run build",
     "deploy": "npm run upload"
   },
   "dependencies": {
