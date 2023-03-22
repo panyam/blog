@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+*.swp
 /.pnp
 .pnp.js
 
