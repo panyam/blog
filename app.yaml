@@ -4,7 +4,11 @@ threadsafe: true
 
 handlers:
 
-- url: /static
+- url: /_next/data/([^/]*)/(.*)\.json
+  static_files: server/pages/\2.json
+  upload: server/pages/(.*)
+
+- url: /_next/static
   static_dir: static
 
 - url: /
