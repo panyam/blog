@@ -5,7 +5,7 @@
   "scripts": {
     "start": "next dev",
     "dev": "next dev",
-    "build": "rm -Rf build && next build",
+    "build": "rm -Rf build && next build && next export",
     "buildall": "npm run build && npm run copystatic",
     "copystatic": "cp app.yaml build && cp .gcloudignore build && cp -r public build",
     "postbuild": "npm run sitemap && npm run rss",

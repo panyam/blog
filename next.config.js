@@ -59,6 +59,7 @@ const securityHeaders = [
  **/
 module.exports = withContentlayer(
   withBundleAnalyzer({
+    productionBrowserSourceMaps: true,
     reactStrictMode: true,
     distDir: 'build',
     pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
