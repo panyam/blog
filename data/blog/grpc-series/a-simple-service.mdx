@@ -292,16 +292,20 @@ service SongService {
 
 #### Create a song
 
-`grpc_cli --json_input --json_output call localhost:9000 CreateSong '{song: {name: "first song"}}'`
+`grpc_cli --json_input --json_output call localhost:9000 CreateSong '{song: {name: "first song", performer_ids: ["1", "2"]}}'
 
 ```json showLineNumbers
 connecting to localhost:9000
 {
  "song": {
-  "createdAt": "2023-03-24T00:42:41.883291Z",
-  "updatedAt": "2023-03-24T00:42:41.883292Z",
+  "createdAt": "2023-03-24T00:54:50.292101Z",
+  "updatedAt": "2023-03-24T00:54:50.292101Z",
   "id": "1",
-  "name": "first song"
+  "name": "first song",
+  "performerIds": [
+   "1",
+   "2"
+  ]
  }
 }
 Rpc succeeded with OK status
@@ -310,16 +314,21 @@ Rpc succeeded with OK status
 
 and another
 
-`grpc_cli --json_input --json_output call localhost:9000 CreateSong '{song: {name: "a really cool song"}}'`
+`grpc_cli --json_input --json_output call localhost:9000 CreateSong '{song: {name: "a really cool song", performer_ids: ["3", "2", "4"], homepage: "http://music.com/songs/1.html"}}'`
 
 ```json showLineNumbers
-connecting to localhost:9000
 {
  "song": {
-  "createdAt": "2023-03-24T00:44:02.334069Z",
-  "updatedAt": "2023-03-24T00:44:02.334069Z",
+  "createdAt": "2023-03-24T00:56:46.556392Z",
+  "updatedAt": "2023-03-24T00:56:46.556392Z",
   "id": "2",
-  "name": "a really cool song"
+  "name": "a really cool song",
+  "homepage": "http://music.com/songs/1.html",
+  "performerIds": [
+   "3",
+   "2",
+   "4"
+  ]
  }
 }
 Rpc succeeded with OK status
@@ -334,16 +343,26 @@ connecting to localhost:9000
 {
  "songs": [
   {
-   "createdAt": "2023-03-24T00:44:02.334069Z",
-   "updatedAt": "2023-03-24T00:44:02.334069Z",
+   "createdAt": "2023-03-24T00:56:46.556392Z",
+   "updatedAt": "2023-03-24T00:56:46.556392Z",
    "id": "2",
-   "name": "a really cool song"
+   "name": "a really cool song",
+   "homepage": "http://music.com/songs/1.html",
+   "performerIds": [
+    "3",
+    "2",
+    "4"
+   ]
   },
   {
-   "createdAt": "2023-03-24T00:43:47.131222Z",
-   "updatedAt": "2023-03-24T00:43:47.131222Z",
+   "createdAt": "2023-03-24T00:54:50.292101Z",
+   "updatedAt": "2023-03-24T00:54:50.292101Z",
    "id": "1",
-   "name": "first song"
+   "name": "first song",
+   "performerIds": [
+    "1",
+    "2"
+   ]
   }
  ]
 }
@@ -358,17 +377,27 @@ Rpc succeeded with OK status
 connecting to localhost:9000
 {
  "songs": {
-  "2": {
-   "createdAt": "2023-03-24T00:44:02.334069Z",
-   "updatedAt": "2023-03-24T00:44:02.334069Z",
-   "id": "2",
-   "name": "a really cool song"
-  },
   "1": {
-   "createdAt": "2023-03-24T00:43:47.131222Z",
-   "updatedAt": "2023-03-24T00:43:47.131222Z",
+   "createdAt": "2023-03-24T00:54:50.292101Z",
+   "updatedAt": "2023-03-24T00:54:50.292101Z",
    "id": "1",
-   "name": "first song"
+   "name": "first song",
+   "performerIds": [
+    "1",
+    "2"
+   ]
+  },
+  "2": {
+   "createdAt": "2023-03-24T00:56:46.556392Z",
+   "updatedAt": "2023-03-24T00:56:46.556392Z",
+   "id": "2",
+   "name": "a really cool song",
+   "homepage": "http://music.com/songs/1.html",
+   "performerIds": [
+    "3",
+    "2",
+    "4"
+   ]
   }
  }
 }
@@ -392,10 +421,16 @@ connecting to localhost:9000
 {
  "songs": [
   {
-   "createdAt": "2023-03-24T00:44:02.334069Z",
-   "updatedAt": "2023-03-24T00:44:02.334069Z",
+   "createdAt": "2023-03-24T00:56:46.556392Z",
+   "updatedAt": "2023-03-24T00:56:46.556392Z",
    "id": "2",
-   "name": "a really cool song"
+   "name": "a really cool song",
+   "homepage": "http://music.com/songs/1.html",
+   "performerIds": [
+    "3",
+    "2",
+    "4"
+   ]
   }
  ]
 }
