@@ -1,0 +1,99 @@
+---
+title: 'Using Buf.build for managing gRPC plugins'
+date: 2023-02-15T15:32:14Z
+lastmod: '2022-05-05'
+tags: ['grpc', 'buf', 'build tooling', 'plugin management']
+draft: false
+summary: 'Buf.build is a modern ecosystem simplifying the plugin management when building gRPC services and addresses several pains and short-comings found in the original gRPC build ecosystem'
+layout: PostSimple
+---
+
+gRPC is a great framework for creating RPC services.  gRPC offers a clean human readable source-of-truth of your service specs without needing further tools to understand them.    What makes the gRPC ecosystem shinte is its plugin facility for extending it on several fronts.   With plugins you can:
+
+* Generate server stubs to implement your service logic
+* Generate clients to talk to these servers
+* Target several languages (golang, python, typescript etc) 
+* Even targeting several transport types (http, tcp etc)
+
+Here is an [awesome list](https://github.com/grpc-ecosystem/awesome-grpc) of curated plugins for the grpc ecosystem.   You can even generate an http proxy gateway along with its own OpenAPI spec for those still needing them to consume your APIs!
+
+As developers, few things are more comforting than the mighty command-line.   For generated APIs (whether rpc or http) while generic CLIs can provide access (eg curl for a generated HTTP gateway) these still need a user to know (or atleast remember) the http semantics etc.   A CLI exec/binary with simpler structure, some predefined conventions and more targeted documentation etc can significantly ease accessing the APIs from the command line.  These can even be useful tools/artifacts to offer the consumers of your services.
+
+Without further Ado let us dive into building a grpc plugin that generates one or more CLIs from custom annotations (defined in this tutorial) added to your protobuf definitions for your grpc services.
+
+Note - this tutorial is **NOT** an in-depth tutorial for creating a grpc based service or creating http gateways for the grpc service.   A simple enough service example will be provided that can highlight the various of nuances of building a plugin instead.
+
+### Getting Started
+
+This tutorial assumes you have the following tooling already installed:
+
+* golang (v1.18+)
+* [buf](https://buf.build/docs/installation)  - We will get to this shortly!
+
+### A simple example
+
+Let us build a simple service for a music site with Songs, Artists and Albums.  While not the most expressive model to describe a music site this serves our purposes:
+
+* Songs are compositions and can be sung by different Artists.  Their composer is denoted by the Artist that composed it.
+* Artists are the musicians who perform.
+* Albums are collections of songs performed/sung/played by a bunch of artists (Solo or in a Band)
+* (Record) Labels are the ones who own albums
+
+#### Create the repo
+
+```shell showLineNumbers
+mkdir musicservice
+cd musicservice
+go mod init music.com/musicservice
+mkdir -p protos/musicservice/v1
+touch protos/musicservice/v1/songs.proto
+touch protos/musicservice/v1/albums.proto
+touch protos/musicservice/v1/artists.proto
+touch protos/musicservice/v1/models.proto
+```
+
+Note when creating your protos (line 4) it is good practise to have them versioned (v1 above).
+
+Also my general preference is to describe the top level service for each entity in &ltentities&gt.go and then have all models in a common models.go.  This allows me to share models across services (especially when parent/child relationships are needed).  This is just one convention but others work fine too (eg all entity Foo related models and services in foo.proto)
+
+#### Add the required dependencies
+
+```
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest    # v1.30.0 at this time
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest   # v1.54.0 at this time
+```
+
+#### Create your protos
+
+1. First create the models
+
+```protobuf showLineNumbers
+// protos/musicservice/v1/models.go
+
+// protos/musicservice/v1/songs.go
+
+// protos/musicservice/v1/albums.go
+
+// protos/musicservice/v1/artists.go
+
+// protos/musicservice/v1/labels.go
+```
+
+Note - this tutorial is **NOT** a generic tutorial for creating a grpc based service or creating http gateways for the grpc service.   Though the demo/example service ([grpcdemo](github.com/panyam/grpcdemo)) contains a full-fledge grpc service and its associated REST based http gateway, this tutorial will focus on
+
+
+1. Creating a plugin using buf and protogen that will generate a python application that can be used as a CLI interface to our service.
+2. Highlight some options to configure the fields, method and services in our demo.
+
+If you are in a rush, check out the [plugin's source code](github.com/panyam/proto2cli).
+
+A quick primer on generating services, clients etc with grpc specs:
+
+1. The protoc utility provided by the grpc/protobuf team takes as input protobuf files (.proto) that contain service descriptions (services, methods, models etc).  The command looks a bit like:
+
+```
+protoc --go_out="./gen" --go-grpc_out="./gen" --go_opt=paths=source_relative \
+       --go-grpc_opt=paths=surce_relative
+```
+
+2. The magic of the protoc utility is that it does not do any generation on its 
