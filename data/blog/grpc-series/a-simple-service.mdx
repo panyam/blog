@@ -292,114 +292,112 @@ service SongService {
 
 #### Create a song
 
-`grpc_cli --json_input call localhost:9000 CreateSong '{song: {name: "first song"}}'`
-
+`grpc_cli --json_input --json_output call localhost:9000 CreateSong '{song: {name: "first song"}}'`
 
 ```json showLineNumbers
 connecting to localhost:9000
-song {
-  created_at {
-    seconds: 1679612030
-    nanos: 917276000
-  }
-  updated_at {
-    seconds: 1679612030
-    nanos: 917276000
-  }
-  id: "1"
-  name: "first song"
+{
+ "song": {
+  "createdAt": "2023-03-24T00:42:41.883291Z",
+  "updatedAt": "2023-03-24T00:42:41.883292Z",
+  "id": "1",
+  "name": "first song"
+ }
 }
+Rpc succeeded with OK status
+
 ```
 
 and another
 
-`grpc_cli --json_input call localhost:9000 CreateSong '{song: {name: "a really cool song"}}'`
+`grpc_cli --json_input --json_output call localhost:9000 CreateSong '{song: {name: "a really cool song"}}'`
 
 ```json showLineNumbers
 connecting to localhost:9000
-song {
-  created_at {
-    seconds: 1679612030
-    nanos: 917276000
-  }
-  updated_at {
-    seconds: 1679612030
-    nanos: 917276000
-  }
-  id: "2"
-  name: "a really cool song"
+{
+ "song": {
+  "createdAt": "2023-03-24T00:44:02.334069Z",
+  "updatedAt": "2023-03-24T00:44:02.334069Z",
+  "id": "2",
+  "name": "a really cool song"
+ }
 }
+Rpc succeeded with OK status
 ```
 
 #### List all songs
 
-`grpc_cli call localhost:9000 ListSongs`
+`grpc_cli --json_input --json_output call localhost:9000 ListSongs {}`
 
 ```json showLineNumbers
-reading request message from stdin...
 connecting to localhost:9000
-songs {
-  created_at {
-    seconds: 1679617744
-    nanos: 999895000
+{
+ "songs": [
+  {
+   "createdAt": "2023-03-24T00:44:02.334069Z",
+   "updatedAt": "2023-03-24T00:44:02.334069Z",
+   "id": "2",
+   "name": "a really cool song"
+  },
+  {
+   "createdAt": "2023-03-24T00:43:47.131222Z",
+   "updatedAt": "2023-03-24T00:43:47.131222Z",
+   "id": "1",
+   "name": "first song"
   }
-  updated_at {
-    seconds: 1679617744
-    nanos: 999895000
-  }
-  id: "2"
-  name: "a really cool song"
-}
-songs {
-  created_at {
-    seconds: 1679617737
-    nanos: 221787000
-  }
-  updated_at {
-    seconds: 1679617737
-    nanos: 221787000
-  }
-  id: "1"
-  name: "first song"
+ ]
 }
 Rpc succeeded with OK status
 ```
 
 #### Get Songs by IDs
 
-`grpc_cli --json_input call localhost:9000 GetSongs '{"ids": ["1", "2"]}'`
+`grpc_cli --json_input --json_output call localhost:9000 GetSongs '{"ids": ["1", "2"]}'`
 
 ```json showLineNumbers
 connecting to localhost:9000
-songs {
-  key: "1"
-  value {
-    created_at {
-      seconds: 1679617737
-      nanos: 221787000
-    }
-    updated_at {
-      seconds: 1679617737
-      nanos: 221787000
-    }
-    id: "1"
-    name: "first song"
+{
+ "songs": {
+  "2": {
+   "createdAt": "2023-03-24T00:44:02.334069Z",
+   "updatedAt": "2023-03-24T00:44:02.334069Z",
+   "id": "2",
+   "name": "a really cool song"
+  },
+  "1": {
+   "createdAt": "2023-03-24T00:43:47.131222Z",
+   "updatedAt": "2023-03-24T00:43:47.131222Z",
+   "id": "1",
+   "name": "first song"
   }
+ }
 }
-songs {
-  key: "2"
-  value {
-    created_at {
-      seconds: 1679617744
-      nanos: 999895000
-    }
-    updated_at {
-      seconds: 1679617744
-      nanos: 999895000
-    }
-    id: "2"
-    name: "a really cool song"
+Rpc succeeded with OK status
+```
+
+#### Delete a song followed by a Listing
+
+`grpc_cli --json_input --json_output call localhost:9000 DeleteSong '{"id": "1"}'`
+
+```json showLineNumbers
+connecting to localhost:9000
+{}
+Rpc succeeded with OK status
+```
+
+`grpc_cli --json_input --json_output call localhost:9000 ListSongs {}`
+
+```json showLineNumbers
+connecting to localhost:9000
+{
+ "songs": [
+  {
+   "createdAt": "2023-03-24T00:44:02.334069Z",
+   "updatedAt": "2023-03-24T00:44:02.334069Z",
+   "id": "2",
+   "name": "a really cool song"
   }
+ ]
 }
 Rpc succeeded with OK status
 ```
