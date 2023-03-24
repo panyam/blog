@@ -7,7 +7,7 @@ summary: 'In this guide we will improve our music service by building a rest/htt
 layout: PostSimple
 ---
 
-[gRPC](https://grpc.io/) is a great framework for creating (micro) services in many environments.  gRPC offers a clean human readable source-of-truth of your service specs without needing further tools to understand them.    What makes the gRPC ecosystem shinte is its plugin facility for extending it on several fronts.   With plugins you can:
+[gRPC](https://grpc.io/) is a great framework for creating (micro) services in many environments.  gRPC offers a clean human readable source-of-truth of your service specs without needing further tools to understand them.    What makes the gRPC ecosystem shine is its plugin facility for extending it on several fronts.   With plugins you can:
 
 * Generate server stubs to implement your service logic
 * Generate clients to talk to these servers
@@ -67,6 +67,7 @@ touch protos/musicservice/v1/artists.proto
 
 # Install dependencies
 go get google.golang.org/grpc
+github.com/stretchr/testify/assert
 ```
 
 Note when creating your protos it is good practise to have them versioned (v1 above).
@@ -445,7 +446,7 @@ Instead of going into this deep, the tests in the service folder show how client
 
 ## Conclusion
 
-That was a lot to cover but we made it.   Even though it was a basic example, hope it was worth it and set a good foundation for the topics in upcoming series.   In this (dense) guide we:
+That was a lot to cover but we made it.   Even though it was a basic example, (hopefully) it set a good foundation for the topics in the rest of the series.   In this guide we:
 
 * Created a grpc service in Go from the ground up, with a very simple implementation (sadly lacking in persistence),
 * Exercised the CLI utility to make calls to the running service

@@ -66,8 +66,12 @@ module.exports = withContentlayer(
     eslint: {
       dirs: ['pages', 'components', 'lib', 'layouts', 'scripts'],
     },
+    // https://github.com/vercel/next.js/issues/21079
+    // Remove this workaround whenever the issue is fixed
+    // images: { unoptimized: true, },
     images: {
-      unoptimized: true,
+      loader: 'imgix',
+      path: '/',
     },
     async headers() {
       return [
