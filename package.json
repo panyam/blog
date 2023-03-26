@@ -15,16 +15,10 @@
     "lint": "next lint --fix --dir pages --dir components --dir lib --dir layouts --dir scripts",
     "prepare": "husky install",
 
-    "copystatic": "cp appbuild.yaml build/app.yaml && cp .gcloudignore build && cp -r public build",
+    "copystatic": "cp app.yaml build && cp .gcloudignore build && cp -r public build",
     "upload": "cd build ; gcloud app deploy --project maniacalbuilder --verbosity=info",
     "predeploy": "npm run buildall",
-    "deploy": "npm run upload",
-
-    "copystaticexport": "cp appexport.yaml out/app.yaml && cp .gcloudignore out",
-    "export": "npm run build && next export && npm run copystaticexport",
-    "uploadexport": "cd out ; gcloud app deploy --project maniacalbuilder --verbosity=info",
-    "predeployexport": "npm run export",
-    "deployexport": "npm run uploadexport"
+    "deploy": "npm run upload"
   },
   "dependencies": {
     "@fontsource/inter": "4.5.15",

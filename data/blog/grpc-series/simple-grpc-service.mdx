@@ -1,24 +1,40 @@
 ---
-title: 'A simple gRPC service'
+title: 'Part 1 - A simple gRPC service'
 date: 2022-09-01T15:32:14Z
 tags: ['grpc', 'services', 'grpc_cli', 'tutorial']
 draft: false
+authors: ["Sri Panyam"]
 summary: 'In this guide we shall build a very simple gRPC service in Go showing some of the tooling setup and common conventions.'
 layout: PostSimple
 ---
 
-[gRPC](https://grpc.io/) is a great framework for creating (micro) services in many environments.  gRPC offers a clean human readable source-of-truth of your service specs without needing further tools to understand them.    What makes the gRPC ecosystem shine is its plugin facility for extending it on several fronts.   With plugins you can:
+This is Part 1 in the [gRPC Tutorial Series](/blog/grpc-series/) show casing best practises and tooling in building and deploying services using gRPC (mostly in Go).
+
+## Introduction
+
+Client-server communication is a fundamental part of modern software architectures.  Clients (on various platforms - web, mobile, desktop, an even IoT devices) request functionality (data and views) that servers that compute, generate and provide.  There have been several paradigms facilitating this - [REST/Http](https://en.wikipedia.org/wiki/Representational_state_transfer), [SOAP](https://en.wikipedia.org/wiki/SOAP), [XML-RPC](http://xmlrpc.com/) and others. 
+
+gRPC is a modern, open source and highly performant remote procedure call (RPC) framework developed by Google enabling efficient communication in distributed systems.   gRPC also uses an [interface definition language](https://en.wikipedia.org/wiki/Interface_description_language) (IDL) - [protobuf](https://protobuf.dev/) - to define services, define methods, messages as well as in serializing structure data between servers and clients.  Protobuf as a data serialization format is powerful and efficient - especially compared to text based formats (like Json).  This makes a great choice for applications that require high performance and scalability.
+
+A major advantage gRPC confers is its ability to generate code for several clients and servers in [several languages](https://grpc.io/docs/languages/) (Java, Python, Go, C++, JS/TS) as well as targeting various platforms and frameworks.  This simplifies implementing and maintaining consistent APIs (via a source-of-truth IDL) in a language and platform agnostic way.    gRPC also offers features like streaming (one way and bi-directional), flow control and flexible middleware/interceptor mechanisms making it a superb choice for real-time applications and microservice architectures.
+
+What makes the gRPC shine is its plugin facility and ecosystem for extending it on several fronts.   With plugins just some of the things you can do are:
 
 * Generate server stubs to implement your service logic
 * Generate clients to talk to these servers
 * Target several languages (golang, python, typescript etc) 
-* Even targeting several transport types (http, tcp etc)
+* Even targeting several transport types (HTTP, TCP etc)
 
 Here is an [awesome list](https://github.com/grpc-ecosystem/awesome-grpc) of curated plugins for the grpc ecosystem.   For example - you can even generate an http proxy gateway along with its own OpenAPI spec for those still needing them to consume your APIs by using the appropriate plugin.
 
-This is Part 1 in the [gRPC Tutorial Series](/blog/grpc-series/) show casing best practises and tooling in building and deploying services using gRPC and Go.
+There are some disadvantages to using gRPC:
 
-This is not an advanced or a unique guide by any means.  Several tutorials exist out there serving this need (for bringing up a gRPC service with Go).  This guide walks through a simple service we are building from the ground up to serve as a foundation for the upcoming guides in this series.  With that disclaimer out of the way, let us get started.  
+* Being a relatively recent technology it has some complexities in learning, setting up and use.  This may especially be true for developers coming from more traditional technologies (like REST)
+* Browser support for gRPC may be limited.  Even though web clients can be generated opening up access to non custom ports (hosting gRPC services) may not be feasible due to org security policies.
+
+Despite this (we feel) its advantages outweight the disadvantages.  Improved tooling over time, increase in familiriaty and a robust plugin ecosystem all have made gRPC a popular choice.   The browser support limitation will be addressed in the next article in this series.
+
+In this article we will build a simple gRPC service to show case common features and patterns.  This will server as a foundation for the upcoming guides in this series.  Let us get started!
 
 ## Motivating Example
 
@@ -29,9 +45,7 @@ Let us build a simple service for a music site with the following entities:
 * Albums - A collection of songs performed by a bunch of artists.
 * Labels - Record label companies who produce albums
 
-(Kudos if you have noticed that the "User" is missing - we will come to all things about Auth, User management and even social features in a future article).
-
-This service is simple enough but provides enough scope to take it in several directions which will be the topic of dedicated posts in the future.
+(Kudos if you have noticed that the "User" is missing - we will come to all things about Auth, User management and even social features in a future article).  This service is rudimentary yet provides enough scope to take it in several directions which will be the topic of dedicated posts in the future.
 
 ## Prerequisites
 
@@ -80,7 +94,7 @@ There are several ways to organize your protos, for example (and not limited to)
 
 In this series we are using the 3rd approach as it also allows us to share models across service while still having clean and easy to absorb protos.
 
-## Describe your Service
+## Define your Service
 
 The .proto files are the starting point of a gRPC, so we can start there with some basic details:
 
@@ -104,7 +118,7 @@ embed albums.proto here from github at the right tag
 embed labels.proto here from github at the right tag
 ```
 
-A few conventions to observe (without preaching any design practices):
+We have a chosen a few conventions (without forcing any design practices):
 
 * Entities (in models.proto) have an id field to denote their primary key/object ID
 * All entities have a created/updated timestamp which are set in the create and update methods respectively.
@@ -186,11 +200,11 @@ Briefly the following are created:
   - For a service X, an interface called XService is generated where the methods are all the rpc methods stilated in the Y.proto file.
   - A client is generated that can talk to a running implementation of the XService interface (coming below).
 
-Pretty powerful isnt it!  Now let us look at actually implementing the services.
+Pretty powerful isn't it!  Now let us look at actually implementing the services.
 
-## Implementing the Service
+## Implementing your Service
 
-Our services are very simple.  They store the different instances in memory as a simple collection of elements added in the order in which they were created (we wont fiddle with databases for now) and serve them by querying and updating this collection.  Since all the services have (mostly) similiar implementations (CRUD) a base store object has been created to represent the in-memory collection and the services simply use this store.
+Our services are very simple.  They store the different instances in memory as a simple collection of elements added in the order in which they were created (we wont fiddle with databases for now) and serve them by querying and updating this collection.  Since all the services have (mostly) similar implementations (CRUD) a base store object has been created to represent the in-memory collection and the services simply use this store.
 
 The base entity store is:
 
@@ -226,9 +240,17 @@ This server can now be run (by default on port 9000) with:
 go run cmd/server.go
 ```
 
-## Testing calls to the server
+Note this is a simple service with *Unary RPC* methods.  ie the client sends a single request to the server and waits for a single response.  There are also other types of methods
 
-Now it is time to test our server.  Note the grpc server is *not* a REST endpoint. So curl would not work (we will cover this in [Part 2](/blog/grpc-series/rest-http-gateway/)).  We can make calls against the server in a couple of ways - using a CLI utility (much like curl for REST/http services) or by using the clients generated by the protoc tool.  Even better, we can also make client calls from other langauges - if we had opted to generate libraries targetting those languages too.
+1. **Server Streaming RPC** - The client sends a request to the server and receives a stream of responses (similar to long-polling in http where the client listens to chunks of messages on the open connection).
+2. **Client streaming RPC** - Here the client sends a stream of messages in a single request and receives a single response from the server.  For example a single request from the client could involve multiple location updates (spread out over time) and the response from the server could be a single "path" object the client travelled along.
+3. **Bidirectional streaming RPC** - The client initiates a connection with the server and both the client and server can send messages independent of one another.   The similarity for this in the HTTP universe would be Websocket connections.
+
+We will implement one or more of these in future tutorials.
+
+## Client calls to the server
+
+Now it is time to test our server.  Note the grpc server is *not* a REST endpoint. So curl would not work (we will cover this in [Part 2](/blog/grpc-series/rest-http-gateway/)).  We can make calls against the server in a couple of ways - using a CLI utility (much like curl for REST/http services) or by using the clients generated by the protoc tool.  Even better, we can also make client calls from other languages - if we had opted to generate libraries targeting those languages too.
 
 ### Calling the server via grpc_cli utility
 
@@ -440,13 +462,15 @@ connecting to localhost:9000
 Rpc succeeded with OK status
 ```
 
-### Prgrammatically calling the server
+### Programmatically calling the server
 
 Instead of going into this deep, the tests in the service folder show how clients can be created as well as in how to write tests.
 
 ## Conclusion
 
-That was a lot to cover but we made it.   Even though it was a basic example, (hopefully) it set a good foundation for the topics in the rest of the series.   In this guide we:
+That was a lot to cover but we made it.   Even though it was a basic example, (hopefully) it set a good foundation for the topics in the rest of the series.   
+
+In summary, gRPC is a crucial component of modern software development that allows developers to build high-performance, scalable, and interoperable systems. Its features and benefits have made it a popular choice among companies that need to handle large amounts of data or need to support real-time communication across multiple platforms.
 
 * Created a grpc service in Go from the ground up, with a very simple implementation (sadly lacking in persistence),
 * Exercised the CLI utility to make calls to the running service

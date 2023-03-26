@@ -72,6 +72,14 @@ module.exports = withContentlayer(
     images: {
       loader: 'imgix',
       path: '/',
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'raw.githubusercontent.com',
+          port: '',
+          pathname: '/grpc-ecosystem/**',
+        },
+      ],
     },
     async headers() {
       return [
