@@ -1,4 +1,4 @@
-runtime: python27
+runtime: nodejs16
 api_version: 1
 threadsafe: true
 
@@ -21,3 +21,10 @@ handlers:
 - url: /(.*)
   static_files: server/pages/\1.html
   upload: server/pages/(.*)
+
+# Uncomment this above if you want script handling anything instead
+# of going to nextjs
+# - url: /.*
+#  secure: always
+#  redirect_http_response_code: 301
+#  script: auto
