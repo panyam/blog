@@ -14,7 +14,6 @@
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "next lint --fix --dir pages --dir components --dir lib --dir layouts --dir scripts",
     "prepare": "husky install",
-
     "copystatic": "cp app.yaml build && cp .gcloudignore build && cp -r public build",
     "upload": "cd build ; gcloud app deploy --project maniacalbuilder --verbosity=info",
     "predeploy": "npm run buildall",
