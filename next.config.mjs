@@ -1,9 +1,3 @@
-import nextMDX from '@next/mdx'
-
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-})
-
 // You might need to insert additional domains in script-src
 // if you are using external services
 const ContentSecurityPolicy = `
@@ -55,36 +49,19 @@ const securityHeaders = [
   },
 ]
 
-import remarkFrontmatter from 'remark-frontmatter'
-// const rehypeHighlight = import("rehype-highlight");
-import rehypeHighlight from 'rehype-highlight'
+/*
 import remarkSnippets from 'remark-snippets' // const remarkSnippets = import("remark-snippets");
-// import remarkFrontmatter from "remark-frontmatter";
-// import rehypeHighlight from "rehype-highlight";
-const withMDX = nextMDX({
-  options: {
-    // If you use remark-gfm, you'll need to use next.config.mjs
-    // as the package is ESM only
-    // https://github.com/remarkjs/remark-gfm#install
-
-    // remarkPlugins: [remarkFrontmatter],
-    // rehypePlugins: [rehypeHighlight],
-    remarkPlugins: [
-      remarkFrontmatter,
-      [
+const remarkSnippetConfig = [
         remarkSnippets,
         {
-          /**
-           * Address of the snippet service to be invokved to run our snippets.
-           */
+          // Address of the snippet service to be invokved to run our snippets.
           snippetsvc: {
             addr: 'localhost:7000', // default
           },
-          /**
-           * Different environments that can be used so they dont have to
-           * be defined in the mdx files.  These environments can be overridden
-           * in specific mdx files and new ones can also be created.
-           */
+          // Different environments that can be used so they dont have to
+          // be defined in the mdx files.  These environments can be overridden
+          // in specific mdx files and new ones can also be created.
+          //
           envinfo: {
             default: 'default',
             envs: [
@@ -100,7 +77,30 @@ const withMDX = nextMDX({
           },
           foo: 'bar',
         },
-      ],
+      ]
+*/
+
+import nextMDX from '@next/mdx'
+import remarkFrontmatter from 'remark-frontmatter'
+import rehypeHighlight from 'rehype-highlight'
+
+import bundleAnalyzer from '@next/bundle-analyzer'
+// const bundleAnalyzer = import('@next/bundle-analyzer')
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
+
+const withMDX = nextMDX({
+  options: {
+    // If you use remark-gfm, you'll need to use next.config.mjs
+    // as the package is ESM only
+    // https://github.com/remarkjs/remark-gfm#install
+
+    // remarkPlugins: [remarkFrontmatter],
+    // rehypePlugins: [rehypeHighlight],
+    remarkPlugins: [
+      remarkFrontmatter,
+      // remarkSnippetConfig,
     ],
     rehypePlugins: [rehypeHighlight],
 
@@ -112,9 +112,9 @@ const withMDX = nextMDX({
 /**
  * @type {import('next/dist/next-server/server/config').NextConfig}
  **/
-module.exports = withMDX(
+const finalConfig = withMDX(
   withBundleAnalyzer({
-    basePath: '/',
+    basePath: '',
     reactStrictMode: true,
     trailingSlash: true,
     productionBrowserSourceMaps: true,
@@ -166,3 +166,5 @@ module.exports = withMDX(
     },
   })
 )
+
+export default finalConfig // module.exports = finalConfig
