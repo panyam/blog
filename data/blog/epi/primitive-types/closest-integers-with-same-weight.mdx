@@ -10,7 +10,7 @@ images: []
 
 The weight, W(x) of an integer, x, is the number of bits set (to 1) in binary.
 
-Given a 64 bit unsigned integer x (where W(x) != 0 and W(x) != 64) find y such that W(x) = W(y) and |x – y| is minimized.
+Given a 64 bit unsigned integer x (where `W(x) != 0 and W(x) != 64`) find y such that `W(x) = W(y)` and `|x – y|` is minimized.
 
 ## Solution
 
@@ -42,4 +42,4 @@ closest_neighbour_by_weight x = closest_neighbour_by_weight_aux x 0
               where two_digits = (x `shiftR` i) .&. 3
 ```
 
-Essentially starting from the least significant bit (i = 0), we see if the bit at position i and the bit at position i + 1 are the same. If they are same, then we recursively continue with i + 1. If they are NOT the same then the bits are swapped (with the x ^ (3 << i) in the False case) and that is the solution. The xor with 3 is just a easy way to swap two consecutive bits.
+Essentially starting from the least significant bit (i = 0), we see if the bit at position i and the bit at position i + 1 are the same. If they are same, then we recursively continue with i + 1. If they are NOT the same then the bits are swapped (with the `x ^ (3 << i)` in the False case) and that is the solution. The xor with 3 is just a easy way to swap two consecutive bits.
