@@ -4,10 +4,10 @@ import ListLayout from '@/layouts/ListLayout'
 import kebabCase from '@/lib/utils/kebabCase'
 import { getAllTags, allCoreContent } from '@/lib/utils/contentlayer'
 import { InferGetStaticPropsType } from 'next'
-import { allBlogs } from 'contentlayer/generated'
+import { getAllBlogs } from '@/lib/utils/contentlayer'
 
 export async function getStaticPaths() {
-  const tags = await getAllTags(allBlogs)
+  const tags = await getAllTags(getAllBlogs())
 
   return {
     paths: Object.keys(tags).map((tag) => ({

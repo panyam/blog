@@ -4,11 +4,10 @@ import ListLayout from '@/layouts/ListLayout'
 import { allCoreContent } from '@/lib/utils/contentlayer'
 import { POSTS_PER_PAGE } from '../../blog'
 import { InferGetStaticPropsType } from 'next'
-import { allBlogs } from 'contentlayer/generated'
-import { sortedBlogPost } from '../../../lib/utils/contentlayer'
+import { sortedBlogPost, getAllBlogs } from '@/lib/utils/contentlayer'
 
 export const getStaticPaths = async () => {
-  const totalPosts = allBlogs
+  const totalPosts = getAllBlogs()
   const totalPages = Math.ceil(totalPosts.length / POSTS_PER_PAGE)
   const paths = Array.from({ length: totalPages }, (_, i) => ({
     params: { page: (i + 1).toString() },

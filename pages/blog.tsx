@@ -1,14 +1,13 @@
 import siteMetadata from '@/data/siteMetadata'
 import ListLayout from '@/layouts/ListLayout'
 import { PageSEO } from '@/components/SEO'
-import { sortedBlogPost, allCoreContent } from '@/lib/utils/contentlayer'
+import { sortedBlogPost, getAllBlogs } from '@/lib/utils/contentlayer'
 import { InferGetStaticPropsType } from 'next'
-import { allBlogs } from 'contentlayer/generated'
 
 export const POSTS_PER_PAGE = 5
 
 export const getStaticProps = async () => {
-  const posts = sortedBlogPost(allBlogs)
+  const posts = sortedBlogPost(getAllBlogs())
   const initialDisplayPosts = posts.slice(0, POSTS_PER_PAGE)
   const pagination = {
     currentPage: 1,
@@ -17,8 +16,8 @@ export const getStaticProps = async () => {
 
   return {
     props: {
-      initialDisplayPosts: allCoreContent(initialDisplayPosts),
-      posts: allCoreContent(posts),
+      initialDisplayPosts: initialDisplayPosts,
+      posts: posts,
       pagination,
     },
   }

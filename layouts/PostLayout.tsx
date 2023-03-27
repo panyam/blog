@@ -7,9 +7,7 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import Comments from '@/components/comments'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
-import { CoreContent } from '@/lib/utils/contentlayer'
 import { ReactNode } from 'react'
-import type { Blog, Authors } from 'contentlayer/generated'
 
 const editUrl = (slug) => `${siteMetadata.siteRepo}/blob/master/data/blog/${slug}`
 const discussUrl = (slug) =>
@@ -25,8 +23,8 @@ const postDateTemplate: Intl.DateTimeFormatOptions = {
 }
 
 interface Props {
-  content: CoreContent<Blog>
-  authorDetails: CoreContent<Authors>[]
+  content: any,
+  authorDetails: any[],
   next?: { slug: string; title: string }
   prev?: { slug: string; title: string }
   children: ReactNode

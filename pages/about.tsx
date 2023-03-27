@@ -1,11 +1,11 @@
 import { MDXLayoutRenderer } from '@/components/MDXComponents'
 import { InferGetStaticPropsType } from 'next'
-import { allAuthors } from 'contentlayer/generated'
+import { getAllAuthors } from '@/lib/utils/contentlayer'
 
 const DEFAULT_LAYOUT = 'AuthorLayout'
 
 export const getStaticProps = async () => {
-  const author = allAuthors.find((p) => p.slug === 'default')
+  const author = getAllAuthors().find((p) => p.slug === 'default')
   return { props: { author } }
 }
 

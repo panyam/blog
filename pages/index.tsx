@@ -3,18 +3,15 @@ import { PageSEO } from '@/components/SEO'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import formatDate from '@/lib/utils/formatDate'
-import { sortedBlogPost, allCoreContent } from '@/lib/utils/contentlayer'
+import { sortedBlogPost, getAllBlogs } from '@/lib/utils/contentlayer'
 import { InferGetStaticPropsType } from 'next'
 import NewsletterForm from '@/components/NewsletterForm'
-// import { allBlogs } from 'contentlayer/generated'
 
 const MAX_DISPLAY = 10
 
 export const getStaticProps = async () => {
-  // TODO: move computation to get only the essential frontmatter to contentlayer.config
-  const sortedPosts = sortedBlogPost("data")
-  const posts = allCoreContent(sortedPosts)
-
+  const sortedPosts = sortedBlogPost(getAllBlogs())
+  const posts = sortedPosts
   return { props: { posts } }
 }
 

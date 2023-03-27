@@ -5,13 +5,10 @@ import siteMetadata from '@/data/siteMetadata'
 import kebabCase from '@/lib/utils/kebabCase'
 import { getAllTags } from '@/lib/utils/contentlayer'
 import { GetStaticProps, InferGetStaticPropsType } from 'next'
-import { allBlogs } from 'contentlayer/generated'
-
-// TODO: refactor into contentlayer once compute over all docs is enabled
+import { getAllBlogs } from '@/lib/utils/contentlayer'
 
 export const getStaticProps: GetStaticProps<{ tags: Record<string, number> }> = async () => {
-  const tags = await getAllTags(allBlogs)
-
+  const tags = await getAllTags(getAllBlogs())
   return { props: { tags } }
 }
 
