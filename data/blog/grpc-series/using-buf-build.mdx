@@ -98,9 +98,9 @@ lint:
     - DEFAULT
 ```
 
-Then run `buf mod update` to synchronize and lock the dependencies.  **Note:** `buf mod update` must be run every time `buf.yaml` is modified.
+Then run `buf mod update` to synchronize and lock the dependencies.  **Note:** `buf mod update` must be run every time `buf.yaml` is modified (for example we could add `buf.build/grpc-ecosystem/grpc-gateway` to the list of deps).
 
-Now running `buf build` (from the protos folder) will result in no errors.
+Running `buf build` now (from the protos folder) will result in no errors.
 
 ### Configure [buf.gen.yaml](https://buf.build/docs/tutorials/getting-started-with-buf-cli/#configure-a-bufgenyaml)
 
