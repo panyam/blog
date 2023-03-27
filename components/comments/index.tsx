@@ -1,10 +1,8 @@
 import siteMetadata from '@/data/siteMetadata'
 import dynamic from 'next/dynamic'
-import { CoreContent } from '@/lib/utils/contentlayer'
-import type { Blog } from 'contentlayer/generated'
 
 interface Props {
-  frontMatter: CoreContent<Blog>
+  frontMatter: any
 }
 
 const UtterancesComponent = dynamic(

@@ -1,5 +1,5 @@
 import kebabCase from '@/lib/utils/kebabCase'
-import type { Blog, DocumentTypes } from 'contentlayer/generated'
+// import type { Blog, DocumentTypes } from 'contentlayer/generated'
 
 export function dateSortDesc(a: string, b: string) {
   if (a > b) return -1

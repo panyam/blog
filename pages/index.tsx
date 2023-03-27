@@ -6,13 +6,13 @@ import formatDate from '@/lib/utils/formatDate'
 import { sortedBlogPost, allCoreContent } from '@/lib/utils/contentlayer'
 import { InferGetStaticPropsType } from 'next'
 import NewsletterForm from '@/components/NewsletterForm'
-import { allBlogs } from 'contentlayer/generated'
+// import { allBlogs } from 'contentlayer/generated'
 
 const MAX_DISPLAY = 10
 
 export const getStaticProps = async () => {
   // TODO: move computation to get only the essential frontmatter to contentlayer.config
-  const sortedPosts = sortedBlogPost(allBlogs)
+  const sortedPosts = sortedBlogPost("data")
   const posts = allCoreContent(sortedPosts)
 
   return { props: { posts } }

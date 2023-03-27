@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import React from 'react'
 import { useMDXComponent } from 'next-contentlayer/hooks'
-import { coreContent } from '@/lib/utils/contentlayer'
+// import { coreContent } from '@/lib/utils/contentlayer'
 import Image from './Image'
 import CustomLink from './Link'
 import TOCInline from './TOCInline'
@@ -36,7 +36,7 @@ export const MDXComponents: any = {
 
 export const MDXLayoutRenderer = ({ layout, content, ...rest }: MDXLayout) => {
   const MDXLayout = useMDXComponent(content.body.code)
-  const mainContent = coreContent(content)
+  const mainContent = content // coreContent(content);
 
   return <MDXLayout layout={layout} content={mainContent} components={MDXComponents} {...rest} />
 }
