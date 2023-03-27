@@ -72,13 +72,16 @@ In your protos root folder (musicservice/protos):
 buf mod init
 ```
 
-This would create a `buf.yaml` file.  Buf uses this file to determine and resolve import paths for all protos within this directory tree.  
+This would create a `buf.yaml` file.  Buf uses this file to determine and resolve import paths for all protos within this directory tree.  The protos can be tested by running `buf build`.
 
-Before building our protos remove the folder `protos/google` which we had added earlier (to include google's http annotations).  We will replace this with a dependency that is hosted in and provided by Buf.build.
+On a new project this would be error free.  But running it here would produce:
 
 ```
-rm -Rf protos/google
+musicservice/v1/albums.proto:8:8:google/api/annotations.proto: does not exist
 ```
+
+Rightly this indicates that we are depending on the google api annotations extensions but the dependency has not been specified.  To fix this add a new dependency in the buf.yaml file:
+
 
 In the buf.yaml file, add a deps section:
 
@@ -95,23 +98,18 @@ lint:
     - DEFAULT
 ```
 
-`buf build` from your project root (musicservice) can be invoked to generate all artifacts (much like `make all`) earlier but you now see a few errors (including this):
+Then run `buf mod update` to synchronize and lock the dependencies.  **Note:** `buf mod update` must be run every time `buf.yaml` is modified.
 
-```
-protos/google/api/annotations.proto:19:8:google/api/http.proto: does not exist
-```
+Now running `buf build` (from the protos folder) will result in no errors.
 
-This erros occurs because:
+### Configure [buf.gen.yaml](https://buf.build/docs/tutorials/getting-started-with-buf-cli/#configure-a-bufgenyaml)
 
-This is because we are working from an existing project and we have not added any of the plugins or configured buf yet.  We shall do that now.  For now ignore this error.
-
-### Configure [buf.gen.yaml]https://buf.build/docs/tutorials/getting-started-with-buf-cli/#configure-a-bufgenyaml)
-
-The `buf.yaml` files in the proto folder is used to mark the root of a buf module (as you can guess - our module will eventually be called `musicservice`).  However we have still not marked/identified our actual module.  This module config is `buf.gen.yaml` and is placed in file in the root directory of your project.
+The `buf.yaml` file created earlier is used to mark the root of the protobuf files of a buf module (as you can guess - our module will eventually be called `musicservice`).  However we have still not marked/identified our actual module (or its root).  This module config is `buf.gen.yaml` and is placed in file in the root directory of your project.
 
 Let us create this file (in the musicservice project root directory):
 
 ```
+# cd musicservice
 touch buf.gen.yaml
 ```
 
@@ -155,50 +153,105 @@ Buf.build as mentioned earlier has a powerful plugin repository which can host a
 
 Now isn't *that* much more simplier and intuitive than installing each plugin locally and then adding commands to a Makefile (sorry oh mighty Makefile.  We shall not forget your sacrifice!)
 
-```
-buf lint path/to/my.proto
-```
+To generate all the artifacts simply run `buf generate` from the root of your module (musicservice).  But before we do this, one more config file must be created.
 
-This will run the linting process and provide feedback on any syntax errors, style violations, or other issues in the protobuf file.
+### Configure [buf.work.yaml](https://buf.build/docs/configuration/v1/buf-work-yaml)
 
-To build a protobuf file, you can use the following command:
+If we had run the above command at this point we would see the following error:
 
 ```
-buf build path/to/my.proto
+protos/musicservice/v1/albums.proto:7:8:musicservice/v1/models.proto: does not exist
 ```
 
-This will generate the binary or JSON representation of the protobuf file, which can be used in various contexts such as gRPC, REST APIs, and databases.
-
-To run tests against a protobuf file, you can use the following command:
+Our protos folder had a single "module" in it.  Buf.build's allows us developers to work with *multiple* modules in the same workspace.  This is done by marking musicservice as a "workspace".   Create `buf.work.yaml` at the project root (musicservice) with the following contents:
 
 ```
-buf test path/to/my.proto
+version: v1
+directories:
+  - protos
 ```
 
-
-This will run any tests that have been defined in the protobuf file, ensuring that it behaves as expected and catching any regressions.
-
-Buf.build also supports code generation in various programming languages. To generate code from a protobuf file, you can use the following command:
+This tells Buf.build that all protobuf definitions can be rooted in any of the directories given in the 'directories' attribute in the workspace definition file.   Now we can generate our artifacts:
 
 ```
-buf generate path/to/my.proto
+rm -Rf gen        # just to convince ourselves
+buf generate
 ```
 
+This would generate all the artifacts in the gen folder - but without needing a Makefile and the various manual protoc commands.
 
-This will generate code in the specified language and output it to the appropriate directory.
+`buf.work.yaml` allows us to have multiple (local) modules within a same workspace enabling more complicated structures like.  For example if our `buf.work.yaml` file's 'directories' attribute was:
 
-V. Advanced Features of Buf.build
+```
+version: v1
+directories:
+  - protos/stores_api
+  - protos/radiostations_api
+```
 
-In addition to its basic features, Buf.build offers several advanced features that can further enhance your development experience. Some of these features include:
+```
+musicservice
+├── buf.gen.yaml
+├── buf.work.yaml
+├── proto
+    └── radiostations_api
+        └── v2
+            └── channels.proto
+            └── showhosts.proto
+    └── stores_api
+        └── v1
+            └── orders.proto
+            └── shoppingcart.proto
+```
 
-Configurable Linting Rules: Buf.build allows you to customize linting rules to fit your specific needs. You can enable or disable rules, adjust severity levels, and define custom rules.
-Incremental Builds: Buf.build can perform incremental builds, which means that it only rebuilds what's necessary. This can speed up the build process and save time.
-Remote Caching: Buf.build can use remote caching to speed up builds by reusing previously built artifacts. This can be especially useful in large codebases with many dependencies.
-VI. Conclusion
+For an indepth guide on how workspaces work checkout the [documentation](https://buf.build/docs/configuration/v1/buf-work-yaml).
 
-Buf.build is a valuable tool for managing protobuf files and related code. It offers a fast, reliable, and easy-to-use way to lint, build, test, and generate code from protobuf files, making it ideal for managing large and complex codebases.
+## Other Features
 
-By using Buf.build, developers and organizations can improve code quality, speed up builds, and enable better collaboration between teams. Its advanced features, such as configurable linting rules, incremental builds, and remote caching, make it a powerful tool for managing protobufs at scale.
+### Linting
 
-If you're new to Buf.build, we encourage you to give it a try and see how it can improve your development workflow. With its intuitive CLI and comprehensive documentation, getting started with Buf.build is easy and straightforward.
+Buf.build also comes with an out of the box style guide for your protobuf definitions which can be used for consistency across teams.  Let us try it.
+
+```
+buf lint
+```
+
+Despite our best intent to version our service (and models) we see quite a few errors of the form:
+
+```
+protos/musicservice/v1/songs.proto:5:1:Files with package "musicservice" must be within a directory "musicservice" relative to root but were in directory "musicservice/v1".
+protos/musicservice/v1/songs.proto:5:1:Package name "musicservice" should be suffixed with a correctly formed version, such as "musicservice.v1".
+```
+
+Let us fix this!  It is as simple as renaming the package names in the protobuf files from `musicservice` to `musicservice.v1`.  Not bad.
+
+We also see another class of errors in terms of how messages should be named:
+
+```
+protos/musicservice/v1/labels.proto:74:18:RPC request type "ListAlbumsInLabelRequest" should be named "ListAlbumsRequest" or "LabelServiceListAlbumsRequest".
+protos/musicservice/v1/labels.proto:74:53:RPC response type "ListAlbumsInLabelResponse" should be named "ListAlbumsResponse" or "LabelServiceListAlbumsResponse".
+```
+
+Here we were *close*.  We will chose LabelServiceListAlbumsRequest/Response (as `ListAlbumsRequest/Response` messages were already used in the Albums service).
+
+`buf lint` now reveals no style violations!
+
+## Advanced features
+
+We have only scratched the surface of Buf.build.  Buf.build has several advanced features:
+
+* [Configurable linting rules](https://buf.build/docs/lint/rules/): Allowing developers to customize linting rules, severity levels etc to suite the needs of teams.
+* [Breaking change detection](https://buf.build/docs/breaking/overview/): An important part of service definition is to ensure that evolving them do not result in breaking changes (for older clients).  Buf.build provides checks for forward and backward compatibility of your service definitions.
+* [Buf Schema Registry](https://buf.build/docs/tutorials/getting-started-with-bsr): Buf.build offers a power schema registry and repositories to host your own custom plugins and annotations.
+* and many more.
+
+See Buf.build [documentation](https://buf.build/docs/) for a full and indepth list of all features and capabilities.
+
+## Conclusion
+
+Buf.build vastly simplifies managing protobuf files and all related code.   Among its tool chain are a fast and easy to use linter, builder and generator for protobuf files targetting a variety of languages, protocols and platforms.  This has made it an ideal tool for managing complex codebases.
+
+Buf.build usage improves developer velocity, code quality, iteration speeds and collaboration between teams.  It has also several advanced and customizable features to suit the specific needs of teams and organizations.
+
+Give it a go!
 
