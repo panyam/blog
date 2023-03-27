@@ -45,7 +45,7 @@ You might have already guessed - protoc plugins again comes to the rescue.  In o
 ```
 protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
        --go-grpc_out=$OUT_DIR --go-grpc_opt=paths=source_relative     \
-       --proto_path=$PROTO_DIR/musicservice/v1/                       \
+       --proto_path=$PROTO_DIR                                        \
         $PROTO_DIR/musicservice/v1/*.proto
 ```
 
@@ -233,7 +233,31 @@ proto
         └── ...
 ```
 
-Also update all the protos targets in our Makefile (goprotos, gwprotos etc) to add an extra `--proto-path` parameter (`--proto_path=$(PROTO_DIR)`) along with the existing `--proto-path` parameter.
+However we will follow a slightly different structure.  Instead of copying files to the protos folder, we will create a vendors folder at the root and symlink to it from the protos folder (this symlinking will be taken care of by our Makefile).  Our new folder structure is:
+
+```
+musicservice
+├── Makefile
+├── ...
+├── vendors
+│   ├── google
+│   │   └── api
+│   │       ├── annotations.proto
+│   │       └── http.proto
+├── proto
+    └── google -> musicservice/vendors/google
+    └── musicservice
+        └── v1
+            └── songs.proto
+            └── albums.proto
+            └── ...
+```
+
+Our updated Makefile is shown below:
+
+```
+EMBED Makefile from PART2 branch
+```
 
 Now running make should be error free and result in the updated bindings in the .pb.gw.go files.
 

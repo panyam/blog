@@ -141,56 +141,25 @@ In the case of Labels - the Albums are accessed via a List apis and Albums are a
 
 The `protoc` command-line tool ensures that server (stubs) and clients are generated from this basic stub.
 
-The magic of protoc is that it does not generate anything on its own.  Instead it uses plugins for different "purposes" to generate custom artifacts.  First le tus generate go artifacts:
+The magic of protoc is that it does not generate anything on its own.  Instead it uses plugins for different "purposes" to generate custom artifacts.  First let us generate go artifacts:
 
 ```
 SRC_DIR=<ABSOLUTE_PATH_OF_MUSICSERVICE>
 PROTO_DIR:=$SRC_DIR/protos
-OUT_DIR:=$SRC_DIR/gen/musicservice/v1
+OUT_DIR:=$SRC_DIR/gen/go
 protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
        --go-grpc_out=$OUT_DIR --go-grpc_opt=paths=source_relative     \
-       --proto_path=$PROTO_DIR/musicservice/v1/                       \
+       --proto_path=$(PROTO_DIR)                                      \
         $PROTO_DIR/musicservice/v1/*.proto
 ```
 
 This is quite cumbersome so we can add this into a Makefile and simply run `make all` to generate protos and build everything going forward.
 
 ```
-# Some vars to detemrine go locations etc
-GOROOT=$(which go)
-GOPATH=$(HOME)/go
-GOBIN=$(GOPATH)/bin
-
-# Evaluates the abs path of the directory where this Makefile resides
-SRC_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-
-# Where the protos exist
-PROTO_DIR:=$(SRC_DIR)/protos
-
-# where we want to generate server stubs, clients etc
-OUT_DIR:=$(SRC_DIR)/gen/go/musicservice/v1
-
-all: printenv goprotos
-
-goprotos:
-	echo "Generating GO bindings"
-	rm -Rf $(OUT_DIR) && mkdir -p $(OUT_DIR)
-	protoc --go_out=$(OUT_DIR) --go_opt=paths=source_relative          	\
-       --go-grpc_out=$(OUT_DIR) --go-grpc_opt=paths=source_relative		\
-       --proto_path=$(PROTO_DIR)/musicservice/v1/ 											\
-      $(PROTO_DIR)/musicservice/v1/*.proto
-
-printenv:
-	@echo MAKEFILE_LIST=$(MAKEFILE_LIST)
-	@echo SRC_DIR=$(SRC_DIR)
-	@echo PROTO_DIR=$(PROTO_DIR)
-	@echo OUT_DIR=$(OUT_DIR)
-	@echo GOROOT=$(GOROOT)
-	@echo GOPATH=$(GOPATH)
-	@echo GOBIN=$(GOBIN)
+EMBED Makefile from PART1 branch
 ```
 
-Now all generated stubs can be found in the `gen/go/musicservice/v1` folder.
+Now all generated stubs can be found in the `gen/go/musicservice/v1` folder (because our protos folder hosted the service defs within musicservice/v1).
 
 Briefly the following are created:
 
@@ -209,13 +178,13 @@ Our services are very simple.  They store the different instances in memory as a
 The base entity store is:
 
 ```
-Embed services/base.go here from the repo at the right tag
+EMBED services/base.go here from the repo at the right tag
 ```
 
 Using this the song service is very simple:
 
 ```
-Embed services/songs.go here
+EMBED services/songs.go here
 ```
 
 Other models are also eerily similar to this and can be found in the repo.
@@ -231,7 +200,7 @@ The general steps are:
 * run this server on a specific port
 
 ```
-Embed cmd/server.go
+EMBED cmd/server.go
 ```
 
 This server can now be run (by default on port 9000) with:
