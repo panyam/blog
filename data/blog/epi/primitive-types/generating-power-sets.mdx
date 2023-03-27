@@ -1,0 +1,41 @@
+---
+title: EPI 5.5 - Generating power sets
+date: 2014-01-24T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'power-sets']
+draft: false
+images: []
+---
+
+## Problem
+
+The power set of an alphabet set, S is the list of all strings (of any lengths) that can be formed from the symbols in S.  There can be no repetitions however with respect to character swaps within the string.
+
+For instance, for S = “ABC”, one possible power set is:
+
+“”, “A”, “B”, “C”, “AB”, “AC”, “BC”, “ABC”
+
+## Solution
+
+The simplest way to think about this as iterating through the numbers 0 to 2^|S|, where each bit in the integer represents whether the alphabet at that index in the set, S is present in the output.  So a solution for this is:
+
+
+```haskell showLineNumbers
+import Data.Bits
+
+lowest_set_bit :: Int -> Int
+lowest_set_bit x = x .&. complement (x - 1)
+
+lowest_set_bit_index :: Int -> Int
+lowest_set_bit_index x = floor (logBase (fromIntegral 2) (fromIntegral (lowest_set_bit x)))
+
+set_bit_positions :: Int -> [Int]
+set_bit_positions 0 = []
+set_bit_positions x = (lowest_set_bit_index x) : (set_bit_positions (clear_lowest_set_bit x))
+
+power_set :: [Char] -> [[Char]]
+power_set [] = []
+power_set alphabet = [str_from_int x | x <- [0 .. ((1::Int) `shiftL` numAlpha) - 1]]
+  where 
+    numAlpha = length alphabet
+    str_from_int x = [alphabet !! i | i <- set_bit_positions x]
+```

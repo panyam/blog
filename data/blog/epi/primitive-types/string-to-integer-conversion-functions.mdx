@@ -1,0 +1,62 @@
+---
+title: EPI 5.6 - String to integer conversion functions
+date: 2014-01-24T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'string to integer', 'integer to string']
+draft: false
+images: []
+---
+
+## Problem
+
+Implement the following methods, which convert (signed) integers to a string and vice versa respectively:
+
+```
+intToString x :: Int -> [Char]
+
+stringToInt :: [Char] -> Int
+```
+
+Additionally invalid strings (when converting to Int) must return an error of some sort.
+
+
+
+## Solution
+
+Even though the question was specific to converting to and from base 10, this can be generalised to any base with *very* little changes.  The straightforward solution is:
+
+
+```haskell showLineNumbers
+intToString :: Int -> Int -> [Char]
+intToString base x 
+            | x < 0 = "-" ++ intToString base (-x)
+            | x < base = [intToDigit x]
+            | otherwise = (intToString base (div x base)) ++ [intToDigit (mod x base)]
+
+stringToInt :: Int -> [Char] -> Int
+stringToInt base (x:xs)
+            | x == '-' = - (stringIntHelper base xs)
+            | otherwise = stringIntHelper base (x:xs)
+            where stringIntHelper base (x:xs)
+                    | dx >= base = error ("Invalid digit: " ++ [x])
+                    | length xs == 0 = digitToInt x
+                    | otherwise = (dx * (floor (fromIntegral base ** fromIntegral digitsLeft))) + (stringIntHelper base xs)
+                    where 
+                        digitsLeft = (length xs)
+                        dx = digitToInt x
+```
+
+Here is an alternative and more intuitive version of stringToIntHelper above:
+
+
+```haskell showLineNumbers
+stringToIntHelper2 base xs = 
+            sum [ digit_to_value digit position |
+                (position, digit) <- (zip dig_positions xs)]
+    where 
+        dig_positions = [(length xs) - 1, (length xs) - 2 .. 0]
+        digit_to_value digit position = (digitToInt digit) * 
+                            floor (base ** fromIntegral position)
+```
+
+This version does not check if each digit is between 0 and “base” but that is a trivial check to add via a “any” check in the original input (xs).
+

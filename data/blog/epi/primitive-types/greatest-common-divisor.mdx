@@ -1,0 +1,33 @@
+---
+title: EPI 5.10 - Greatest common divisor
+date: 2014-02-27T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'greatest common divisor']
+draft: false
+images: []
+---
+
+## Problem
+
+Design an algorithm for computing the GCD of two numbers without using multiplication, division or the modulus operator.
+
+## Solution
+
+The GCD of two numbers can be computed by recursively subtracting the smaller number from the larger until one of the numbers is 0, at which point the non-zero value is the GCD.
+
+However this can be improved by “quickly” eliminating factors of two (by inspecting the least significant bits) and doubling and halving values (via left and right shifting by 1 respectively).
+
+```haskell showLineNumbers
+greatest_common_divisor x 0 = x
+greatest_common_divisor 0 y = y
+greatest_common_divisor x y
+    | x_is_even && y_is_even = 2 * greatest_common_divisor (x `shiftR` 1) (y `shiftR` 1)
+    | x_is_odd && y_is_even = greatest_common_divisor x (y `shiftR` 1)
+    | x_is_even && y_is_odd = greatest_common_divisor (x `shiftR` 1) y
+    | x  y = greatest_common_divisor (x - y) x
+    | otherwise = x
+    where
+        x_is_even = (x .&. 1) == 0
+        y_is_even = (y .&. 1) == 0
+        x_is_odd = not x_is_even
+        y_is_odd = not y_is_even
+```

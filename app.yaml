@@ -1,9 +1,8 @@
 runtime: nodejs16
-api_version: 1
-threadsafe: true
+# api_version: 1
+# threadsafe: true
 
 handlers:
-
 - url: /_next/data/([^/]*)/(.*)\.json
   static_files: server/pages/\2.json
   upload: server/pages/(.*)

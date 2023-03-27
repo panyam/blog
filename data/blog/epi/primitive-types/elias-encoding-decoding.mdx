@@ -1,0 +1,42 @@
+---
+title: EPI 5.9 - Elias Encoding and Decoding
+date: 2014-01-24T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'elias', 'encoding', 'decoding']
+draft: false
+images: []
+---
+
+## Problem
+
+Elias encoded version of an integer X = X in binary PREPENDED by number of zeroes in the binary representation minus 1.
+
+So Elias of encoding of 13 (binary = 1101) would be 000 1101 (3 zeroes as length of 1101 = 4).
+
+
+## Solution
+
+```haskell showLineNumbers
+elias_encode_int :: Int -> [Char]
+elias_encode_int x = (take (len - 1) (repeat '0')) ++ xbase2
+    where 
+        xbase2  = intToString 2 x
+        len     = (length xbase2)
+
+
+elias_decode_str :: Int -> [Char] -> Int
+elias_decode_str size xs = stringToInt 2 (take size xs)
+
+
+elias_encode :: [Int] -> [Char]
+elias_encode xs = concat (map elias_encode_int xs)
+
+
+elias_decode_helper :: Int -> [Char] -> [Int]
+elias_decode_helper  nzeroes [] = []
+elias_decode_helper  nzeroes (f:fs)
+        | f == '0' = elias_decode_helper  (1 + nzeroes) fs
+        | otherwise = (elias_decode_str (1 + nzeroes) (f:fs)) : (elias_decode_helper  0 (drop nzeroes fs))
+
+
+elias_decode = elias_decode_helper 0
+```

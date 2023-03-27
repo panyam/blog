@@ -3,7 +3,7 @@
   "version": "1.5.3",
   "private": true,
   "scripts": {
-    "start": "next dev",
+    "start": "next start",
     "dev": "next dev",
     "build": "rm -Rf build && next build",
     "buildall": "npm run build && npm run copystatic",

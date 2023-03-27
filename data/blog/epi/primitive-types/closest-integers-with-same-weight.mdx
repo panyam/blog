@@ -1,0 +1,45 @@
+---
+title: EPI 5.4 - Closest integers with same weight
+date: 2014-01-23T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'haskell']
+draft: false
+images: []
+---
+
+## Problem
+
+The weight, W(x) of an integer, x, is the number of bits set (to 1) in binary.
+
+Given a 64 bit unsigned integer x (where W(x) != 0 and W(x) != 64) find y such that W(x) = W(y) and |x – y| is minimized.
+
+## Solution
+
+
+An example would make this clear, eg if
+
+X = 4 (dec) = 0100 (bin)
+
+The candiates are:
+
+0001   –   Diff = 3
+
+0010   –   Diff = 2
+
+1000   –   Diff = 4
+
+So Y = 010 (bin) = 2 (dec).
+
+The solution to this is to start with X and find the first “01” or “10” starting from the LEFT and then swap the bits.
+
+In haskell this is (assuming a 64 bit number)
+
+```haskell showLineNumbers
+import Data.Bits
+closest_neighbour_by_weight x = closest_neighbour_by_weight_aux x 0
+    where closest_neighbour_by_weight_aux x i 
+            | two_digits /= 0 && two_digits /= 3 = xor x (shiftL 3 i)
+            | otherwise = closest_neighbour_by_weight_aux x (i + 1)
+              where two_digits = (x `shiftR` i) .&. 3
+```
+
+Essentially starting from the least significant bit (i = 0), we see if the bit at position i and the bit at position i + 1 are the same. If they are same, then we recursively continue with i + 1. If they are NOT the same then the bits are swapped (with the x ^ (3 << i) in the False case) and that is the solution. The xor with 3 is just a easy way to swap two consecutive bits.

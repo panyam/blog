@@ -1,0 +1,30 @@
+---
+title: EPI 5.8 - Spreadsheet column encoding
+date: 2014-01-24T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'sreadsheet', 'column encoding']
+draft: false
+images: []
+---
+
+## Problem
+
+Write a function that converts excel column IDs to corresponding integers with “A” corresponding to 1 and so on.
+
+## Solution
+
+We will modify the solution in [EPI 5.6](/blog/epi/primitive-types/string-to-integer-conversion-functions/) slightly so that we have:
+
+```haskell showLineNumbers
+indexOf :: Eq a => a -> [a] -> Int
+indexOf item xs
+    | length firstMatched == 0 = -1
+    | otherwise = fst (head firstMatched)
+    where
+        matchesItem x = snd x /= item
+        firstMatched = dropWhile matchesItem 
+                        (zip [0 .. (length xs) - 1] xs)
+
+
+digitIndices :: [Char] -> [Int]
+digitIndices digits = [ indexOf (chr i) digits | i <- [0 .. 255]]
+```

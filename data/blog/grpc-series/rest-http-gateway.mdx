@@ -9,7 +9,7 @@ layout: PostSimple
 
 ## Quick Recap
 
-In [Part 1](/blog/grpc-series/a-simple-grpc-service/):
+In [Part 1](/blog/grpc-series/simple-grpc-service/):
 
 * We built a simple gRPC service for managing labels, albums, artists and songs for a music related site/app.
 * gRPC provided a very easy way to represent the services and operations for this app.
@@ -40,7 +40,7 @@ This approach has several benefits:
 
 ## Overview
 
-You might have already guessed - protoc plugins again comes to the rescue.  In our service's Makefile (see [Part 1](/blog/grpc-series/a-simple-grpc-service/)), we had generated message and service stubs for Go using the protoc-gen-go plugin:
+You might have already guessed - protoc plugins again comes to the rescue.  In our service's Makefile (see [Part 1](/blog/grpc-series/simple-grpc-service/)), we had generated message and service stubs for Go using the protoc-gen-go plugin:
 
 ```
 protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
@@ -195,7 +195,7 @@ Back to the http bindings use case - Typically a http annotation has a method, a
 
 For example in the CreateSong method, the method is a POST request to "v1/songs" with the body (`*`) corresponding ot the JSON representation of the `CreateSongRequest` message type.  ie our request is expected to look like:
 
-```
+```json
 {
   "song": {... song object...}
 }
