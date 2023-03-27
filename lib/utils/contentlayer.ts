@@ -1,4 +1,5 @@
 import kebabCase from '@/lib/utils/kebabCase'
+import getAllFilesRecursively from './files'
 // import type { Blog, DocumentTypes } from 'contentlayer/generated'
 //
 type Blog = any
@@ -11,11 +12,17 @@ export function dateSortDesc(a: string, b: string) {
   return 0
 }
 
-export function getAllAuthors(): Author[] {
+export function getAllAuthors(folder?: string): Author[] {
+  folder = folder || 'data/authors'
+  const files = getAllFilesRecursively(folder)
+  console.log('Author Files: ', files)
   return []
 }
 
-export function getAllBlogs(): Blog[] {
+export function getAllBlogs(folder?: string): Blog[] {
+  folder = folder || 'data/blog'
+  const files = getAllFilesRecursively(folder)
+  console.log('Blog Files: ', files)
   return []
 }
 
