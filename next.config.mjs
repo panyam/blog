@@ -1,3 +1,5 @@
+import path from 'path'
+
 // You might need to insert additional domains in script-src
 // if you are using external services
 const ContentSecurityPolicy = `
@@ -79,10 +81,26 @@ const remarkSnippetConfig = [
         },
       ]
 */
+// Remark packages
+import remarkGfm from 'remark-gfm'
+import remarkFootnotes from 'remark-footnotes'
+import remarkMath from 'remark-math'
+// we can also include "local" plugins!!
+// import remarkFrontmatter from 'remark-frontmatter'
+// import remarkExtractFrontmatter from './lib/remark-extract-frontmatter'
+// const remarkCodeTitles = import('./lib/remark-code-title')
+// const remarkImgToJsx  = import('./lib/remark-img-to-jsx')
+
+// Rehype packages
+import rehypeSlug from 'rehype-slug'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
+import rehypeKatex from 'rehype-katex'
+import rehypeCitation from 'rehype-citation'
+import rehypePrismPlus from 'rehype-prism-plus'
+import rehypePresetMinify from 'rehype-preset-minify'
+import rehypeHighlight from 'rehype-highlight'
 
 import nextMDX from '@next/mdx'
-import remarkFrontmatter from 'remark-frontmatter'
-import rehypeHighlight from 'rehype-highlight'
 
 import bundleAnalyzer from '@next/bundle-analyzer'
 // const bundleAnalyzer = import('@next/bundle-analyzer')
@@ -95,14 +113,24 @@ const withMDX = nextMDX({
     // If you use remark-gfm, you'll need to use next.config.mjs
     // as the package is ESM only
     // https://github.com/remarkjs/remark-gfm#install
-
-    // remarkPlugins: [remarkFrontmatter],
-    // rehypePlugins: [rehypeHighlight],
     remarkPlugins: [
-      remarkFrontmatter,
+      // remarkExtractFrontmatter,
+      remarkGfm,
+      // remarkCodeTitles,
+      [remarkFootnotes, { inlineNotes: true }],
+      remarkMath,
+      // remarkImgToJsx,
       // remarkSnippetConfig,
     ],
-    rehypePlugins: [rehypeHighlight],
+    rehypePlugins: [
+      // rehypeHighlight,
+      rehypeSlug,
+      rehypeAutolinkHeadings,
+      rehypeKatex,
+      [rehypeCitation, { path: path.join(process.cwd(), 'data') }],
+      [rehypePrismPlus, { ignoreMissing: true }],
+      rehypePresetMinify,
+    ],
 
     // If you use `MDXProvider`, uncomment the following line.
     // providerImportSource: "@mdx-js/react",

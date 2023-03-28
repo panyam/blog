@@ -17,7 +17,12 @@ const walkDir = (fullPath: string) => {
 
 const pathJoinPrefix = (prefix: string) => (extraPath: string) => path.join(prefix, extraPath)
 
-const getAllFilesRecursively = (folder: string): string[] =>
+export const getAllFilesRecursively = (folder: string): string[] =>
   pipe(fs.readdirSync, map(pipe(pathJoinPrefix(folder), walkDir)), flattenArray)(folder)
 
-export default getAllFilesRecursively
+export const readFile = (file): string => fs.readFileSync(file, 'utf-8')
+
+export const readFiles = (files): Buffer[] => files.map((file) => fs.readFileSync(file))
+
+export const readFilesAsync = (files): Promise<Buffer[]> =>
+  Promise.all(files.map((file) => fs.promises.readFile(file)))
