@@ -17,6 +17,7 @@ interface Props {
 
 export default function PostLayout({ content, next, prev, children }: Props) {
   const { slug, date, title } = content
+  console.log('Ok Children: : ', children)
 
   return (
     <SectionContainer>

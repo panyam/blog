@@ -21,8 +21,15 @@ export function dateSortDesc(a: string, b: string) {
 export function getAllAuthors(folder?: string): Author[] {
   folder = folder || 'data/authors'
   const files = getAllFilesRecursively(folder)
+  const authors: Author[] = []
   console.log('Author Files: ', files)
-  return []
+  files.forEach((file: string) => {
+    console.log('Reading Author: ', file)
+    const source = readFile(file)
+    const matter = parseAuthor(file, source)
+    authors.push(matter)
+  })
+  return authors
 }
 
 export function getAllBlogs(folder?: string): Blog[] {
@@ -32,7 +39,7 @@ export function getAllBlogs(folder?: string): Blog[] {
   files.forEach((file: string) => {
     console.log('Reading Post: ', file)
     const source = readFile(file)
-    const matter = load_matter(file, source)
+    const matter = parseBlog(file, source)
 
     // computed fields
     results.push(matter)
@@ -40,16 +47,45 @@ export function getAllBlogs(folder?: string): Blog[] {
   return results
 }
 
-export function load_matter(fullpath: string, source: string): any {
+export function parseAuthor(fullpath: string, source: string): any {
   const results = matter(source)
   const data = { ...results.data }
-  let date = data.date
-  if (typeof date !== 'number') {
-    date = date.getTime() as number
+  data.body = {
+    raw: results.content,
   }
-  data.dateString = dayjs(date).format('MMMM D, YYYY')
+  data._raw = {
+    sourceFilePath: fullpath,
+    sourceFileDir: path.dirname(fullpath),
+    contentType: 'mdx',
+    sourceFileName: fullpath.split('/').pop(),
+    flattenedPath: fullpath.replace(/\.[^/.]+$/, ''),
+  }
+  data.slug = data.slug || data._raw.flattenedPath.replace(/^.+?(\/)/, '')
+  return data
+}
+
+export function parseBlog(fullpath: string, source: string): any {
+  const results = matter(source)
+  const data = { ...results.data }
+  data.date = data.date || Date.now()
+  if (data.date) {
+    if (typeof data.date === 'string') {
+      data.date = Date.parse(data.date)
+    }
+    if (typeof data.date !== 'number') {
+      data.date = data.date.getTime() as number
+    }
+  }
+  if (data.lastmod) {
+    if (typeof data.lastmod === 'string') {
+      data.lastmod = Date.parse(data.lastmod)
+    }
+    if (typeof data.lastmod !== 'number') {
+      data.lastmod = data.lastmod.getTime() as number
+    }
+  }
+  // data.dateString = dayjs(date).format('MMMM D, YYYY')
   data.readingTime = readingTime(source).text
-  data.date = date
   data._raw = {
     sourceFilePath: fullpath,
     sourceFileDir: path.dirname(fullpath),
@@ -61,9 +97,6 @@ export function load_matter(fullpath: string, source: string): any {
   data.body = {
     raw: results.content,
   }
-
-  console.log('data: ', data)
-  console.log('_raw: ', data._raw)
   return data
 }
 
@@ -88,4 +121,13 @@ export async function getAllTags(allBlogs: Blog[]) {
   })
 
   return tagCount
+}
+
+const DEFAULT_AUTHOR = 'authors/default'
+export function getPostAuthor(post: Blog): Author {
+  const authorList = post.authors || [DEFAULT_AUTHOR]
+  const allAuthors = getAllAuthors()
+  return authorList.map((author) => {
+    return allAuthors.find((p) => p.slug === author) || {}
+  })
 }

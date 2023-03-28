@@ -1,14 +1,17 @@
 import PageTitle from '@/components/PageTitle'
-import { MDXLayoutRenderer } from '@/components/MDXComponents'
+import { OurMDXRemote } from '@/components/MDXComponents'
 import { sortedBlogPost } from '@/lib/utils/contentlayer'
+import { renderPostContent } from '@/lib/utils/renderer'
 import { InferGetStaticPropsType } from 'next'
-import { getAllBlogs, getAllAuthors } from 'lib/utils/contentlayer'
+import { getPostAuthor, getAllBlogs } from 'lib/utils/contentlayer'
 
 const DEFAULT_LAYOUT = 'PostLayout'
 
 export async function getStaticPaths() {
+  const allBlogs = getAllBlogs()
+  const paths = allBlogs.map((p) => ({ params: { slug: p.slug.split('/') } }))
   return {
-    paths: getAllBlogs().map((p) => ({ params: { slug: p.slug.split('/') } })),
+    paths: paths,
     fallback: false,
   }
 }
@@ -23,14 +26,12 @@ export const getStaticProps = async ({ params }) => {
   const nextContent = sortedPosts[postIndex - 1] || null
   const next = nextContent || null
   const post = sortedPosts.find((p) => p.slug === slug)
-  const authorList = post.authors || ['default']
-  const authorDetails = authorList.map((author) => {
-    return getAllAuthors().find((p) => p.slug === author)
-  })
-
+  const authorDetails = getPostAuthor(post)
+  const mdxSource = await renderPostContent(post.body.raw)
   return {
     props: {
       post,
+      mdxSource,
       authorDetails,
       prev,
       next,
@@ -40,6 +41,7 @@ export const getStaticProps = async ({ params }) => {
 
 export default function Blog({
   post,
+  mdxSource,
   authorDetails,
   prev,
   next,
@@ -47,10 +49,12 @@ export default function Blog({
   return (
     <>
       {'draft' in post && post.draft !== true ? (
-        <MDXLayoutRenderer
+        // <OurMDXProvider
+        <OurMDXRemote
+          source={mdxSource}
           layout={post.layout || DEFAULT_LAYOUT}
-          toc={post.toc}
           content={post}
+          toc={post.toc}
           authorDetails={authorDetails}
           prev={prev}
           next={next}

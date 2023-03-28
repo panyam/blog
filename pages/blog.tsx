@@ -4,7 +4,7 @@ import { PageSEO } from '@/components/SEO'
 import { sortedBlogPost, getAllBlogs } from '@/lib/utils/contentlayer'
 import { InferGetStaticPropsType } from 'next'
 
-export const POSTS_PER_PAGE = 5
+export const POSTS_PER_PAGE = 10
 
 export const getStaticProps = async () => {
   const posts = sortedBlogPost(getAllBlogs())

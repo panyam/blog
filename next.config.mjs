@@ -86,7 +86,7 @@ import remarkGfm from 'remark-gfm'
 import remarkFootnotes from 'remark-footnotes'
 import remarkMath from 'remark-math'
 // we can also include "local" plugins!!
-// import remarkFrontmatter from 'remark-frontmatter'
+import remarkFrontmatter from 'remark-frontmatter'
 // import remarkExtractFrontmatter from './lib/remark-extract-frontmatter'
 // const remarkCodeTitles = import('./lib/remark-code-title')
 // const remarkImgToJsx  = import('./lib/remark-img-to-jsx')
@@ -108,12 +108,15 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 })
 
+const withMDX = (x) => x
+/*
 const withMDX = nextMDX({
   options: {
     // If you use remark-gfm, you'll need to use next.config.mjs
     // as the package is ESM only
     // https://github.com/remarkjs/remark-gfm#install
     remarkPlugins: [
+      remarkFrontmatter,
       // remarkExtractFrontmatter,
       remarkGfm,
       // remarkCodeTitles,
@@ -136,6 +139,7 @@ const withMDX = nextMDX({
     // providerImportSource: "@mdx-js/react",
   },
 })
+*/
 
 /**
  * @type {import('next/dist/next-server/server/config').NextConfig}
