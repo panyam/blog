@@ -1,21 +1,17 @@
 import { writeFileSync } from 'fs'
-import { globby } from 'globby'
 import prettier from 'prettier'
 import siteMetadata from '../data/siteMetadata.js'
-import { getAllBlogs } from 'lib/utils/contentlayer'
+import { getAllBlogs } from '../lib/utils/contentlayer'
+import { globSync } from 'glob'
 
 async function generate() {
   const prettierConfig = await prettier.resolveConfig('./.prettierrc.js')
   const contentPages = getAllBlogs()
-    .map((x) => `/${x._raw.flattenedPath}`)
     .filter((x) => !x.draft && !x.canonicalUrl)
-  const pages = await globby([
-    'pages/*.{js|tsx}',
-    'public/tags/**/*.xml',
-    '!pages/_*.{js|tsx}',
-    '!pages/api',
-    '!pages/404.{js|tsx}',
-  ])
+    .map((x) => `/${x._raw.flattenedPath}`)
+  const pages = globSync(['pages/*.{js|tsx}', 'public/tags/**/*.xml'], {
+    ignore: ['pages/_*.{js|tsx}', 'pages/api', 'pages/404.{js|tsx}'],
+  })
 
   const sitemap = `
         <?xml version="1.0" encoding="UTF-8"?>

@@ -1,9 +1,10 @@
 import { writeFileSync, mkdirSync } from 'fs'
 import path from 'path'
 import GithubSlugger from 'github-slugger'
-import { escape } from './htmlEscaper.mjs'
-import siteMetadata from '../data/siteMetadata.js'
 import { getAllBlogs, getAllTags } from '../lib/utils/contentlayer'
+import { escape } from './htmlEscaper'
+import siteMetadata from '../data/siteMetadata.js'
+// import { getAllBlogs, getAllTags } from '../lib/utils/contentlayer'
 
 const generateRssItem = (post) => `
   <item>
@@ -34,16 +35,17 @@ const generateRss = (posts, page = 'feed.xml') => `
 `
 
 async function generate() {
+  const allBlogs = getAllBlogs()
   // RSS for blog post
-  if (getAllBlogs().length > 0) {
+  if (allBlogs.length > 0) {
     const rss = generateRss(getAllBlogs())
     writeFileSync('./public/feed.xml', rss)
   }
 
   // RSS for tags
   // TODO: use AllTags from contentlayer when computed docs is ready
-  if (getAllBlogs().length > 0) {
-    const tags = await getAllTags()
+  if (allBlogs.length > 0) {
+    const tags = await getAllTags(allBlogs)
     for (const tag of Object.keys(tags)) {
       const filteredPosts = getAllBlogs().filter(
         (post) => post.draft !== true && post.tags.map((t) => GithubSlugger.slug(t)).includes(tag)
