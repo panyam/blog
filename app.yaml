@@ -17,6 +17,10 @@ handlers:
   static_files: server/pages/index.html
   upload: server/pages/index.html
 
+- url: /(.*)/
+  static_files: server/pages/\1.html
+  upload: server/pages/(.*)
+
 - url: /(.*)
   static_files: server/pages/\1.html
   upload: server/pages/(.*)

@@ -36,7 +36,6 @@ export function getAllBlogs(folder?: string): Blog[] {
   const files = getAllFilesRecursively(folder)
   const results: Blog[] = []
   files.forEach((file: string) => {
-    console.log('Reading Post: ', file)
     const source = readFile(file)
     const matter = parseBlog(file, source)
 
@@ -64,6 +63,7 @@ export function parseAuthor(fullpath: string, source: string): any {
 }
 
 export function parseBlog(fullpath: string, source: string): any {
+  console.log('Reading Post: ', fullpath)
   const results = matter(source)
   const data = { ...results.data }
   data.date = data.date || Date.now()
@@ -92,7 +92,18 @@ export function parseBlog(fullpath: string, source: string): any {
     sourceFileName: fullpath.split('/').pop(),
     flattenedPath: fullpath.replace(/\.[^/.]+$/, ''),
   }
-  data.slug = data.slug || data._raw.flattenedPath.replace(/^.+?(\/)/, '')
+  data.slug = data.slug || data._raw.flattenedPath.split('/').slice(2).join('/') // replace(/^.+?(\/)/, '')
+  data.isDir = false
+  /*
+  console.log('Read Slug: ', data.slug, data._raw)
+  if (data.slug.endsWith('/index/')) {
+    data.slug = data.slug.substring(0, data.slug.length - ('/index/'.length - 1))
+    data.isDir = true
+  } else if (data.slug.endsWith('/index')) {
+    data.slug = data.slug.substring(0, data.slug.length - ('/index'.length - 1))
+    data.isDir = true
+  }
+  */
   data.body = {
     raw: results.content,
   }
