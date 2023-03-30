@@ -1,0 +1,81 @@
+---
+title: EPI 6.15 - Printing a 2D array spirally
+date: 2014-02-27T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'spiral printing']
+draft: false
+images: []
+---
+
+###  Problem:
+
+Given an nxm 2D array of integers, print it in spiral order.
+
+Eg for a 3×3 matrix (with the following implicit values):
+
+```
+1	2	3
+4	5	6
+7	8	9
+```
+
+Would be printed as “1 2 3 6 9 8 7 4 5”
+
+
+### Solution:
+
+The straight forward solution is to have 4 iterations, and in each iteration to print one of the two directions (horizontal and vertical) alternatively.
+
+However a more intuitive solution is to use vectors to create a tour starting from the index (0,0) and incrementing the next point based on the current direction and position.
+
+First we create the concept of directions along with a couple of helper functions:
+
+```haskell showLineNumbers
+data Direction = North | East | South | West
+-- Return the clockwise direction of a given direction
+clockwise_of North = East
+clockwise_of East = South
+clockwise_of South = West
+clockwise_of West = North
+
+-- Returns the vector representing the direction
+vector_of North = (0, -1)
+vector_of South = (0, 1)
+vector_of East = (1, 0)
+vector_of West = (-1, 0)
+
+-- The primary coordinate that will be updated when traversing in a particular direction
+primary_coord North = 1
+primary_coord South = 1
+primary_coord East = 0
+primary_coord West = 0
+
+-- Given a direction and point, returns the next and previous points in the direction.
+next_pt dir (x,y) = ((x + fst (vector_of dir)),(y + snd (vector_of dir)))
+prev_pt dir (x,y) = ((x - fst (vector_of dir)),(y - snd (vector_of dir)))
+```
+
+Now we simply use the above helpers to start and iterate through a tour:
+
+```haskell showLineNumbers
+print_spirally width height = print_spirally' East (0,0) 0 [width, height]
+    where
+        print_spirally' dir (x,y) t [w,h]
+            | w == 0 || h == 0 = []
+            | t < [w,h] !! curr_coord = (y * width + x + 1) : print_spirally' dir (next_pt dir (x,y)) (t+1) [w,h]
+            | otherwise = print_spirally' next_dir (next_pt next_dir (prev_pt dir (x,y))) 0 [next_w,next_h]
+            where 
+                curr_coord = primary_coord dir
+                dir_vector = vector_of dir
+                next_dir = clockwise_of dir
+                next_dir_vector = vector_of next_dir
+                next_w = w - (abs (fst next_dir_vector))
+                next_h = h - (abs (snd next_dir_vector))
+```
+
+Couple of things to note:
+
+* w,h represent the “remaining” width and height in the spiral as each time there is a change in direction, the available coordinate size reduces by one (height if beginning vertically, width if beginning horizontally).
+* t is the number of values printed in a given direction (when this value reaches “w” or “h” depending on the direction, direction is rotated and t is reset to 0).
+* When the direction needs to change (in the otherwise) the “current” point is one beyond the last point in the direction. For this reason the next point is evaluted from the previous direction in the previous point.
+
+

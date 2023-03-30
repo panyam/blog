@@ -1,0 +1,66 @@
+---
+title: EPI 6.3 - Max Difference
+date: 2014-01-26T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'max difference']
+draft: false
+images: []
+---
+
+A robot needs to travel along a path that includes several ascents and descents.  As it at ascends, it uses up energy stored in its battery.  As it descends it converts the potential energy to charge the battery.  Assume the conversion is perfect (ie descending X units restores as much as energy as was expended in an ascent of X units).  Also assume that the “distance” travelled is irrelevant and only the height determines the energy lost and gained.
+
+
+###  Problem:
+
+Given a set of 3 dimensional coordinates which plot the ascents and descents during a robot’s path, compute the minimum battery capacity required.
+
+
+### Solution:
+
+The O(n^2) solution (for each index find the maximum “increase” is going forward and then find the index with the maximum increase) is:
+
+
+```haskell showLineNumbers
+third (a,b,c) = c
+
+max_diff_nsquared xs = maximumBy (comparing third) 
+                        [(i,j,xj - xi) | (i,xi) <- zip [0.. length xs - 1] xs, 
+                                         (j,xj) <- zip [0.. length xs - 1] xs, i < j]
+```
+
+In the naive method, finding the maximum increase at an index is O(n^2). This can be brought down to a linear algorithm with O(n) space:
+
+```haskell showLineNumbers
+max_increase_from_index :: [Int] -> [(Int,Int)]
+max_increase_from_index [] = []
+max_increase_from_index (x:[]) = [(0,x)]
+max_increase_from_index (x:xs)
+    | x <= aj = (j,aj):max_inc_from_next
+    | otherwise = (length max_inc_from_next, x) : max_inc_from_next
+    where 
+        max_inc_from_next = max_increase_from_index xs
+        (j, aj) = head max_inc_from_next
+```
+
+This would return a list of triples `(j,A[j])` such that for each index i. Note that the indexes of j will be in “reverse”.
+
+To get the best i, j such that `i < j` and `A[j] – A[i]` is maximised:
+
+
+```haskell showLineNumbers
+lxs = length xs - 1
+maximumBy (comparing third) [(i,lxs - j,aj-ai) | (i,ai,(j,aj))<- zip3 [0..((length ms) - 1)] ms ms2]
+```
+
+Giving the final solution of:
+
+```haskell showLineNumbers
+minimum_robot_battery :: [(Int,Int,Int)] -> (Int,Int,Int)
+minimum_robot_battery xs = maximumBy (comparing third) [(i,lxs - j,aj-ai) | 
+                            (i,ai,(j,aj)) <- zip3 [0..((length ms) - 1)] ms ms2]
+    where 
+        ms = map third xs
+        ms2 = max_increase_from_index ms
+        lxs = length xs - 1
+```
+
+Note that we dont actually have to compute the array of differences. We could have simply also passed and maintained in a “curr_max” variable which would have stored have returned the max difference at the completion of the call.

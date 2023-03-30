@@ -1,0 +1,74 @@
+---
+title: EPI 6.6 - Longest contiguous increasing subarray
+date: 2014-02-04T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'longest contiguous increasing subarray', 'subarray']
+draft: false
+images: []
+---
+
+###  Problem:
+
+An array is increasing if each element is less than its succeeding element except for the last element.
+
+Given an array A of n elements return the beginning and ending indices of a longest increasing subarray of A.
+
+### Solution:
+
+Let S[i] be the longest increasing subarray between the indexes (0,i – 1).  Then:
+
+```
+S[i] = a,b if A[i] > A[i – 1],
+i,i otherwise
+where a,b = S[i – 1]
+```
+
+In haskell this would be:
+
+```haskell showLineNumbers
+longest_contig_inc_subarray :: (Ord a) => [a] -> (Int, Int)
+longest_contig_inc_subarray [] = (-1, -1)
+longest_contig_inc_subarray (x:xs) = longest_contig_inc_subarray' (0, x, 0, x) xs
+    where
+    longest_contig_inc_subarray' (i,ai,j,aj) [] = (i,j)
+    longest_contig_inc_subarray' (i,ai,j,aj) (x:xs) 
+            | x >= aj = longest_contig_inc_subarray' (i,ai,j + 1,x) xs
+            | otherwise = longest_contig_inc_subarray' (j + 1,x,j + 1,x) xs
+```
+
+A heuristic to improve the best case complexity (but does nothing in the worst case) is to realise that if the length of the longest subarray till i is L (and `A[i + 1] < A[i]` – indicating an end of the longest subarray), then a larger increasing subarray must contain *atleast* L elements. So we only need to start with L items in front and check backwards.
+
+The code for this is (here the start index and the length of the subarray are returned instead):
+
+```haskell showLineNumbers
+-- Returns the size of the largest increasing "prefix" in an array
+largest_inc_prefix [] = 0
+largest_inc_prefix (x:[]) = 1
+largest_inc_prefix (x:y:xs)
+        | x = y = 1 + largest_dec_prefix (y:xs)
+        | otherwise = 1
+
+-- Returns the size of the largest decreasing "prefix" in an array
+largest_dec_prefix [] = 0
+largest_dec_prefix (x:[]) = 1
+largest_dec_prefix (x:y:xs)
+        | x >= y = 1 + largest_dec_prefix (y:xs)
+        | otherwise = 1
+
+lcisa :: (Ord a) => [a] -> (Int, Int)
+lcisa [] = (-1,-1)
+lcisa xs = lcisa' (0,1) 0 xs
+    where 
+        lcisa' (start,maxlen) i [] = (start,maxlen)
+        lcisa' (start,maxlen) i xs
+            | nextlen > maxlen = lcisa' nextbest
+                                    (i + maxlen + inc_prefix)
+                                    (drop inc_prefix rest)
+            | otherwise = lcisa' (start,maxlen) (i + maxlen) rest
+            where
+                first_l = take maxlen xs
+                rest = drop maxlen xs
+                dec_prefix = largest_dec_prefix (reverse first_l)
+                inc_prefix = largest_inc_prefix rest
+                nextlen = inc_prefix + dec_prefix
+                nextbest = (i + maxlen - dec_prefix, nextlen) 
+```

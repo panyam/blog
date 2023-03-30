@@ -1,0 +1,43 @@
+---
+title: EPI 6.18 - Run-Length Encoding
+date: 2014-02-27T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'run length', 'encoding']
+draft: false
+images: []
+---
+
+###  Problem:
+
+Implement functions to run length encode a string and decode the RLE value of an encoded string.
+
+For example “aaaabcccaa” should be encoded to “4a1b3c2a”, while “3e4f2e” would be decoded to “eeeffffee”.
+
+### Solution:
+
+Encoding is straight forward:
+
+```haskell showLineNumbers
+run_length_encode :: [Char] -> [Char]
+run_length_encode xs = run_length_encode' 0 '|' xs
+    where
+        run_length_encode' 0 _ [] = []
+        run_length_encode' 0 _ (x:xs) = run_length_encode' 1 x xs
+        run_length_encode' count curr_ch [] = (show count) ++ [curr_ch]
+        run_length_encode' count curr_ch (x:xs)
+            | curr_ch == x = run_length_encode' (count + 1) curr_ch xs
+            | otherwise = (show count) ++ [curr_ch] ++ run_length_encode' 1 x xs
+
+```
+
+Decoding is also fairly straightforward, except we just need to accumulate the “count” before that many characters can be output:
+
+
+```
+run_length_decode :: [Char] -> [Char]
+run_length_decode xs = run_length_decode' 0 xs
+    where
+        run_length_decode' _ [] = []
+        run_length_decode' count (x:xs)
+            | isDigit x = run_length_decode' ((count * 10) + (digitToInt x)) xs
+            | otherwise = (replicate count x) ++ run_length_decode' 0 xs
+```

@@ -1,0 +1,62 @@
+---
+title: EPI 6.13 - Rotating an array
+date: 2014-01-26T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'rotating']
+draft: false
+images: []
+---
+
+###  Problem:
+
+Given an Array of n elements, design an algorithm for rotating an Array right by i positions. Only O(1) additional storage is allowed.
+
+### Solution:
+
+The natural solution is to start from position the value at index k to k + i, repeatedly n times. This will work well if GCD(n,i) is != 1. However a general solution is to perform m jumps of size i, l times, but each time starting from the next index.
+
+The first helper function is to perform m jumps of “size” each starting from a given index, wrapping around if necessary. For example if A = [1,2,3,4,5,6,7,8,9,10],
+
+```haskell showLineNumbers
+m_rotations A 0 3 3
+```
+
+would cause the following jumps: `1 -> 4 -> 7`, with A resulting in:
+
+```
+[1, 2, 3, 1, 5, 6, 4, 8, 9, 10]
+```
+
+```haskell showLineNumbers
+m_rotations xs index size m = elems (m_rotations' (arrayFromList xs 0) index (xs!!index) size m)
+    where
+        len = length xs
+        m_rotations' arr curr_index curr_value size numleft 
+            | curr_index < 0 || size <= 0 || numleft <= 0 = arr
+            | otherwise = m_rotations' (arr // [(next_index, curr_value)]) next_index next_value size (numleft - 1)
+            where
+                next_index = mod (curr_index + size) len
+                next_value = arr!next_index
+```
+
+Now we create the actual rotator method that calls m_rotations k times, where `k = gcd(|A|, j)`. This is:
+
+```haskell showLineNumbers
+rotate_array xs j = rotate_array' xs 0
+    where 
+        lxs = length xs
+        j' = mod j lxs
+        gcd_lxs_j = greatest_common_divisor lxs j'
+        numtimes = div lxs gcd_lxs_j
+        rotate_array' xs start_index
+            | start_index >= gcd_lxs_j = xs
+            | otherwise = m_rotations ys (j' - (start_index + 1)) j' numtimes
+            where
+                ys = rotate_array' xs (start_index + 1)
+```
+
+A simpler algorithm to perform this is very similar to reversing words in a sentence:
+
+```haskell showLineNumbers
+rotate_array_simple xs j = reverse (take j rxs) ++ reverse (drop j rxs) 
+        where rxs = reverse x
+```

@@ -1,0 +1,63 @@
+---
+title: EPI 6.4 - Generalized Max Difference
+date: 2014-01-28T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'max difference']
+draft: false
+images: []
+---
+
+Following on from [EPI 6.3](/blog/epi/strings-and-arrays/max-difference/), we have three generalized versions of max difference:
+
+
+A robot needs to travel along a path that includes several ascents and descents.  As it at ascends, it uses up energy stored in its battery.  As it descends it converts the potential energy to charge the battery.  Assume the conversion is perfect (ie descending X units restores as much as energy as was expended in an ascent of X units).  Also assume that the “distance” travelled is irrelevant and only the height determines the energy lost and gained.
+
+
+### Problem 1. Compute the maximum value of `(A[j0] – A[i0]) + (A[j1] – A[i1])` such that `i0 < j0 < i1 < j1`.
+
+The simple solution is O(n^4), by iterating all combinations of i0, j0, ii1 and ji1.
+
+This could be improved to be O(n^2) by applying the O(n) solution to each entry in the array.
+
+A O(n) solution with O(n) space is to compute the best solution in the forward and reverse directions (similar to max_increase_from_index in EPI 6.3) and use the two values on conjunction.  This is:
+
+```haskell showLineNumbers
+max_increase_forward :: (Num a, Ord a) => [a] -> [(Integer, a, a)]
+max_increase_forward [] = []
+max_increase_forward (x:xs) = max_increase_forward' 0 (0,x) (x:xs)
+    where
+        max_increase_forward' i curr_max [] = []
+        max_increase_forward' i (j,aj) (x:xs)
+            | x >= aj = (j,aj,x - aj) : (max_increase_forward' (i + 1) (j,aj) xs)
+            | otherwise = (i,x,0) : (max_increase_forward' (i + 1) (i,x) xs)
+
+max_increase_backward :: (Num a, Ord a) => [a] -> [(Integer, a, a)]
+max_increase_backward xs = max_increase_backward' 0 xs
+max_increase_backward' i [] = []
+max_increase_backward' i [x] = [(i,x,0)]
+max_increase_backward' i (x:xs)
+    | x <= aj = (j,aj,aj - x) : rest
+    | otherwise = (i,x,0) : rest
+    where 
+        rest = max_increase_backward' (i + 1) xs
+        (j,aj,diff) = head rest
+```
+
+Now it is a matter of iterating the two results to find the maximum – done in O(n):
+
+```haskell showLineNumbers
+max_increase_k2 :: (Num a, Ord a) => [a] -> a
+max_increase_k2 xs = maximumBy compare (max_increase_k2_iter fs rs)
+    where 
+        fs = drop 1 (take (length xs - 1) (max_increase_forward xs))
+        rs = drop 2 (max_increase_backward xs)
+        max_increase_k2_iter [] [] = []
+        max_increase_k2_iter ((a1,a2,a3):fs) ((b1,b2,b3):rs) = (a3 + b3) : (max_increase_k2_iter fs rs)
+```
+
+### Problem 2. Compute maximum value of Sum(A[jt] – A[it]) for t = 0 -> k-1, such that i0 < j0 < i1 < j1 < … ik – 1 < jk – 1, for a fixed k.
+
+TBD
+
+### Problem 3. Repeat (3) where k is any value between 0 and floor(n / 2).
+
+TBD

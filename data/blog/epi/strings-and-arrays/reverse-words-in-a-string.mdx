@@ -1,0 +1,34 @@
+---
+title: EPI 6.19 - Reversing words in a string
+date: 2014-02-01T15:32:08Z
+tags: ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'strings', 'reversal']
+draft: false
+images: []
+---
+
+###  Problem:
+
+Reverse the words in a sentence, eg:
+
+`hello world` -> `world hello`
+
+
+### Solution:
+
+We can define a word as any substring separated by one or more spaces. To do this on constant space, simply reverse the entire sentence, and then reverse each word within.
+
+A recursive solution would be:
+
+```haskell showLineNumbers
+reverse_words :: [Char] -> [Char]
+reverse_words [] = []
+reverse_words xs = initial_spaces ++ (reverse after_spaces) ++ reverse_words remaining
+    where
+        initial_spaces = takeWhile isSpace xs
+        spaces_dropped = dropWhile isSpace xs
+        after_spaces = takeWhile (\x -> not (isSpace x)) spaces_dropped
+        remaining = drop (length after_spaces) spaces_dropped
+```
+
+This is clearly not O(1) in space usage. The constant space solution would perform an in-place swapping of characters within the input array.
+
