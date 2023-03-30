@@ -23,8 +23,8 @@ const postDateTemplate: Intl.DateTimeFormatOptions = {
 }
 
 interface Props {
-  content: any,
-  authorDetails: any[],
+  content: any
+  authorDetails: any[]
   next?: { slug: string; title: string }
   prev?: { slug: string; title: string }
   children: ReactNode

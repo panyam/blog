@@ -5,7 +5,7 @@ import Pagination from '@/components/Pagination'
 import formatDate from '@/lib/utils/formatDate'
 
 interface Props {
-  posts: any[],
+  posts: any[]
   title: string
   initialDisplayPosts?: any[]
   pagination?: ComponentProps<typeof Pagination>
@@ -69,8 +69,8 @@ export default function ListLayout({ posts, title, initialDisplayPosts = [], pag
                   <div className="space-y-3 xl:col-span-3">
                     <div>
                       <h3 className="text-2xl font-bold leading-8 tracking-tight">
-                        <Link href={`/blog/${slug}`} className="text-gray-900 dark:text-gray-100">
-                          {title}
+                        <Link href={`/${slug}`} className="text-gray-900 dark:text-gray-100">
+                          {title} - {slug}
                         </Link>
                       </h3>
                       <div className="flex flex-wrap">
