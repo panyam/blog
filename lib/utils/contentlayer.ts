@@ -1,8 +1,7 @@
-
-import kebabCase from '@/lib/utils/kebabCase'
+import kebabCase from './kebabCase'
 import { readFile, getAllFilesRecursively } from './files'
 import path from 'path'
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs'
 import matter from 'gray-matter'
 import readingTime from 'reading-time'
 
