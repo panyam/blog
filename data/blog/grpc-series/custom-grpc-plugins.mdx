@@ -2,15 +2,14 @@
 title: 'Part 5 - Building custom plugins gRPC'
 date: 2023-03-01T15:32:14Z
 lastmod: '2022-05-05'
-tags: ['grpc', 'protogen', 'buf', 'custom plugins']
+tags: ['grpc', 'buf', 'custom plugins']
 draft: true
 summary: 'A guide for creating custom grpc plugins in Go with protogen and buf'
 layout: PostSimple
 ---
 
-As developers, few things are more comforting than the mighty command-line.   For generated APIs (whether rpc or http) while generic CLIs can provide access (eg curl for a generated HTTP gateway) these still need a user to know (or atleast remember) the http semantics etc.   A CLI exec/binary with simpler structure, some predefined conventions and more targeted documentation etc can significantly ease accessing the APIs from the command line.  These can even be useful tools/artifacts to offer the consumers of your services.
+As developers, few things are more comforting than the mighty command-line. For generated APIs (whether rpc or http) while generic CLIs can provide access (eg curl for a generated HTTP gateway) these still need a user to know (or atleast remember) the http semantics etc. A CLI exec/binary with simpler structure, some predefined conventions and more targeted documentation etc can significantly ease accessing the APIs from the command line. These can even be useful tools/artifacts to offer the consumers of your services.
 
 Without further Ado let us dive into building a grpc plugin that generates one or more CLIs from custom annotations (defined in this tutorial) added to your protobuf definitions for your grpc services.
 
-Note - this tutorial is **NOT** an in-depth tutorial for creating a grpc based service or creating http gateways for the grpc service.   A simple enough service example will be provided that can highlight the various of nuances of building a plugin instead.  Look at Part 1 for this.
-
+Note - this tutorial is **NOT** an in-depth tutorial for creating a grpc based service or creating http gateways for the grpc service. A simple enough service example will be provided that can highlight the various of nuances of building a plugin instead. Look at Part 1 for this.
