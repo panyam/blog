@@ -12,9 +12,11 @@ export const getStaticProps = async () => {
   return { props: { author, mdxSource } }
 }
 
-export default function About({ author, mdxSource }: InferGetStaticPropsType<typeof getStaticProps>) {
-  return <OurMDXRemote
-            source={mdxSource}
-            layout={author.layout || DEFAULT_LAYOUT}
-            content={author} />
+export default function About({
+  author,
+  mdxSource,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
+  return (
+    <OurMDXRemote source={mdxSource} layout={author.layout || DEFAULT_LAYOUT} content={author} />
+  )
 }
