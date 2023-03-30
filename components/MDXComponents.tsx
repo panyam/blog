@@ -59,8 +59,6 @@ export function OurMDXRemote({ source, layout, content, ...rest }) {
   // so that we can pass in the layout as a prop
   const components = { ...MDXComponents }
   components.wrapper = (props) => {
-    console.log('Rest: ', rest)
-    console.log('Props: ', props)
     const Layout = require(`../layouts/${layout}`).default
     return (
       <Layout content={content} {...rest}>
