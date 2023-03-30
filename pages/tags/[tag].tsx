@@ -2,9 +2,8 @@ import { TagSEO } from '@/components/SEO'
 import siteMetadata from '@/data/siteMetadata'
 import ListLayout from '@/layouts/ListLayout'
 import kebabCase from '@/lib/utils/kebabCase'
-import { getAllTags, allCoreContent } from '@/lib/utils/contentlayer'
+import { getAllBlogs, getAllTags } from '@/lib/utils/contentlayer'
 import { InferGetStaticPropsType } from 'next'
-import { getAllBlogs } from '@/lib/utils/contentlayer'
 
 export async function getStaticPaths() {
   const tags = await getAllTags(getAllBlogs())
@@ -21,10 +20,8 @@ export async function getStaticPaths() {
 
 export const getStaticProps = async (context) => {
   const tag = context.params.tag as string
-  const filteredPosts = allCoreContent(
-    allBlogs.filter(
-      (post) => post.draft !== true && post.tags.map((t) => kebabCase(t)).includes(tag)
-    )
+  const filteredPosts = getAllBlogs().filter(
+    (post) => post.draft !== true && post.tags.map((t) => kebabCase(t)).includes(tag)
   )
 
   return { props: { posts: filteredPosts, tag } }
