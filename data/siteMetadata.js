@@ -1,11 +1,11 @@
 const siteMetadata = {
-  title: 'Maniacal Builder Blog',
+  title: 'Build Mage Blog',
   author: 'Sri Panyam',
-  headerTitle: 'ManiacalBuilder',
+  headerTitle: 'BuildMage',
   description: 'My personal blog highlighting adventures in building random things on the side',
   language: 'en-us',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://maniacalbuilder.appspot.com',
+  siteUrl: 'https://buildmage.com',
   siteRepo: 'https://github.com/panyam/',
   siteLogo: '/static/images/logo.png',
   image: '/static/images/avatar.png',

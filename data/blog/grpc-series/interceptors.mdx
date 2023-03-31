@@ -1,0 +1,87 @@
+---
+title: 'Part 4 - Authentication, Middleware and Interceptors'
+date: 2023-02-20T15:32:14Z
+lastmod: '2022-05-05'
+tags: ['grpc', 'buf', 'build tooling', 'plugin management']
+draft: false
+summary: 'Buf.build is a modern ecosystem simplifying the plugin management when building gRPC services and addresses several pains and short-comings found in the original gRPC build ecosystem'
+layout: PostSimple
+---
+
+## Introduction
+
+Up until now in the [gRPC Series](/blog/grpc-series/index) we have built:
+
+* [Built a simple gRPC service](/blog/grpc-series/simple-grpc-service/)
+* Added a [REST/HTTP interface](/blog/grpc-series/rest-http-gateway/) to our gRPC service showcasing the grpc plugin universe
+* [Introduced Buf.build](/blog/grpc-series/using-buf-build/) to simply managing plugins
+
+We are far from productionalizing our service.   A production ready service would need several things:
+
+* Authentication/Authorization
+* Request Logging
+* Request Tracing
+* Caching
+* Rate Limiting
+* Load balancing
+* and more (security, multi-zone/multi-regional services, etc)
+
+A common thread across all these aspects is that these apply in an (almost) uniform way to all requests to an operation (without the operation being aware of it).   eg given a request handler function (more on this later):
+
+* Request Logging would printing out common metrics (like response times, error traces etc) after calling the handler.
+* Rate limiting can also be applied in a uniform way (by looking up a config of request specific limits) and only invoking the handler if within those limits.
+* Authentication can look for common request headers (if HTTP) before allowing continuing onto the request handler.
+
+### Middleware
+
+In a typical HTTP endpoint (api or otherwise) this is done through `middleware`.  The role of middleware is to
+
+* Intercept a request a handler,
+* Reject, Modify or Forward the request as is to the underlying handler
+* Intercept (the forwarded) request's response, and then modify/forward back to the caller.
+
+Request handlers are typically functions that `(req: HTTPRequest) => HTTPResponse` (in your favorite language/platform (&trade;)).  Naturally middleware can also be thought of as "decorator" functions that return other handler functions, eg:
+
+```js showLineNumbers
+function mymiddleware(anotherHandler: HTTPHandler): HTTPHandler {
+  newHanlder = function(req: HTTPRequest): HTTPResponse {
+    req = // do some preprocessing and get a modified request
+    
+    resp = anotherHandler(req)
+
+    resp = // do some post processing and get a modified response
+  
+    // return it
+    return resp
+
+  }
+
+  return newHandler
+}
+```
+
+So now we could create a very simple rate-limiter (say for a 5 minute window) with:
+
+```js showLineNumbers
+function rateLimitingMiddleware(originalHandler: HTTPHandler): HTTPHandler {
+  return function(req: HTTPRequest): HTTPResponse {
+    method = req.method
+    path = req.path
+
+    rate_config = getRateLimitConfig(method, path)
+
+    // (5 minutes in seconds)
+    ourWindow = 5 * 60
+    num_requests = getNumRequestsInWindow(method, path, ourWindow)
+
+    if (num_requests > rate_config.limit) {
+      return HTTPResponse(429, "Too many requests")
+    }
+
+    return originalHandler(req)
+  }
+}
+```
+
+For example in a NodeJS express app, middleware can be applied 
+
