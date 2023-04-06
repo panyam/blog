@@ -98,25 +98,15 @@ In this series we are using the 3rd approach as it also allows us to share model
 
 The .proto files are the starting point of a gRPC, so we can start there with some basic details:
 
-```
-embed models.proto here from github at the right tag
-```
+<CodeEmbed title="Models" language="protobuf" url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/models.proto" height="300px"/>
 
-```
-embed songs.proto here from github at the right tag
-```
+<CodeEmbed title="Song Service" language="protobuf" url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/songs.proto" height="300px"/>
 
-```
-embed artists.proto here from github at the right tag
-```
+Similarly other service definitions can be found in:
+* [albums.proto]("https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/albums.proto) - RPC specs for the Albums service
+* [artists.proto]("https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/artists.proto) - RPC specs for the Artists service
+* [labels.proto]("https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/labels.proto) - RPC specs for the Labels service
 
-```
-embed albums.proto here from github at the right tag
-```
-
-```
-embed labels.proto here from github at the right tag
-```
 
 We have a chosen a few conventions (without forcing any design practices):
 
@@ -155,9 +145,7 @@ protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
 
 This is quite cumbersome so we can add this into a Makefile and simply run `make all` to generate protos and build everything going forward.
 
-```
-EMBED Makefile from PART1 branch
-```
+<CodeEmbed title="Makefile" language="bash" url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/Makefile" />
 
 Now all generated stubs can be found in the `gen/go/musicservice/v1` folder (because our protos folder hosted the service defs within musicservice/v1).
 
@@ -175,17 +163,12 @@ Pretty powerful isn't it!  Now let us look at actually implementing the services
 
 Our services are very simple.  They store the different instances in memory as a simple collection of elements added in the order in which they were created (we wont fiddle with databases for now) and serve them by querying and updating this collection.  Since all the services have (mostly) similar implementations (CRUD) a base store object has been created to represent the in-memory collection and the services simply use this store.
 
-The base entity store is:
+A small part of the base entity looks like:
 
-```
-EMBED services/base.go here from the repo at the right tag
-```
+The base entity store can be found [here](https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/services/base.go).
 
-Using this the song service is very simple:
+Using this the [song service](https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/services/songs.go) is very simple.
 
-```
-EMBED services/songs.go here
-```
 
 Other models are also eerily similar to this and can be found in the repo.
 

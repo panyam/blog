@@ -4,6 +4,7 @@ import Image from './Image'
 import CustomLink from './Link'
 import TOCInline from './TOCInline'
 import Pre from './Pre'
+import CodeRenderer from './CodeRenderer'
 import { BlogNewsletterForm } from './NewsletterForm'
 
 interface MDXLayout {
@@ -22,6 +23,7 @@ export const MDXComponents: any = {
   TOCInline,
   a: CustomLink,
   pre: Pre,
+  CodeEmbed: CodeRenderer,
   BlogNewsletterForm,
 }
 
