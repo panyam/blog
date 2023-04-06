@@ -163,12 +163,13 @@ Pretty powerful isn't it!  Now let us look at actually implementing the services
 
 Our services are very simple.  They store the different instances in memory as a simple collection of elements added in the order in which they were created (we wont fiddle with databases for now) and serve them by querying and updating this collection.  Since all the services have (mostly) similar implementations (CRUD) a base store object has been created to represent the in-memory collection and the services simply use this store.
 
-A small part of the base entity looks like:
+This (simple) base entity looks like:
 
-The base entity store can be found [here](https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/services/base.go).
+<CodeEmbed title="Base Entity Store" language="go" url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/services/base.go"/>
 
-Using this the [song service](https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/services/songs.go) is very simple.
+Using this the Song service is now very simple:
 
+<CodeEmbed title="Song Service Implementation" language="go" url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/services/songs.go"/>
 
 Other models are also eerily similar to this and can be found in the repo.
 
@@ -182,9 +183,7 @@ The general steps are:
 * register each our service implementations with this server
 * run this server on a specific port
 
-```
-EMBED cmd/server.go
-```
+<CodeEmbed title="Main Server CLI" language="go" url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/cmd/server.go"/>
 
 This server can now be run (by default on port 9000) with:
 
