@@ -10,9 +10,9 @@ import { ReactNode } from 'react'
 
 interface Props {
   content: any
-  children: ReactNode
   next?: { slug: string; title: string }
   prev?: { slug: string; title: string }
+  children: ReactNode
 }
 
 export default function PostLayout({ content, next, prev, children }: Props) {

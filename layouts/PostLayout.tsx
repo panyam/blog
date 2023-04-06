@@ -35,11 +35,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
 
   return (
     <SectionContainer>
-      <BlogSEO
-        url={`${siteMetadata.siteUrl}/blog/${slug}`}
-        authorDetails={authorDetails}
-        {...content}
-      />
+      <BlogSEO url={`${siteMetadata.siteUrl}/blog/${slug}`} authorDetails={authorDetails} {...content} />
       <ScrollTopAndComment />
       <article>
         <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
@@ -74,8 +70,8 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                         <Image
                           unoptimized={true}
                           src={author.avatar}
-                          width="38px"
-                          height="38px"
+                          width="38"
+                          height="38"
                           alt="avatar"
                           className="h-10 w-10 rounded-full"
                         />

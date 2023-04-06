@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from 'fs'
 import path from 'path'
-import GithubSlugger from 'github-slugger'
+// import GithubSlugger from 'github-slugger'
+import { slug } from 'github-slugger'
 import { getAllBlogs, getAllTags } from '../lib/utils/contentlayer'
 import { escape } from './htmlEscaper'
 import siteMetadata from '../data/siteMetadata.js'
@@ -48,7 +49,7 @@ async function generate() {
     const tags = await getAllTags(allBlogs)
     for (const tag of Object.keys(tags)) {
       const filteredPosts = getAllBlogs().filter(
-        (post) => post.draft !== true && post.tags.map((t) => GithubSlugger.slug(t)).includes(tag)
+        (post) => post.draft !== true && post.tags.map((t) => slug(t)).includes(tag)
       )
       const rss = generateRss(filteredPosts, `tags/${tag}/feed.xml`)
       const rssPath = path.join('public', 'tags', tag)

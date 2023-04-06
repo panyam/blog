@@ -33,8 +33,8 @@ const CodeRenderer = (props) => {
               console.log('Error loading lang plugin: ', language)
             }
             // const t1 = Date.now()
-            Prism.highlightElement(codeRef.current)
-            // Prism.highlightAll()
+            // Prism.highlightElement(codeRef.current)
+            Prism.highlightAll()
             // console.log("Highlighting: ", Date.now() - t1, codeRef.current)
           }
         })

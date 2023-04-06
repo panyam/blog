@@ -2,7 +2,8 @@ import { VFile } from 'vfile'
 import { Parent } from 'unist'
 import { visit } from 'unist-util-visit'
 import { Heading } from 'mdast'
-import slugger from 'github-slugger'
+// import slugger from 'github-slugger'
+import { slug } from 'github-slugger'
 import { toString } from 'mdast-util-to-string'
 import { remark } from 'remark'
 import { Toc } from 'types/Toc'
@@ -14,7 +15,7 @@ export function remarkTocHeadings() {
       const textContent = toString(node)
       toc.push({
         value: textContent,
-        url: '#' + slugger.slug(textContent),
+        url: '#' + slug(textContent),
         depth: node.depth,
       })
     })
