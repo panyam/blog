@@ -4,6 +4,7 @@ date: 2022-09-15T15:32:14Z
 tags: ['grpc', 'services', 'rest', 'http gateway', 'openapi']
 draft: false
 summary: 'In this guide we will improve our music service by building a rest/http gateway fronting it.'
+authors: ['Sri Panyam']
 layout: PostSimple
 ---
 
@@ -11,36 +12,36 @@ layout: PostSimple
 
 In [Part 1](/blog/grpc-series/simple-grpc-service/):
 
-* We built a simple gRPC service for managing labels, albums, artists and songs for a music related site/app.
-* gRPC provided a very easy way to represent the services and operations for this app.
-* We were able to serve (a very rudimentary implementation) from localhost on an arbitrary port (9000 by default) on a custom TCP protocol.
-* We were able to call the methods on these services both via a CLI utility (grpc_cli) as well as through generated clients (via tests).
+- We built a simple gRPC service for managing labels, albums, artists and songs for a music related site/app.
+- gRPC provided a very easy way to represent the services and operations for this app.
+- We were able to serve (a very rudimentary implementation) from localhost on an arbitrary port (9000 by default) on a custom TCP protocol.
+- We were able to call the methods on these services both via a CLI utility (grpc_cli) as well as through generated clients (via tests).
 
 The advantage of this approach is that any app/site/service can access this running server via a client (we could also generate JS or Swift or Java clients to make these calls in the respective environments).
 
 At a high level, the downsides to this approach to this are:
 
-* **Network Access** - Usually a network request (from an app or a browser client to this service) has to traverse several networks over the internet.  Most networks are secured by firewalls that only permit access to specific ports and protocols (80:http, 443:https) and having this custom port (and protocol) whitelisted on every firewall along the way may not be tractable.
-* **Discomfort with non-standard tools** - Familiarity and comfort with grpc is still nascent outside the service building community.   For most service consumers few things are more easier and accessible than HTTP based tools (curl, httpie, Postman etc).  Similarly for other enterprises/organizations are used to APIs exposed as Restful endpoints so having to build/integrate non HTTP clients imposes a learning curve.
+- **Network Access** - Usually a network request (from an app or a browser client to this service) has to traverse several networks over the internet. Most networks are secured by firewalls that only permit access to specific ports and protocols (80:http, 443:https) and having this custom port (and protocol) whitelisted on every firewall along the way may not be tractable.
+- **Discomfort with non-standard tools** - Familiarity and comfort with grpc is still nascent outside the service building community. For most service consumers few things are more easier and accessible than HTTP based tools (curl, httpie, Postman etc). Similarly for other enterprises/organizations are used to APIs exposed as Restful endpoints so having to build/integrate non HTTP clients imposes a learning curve.
 
 ## Use a familiar cover - grpc-gateway
 
-We can have the best of both worlds by enacting a proxy in front our service that translates gRPC to/from the familiar REST/HTTP to/from the outside world.   Given the amazing ecosystem of plugins in gRPC just such a plugin exists - the [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway).   The repo itself contains a very indepth set of examples and tutorials on how to integrate it into a service.  In this guide we shall apply it to our canonical music service in small increments.
+We can have the best of both worlds by enacting a proxy in front our service that translates gRPC to/from the familiar REST/HTTP to/from the outside world. Given the amazing ecosystem of plugins in gRPC just such a plugin exists - the [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway). The repo itself contains a very indepth set of examples and tutorials on how to integrate it into a service. In this guide we shall apply it to our canonical music service in small increments.
 
 A very high level image (courtesy grpc-gateway) shows the final wrapper architecture around our service:
 
-<img src='/static/images/grpc_architecture_diagram.svg' width={800} height={400}/>
+<img src="/static/images/grpc_architecture_diagram.svg" width={800} height={400} />
 
 This approach has several benefits:
 
 1. **Interoperability**: Clients that need and only support http(s) can now access our service with a familiar facade.
-2. **Network support**: Most corporate firewalls and networks rarely allow non http ports.   With the grpc-gateway this limitation can be eased as the services are now exposed via a http proxy without any loss in translation.
-3. **Client side support**: Today several client side libraries already support and enable REST, HTTP and Websocket communication with servers.  Using the grpc-gateway, these existing tools (eg curl, httpie, postman) can be used as is.  Since no custom protocol is exposed beyond the grpc-gateway complexity (for implementing clients for custom protocols) is eliminated (eg no need to implement a gRPC generator for Kotlin or Swift to support Android or Swift).
-4. **Scalability**: Standard http load balancing techniques can be applied by placing a load-balancer in front of the grpc-gateway to distribute requests across multiple grpc service hosts.   Building protocol/service specific load balancer is not an easy nor rewarding task.
+2. **Network support**: Most corporate firewalls and networks rarely allow non http ports. With the grpc-gateway this limitation can be eased as the services are now exposed via a http proxy without any loss in translation.
+3. **Client side support**: Today several client side libraries already support and enable REST, HTTP and Websocket communication with servers. Using the grpc-gateway, these existing tools (eg curl, httpie, postman) can be used as is. Since no custom protocol is exposed beyond the grpc-gateway complexity (for implementing clients for custom protocols) is eliminated (eg no need to implement a gRPC generator for Kotlin or Swift to support Android or Swift).
+4. **Scalability**: Standard http load balancing techniques can be applied by placing a load-balancer in front of the grpc-gateway to distribute requests across multiple grpc service hosts. Building protocol/service specific load balancer is not an easy nor rewarding task.
 
 ## Overview
 
-You might have already guessed - protoc plugins again comes to the rescue.  In our service's Makefile (see [Part 1](/blog/grpc-series/simple-grpc-service/)), we had generated message and service stubs for Go using the protoc-gen-go plugin:
+You might have already guessed - protoc plugins again comes to the rescue. In our service's Makefile (see [Part 1](/blog/grpc-series/simple-grpc-service/)), we had generated message and service stubs for Go using the protoc-gen-go plugin:
 
 ```
 protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
@@ -49,43 +50,42 @@ protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
         $PROTO_DIR/musicservice/v1/*.proto
 ```
 
-###  A brief introduction to plugins
+### A brief introduction to plugins
 
-The magic of the protoc plugin is that it does not any generation on its own but orchestrates plugins by passing the a parsed Abstract Syntax Tree (AST) across plugins.  This is illustrated below:
+The magic of the protoc plugin is that it does not any generation on its own but orchestrates plugins by passing the a parsed Abstract Syntax Tree (AST) across plugins. This is illustrated below:
 
-<img src='/static/images/protoc_plugin_flow.png' width={800} height={400}/>
+<img src="/static/images/protoc_plugin_flow.png" width={800} height={400} />
 
-* Step 0 - Input files (in the above case musicservice/v1/*.proto) are passed to the protoc plugin
-* Step 1 - The protoc tool first parses and validate all proto files.
-* Step 2 - protoc then invokes each plugin in its list command line arguments in turn by passing a serialized version of *all* the proto files it has parsed into an AST.
-* Step 3 - Each proto plugin (in this case `go` and `go-grpc` reads this serialized AST via its stdin.  The plugin that processes/analyzes these AST representations and generates File artifacts.
-  -  Note that there does not need to be a 1-1 correspondance between input files (eg A.proto, B.proto, C.proto) and the output file artifacts it generates.  For example the plugin may create a "single" unified file artifact encampassing all the information in all the input protos.
+- Step 0 - Input files (in the above case musicservice/v1/\*.proto) are passed to the protoc plugin
+- Step 1 - The protoc tool first parses and validate all proto files.
+- Step 2 - protoc then invokes each plugin in its list command line arguments in turn by passing a serialized version of _all_ the proto files it has parsed into an AST.
+- Step 3 - Each proto plugin (in this case `go` and `go-grpc` reads this serialized AST via its stdin. The plugin that processes/analyzes these AST representations and generates File artifacts.
+  - Note that there does not need to be a 1-1 correspondance between input files (eg A.proto, B.proto, C.proto) and the output file artifacts it generates. For example the plugin may create a "single" unified file artifact encampassing all the information in all the input protos.
   - The plugin writes out the generated file artifacts onto its stdout.
-* Step 4 - protoc tool captures the plugin's stdout and for each generated file artifacts, serializes it onto disk.
-
+- Step 4 - protoc tool captures the plugin's stdout and for each generated file artifacts, serializes it onto disk.
 
 #### Questions
 
 ##### <u>**How does protoc know which plugins to invoke?**</u>
 
-Any command line argument to protoc in the format `--<pluginname>_out` is a plugin indicator with the name "pluginname".  In the above example protoc would have encountered two plugins - `go` and `go-grpc`.
+Any command line argument to protoc in the format `--<pluginname>_out` is a plugin indicator with the name "pluginname". In the above example protoc would have encountered two plugins - `go` and `go-grpc`.
 
 ##### <u>**Where does protoc find the plugin?**</u>
 
-protoc uses a convention of finding an executable with the name `protoc-gen-<pluginname>`.  This executable must be found in the folders in the $PATH variable.
+protoc uses a convention of finding an executable with the name `protoc-gen-<pluginname>`. This executable must be found in the folders in the $PATH variable.
 Since plugins are just plain executables these can be written in any language.
 
 ##### <u>**What is the serialization format of the AST?**</u>
 
-The wire-format for the AST is not needed.  Protoc has libraries (in several languages) that can be included by the executables that can deserialize ASTs from stdin and serialize generated file artifacts onto stdout.
+The wire-format for the AST is not needed. Protoc has libraries (in several languages) that can be included by the executables that can deserialize ASTs from stdin and serialize generated file artifacts onto stdout.
 
 **We will build a custom plugin in [Part 4](/blog/grpc-series/custom-grpc-plugins/) of this series.**
 
 ## Setup
 
-As you may have guessed (again), our plugins will also need to be installed before it can be invoked by protoc.  We shall install the grpc-gateway plugins.
+As you may have guessed (again), our plugins will also need to be installed before it can be invoked by protoc. We shall install the grpc-gateway plugins.
 
-For detailed set of instructions follow the [grpc-gateway installation setup](https://github.com/grpc-ecosystem/grpc-gateway#installation).  Briefly:
+For detailed set of instructions follow the [grpc-gateway installation setup](https://github.com/grpc-ecosystem/grpc-gateway#installation). Briefly:
 
 ```
 go get \
@@ -104,10 +104,10 @@ go install \
 
 This will install the following four plugins in your `$GOBIN` folder:
 
-* `protoc-gen-grpc-gateway` - The GRPC Gateway generator
-* `protoc-gen-openapiv2` - Swagger/OpenAPI spec generator
-* `protoc-gen-go` - The Go protobuf 
-* `protoc-gen-go-grpc` - Go grpc server stub and client generator
+- `protoc-gen-grpc-gateway` - The GRPC Gateway generator
+- `protoc-gen-openapiv2` - Swagger/OpenAPI spec generator
+- `protoc-gen-go` - The Go protobuf
+- `protoc-gen-go-grpc` - Go grpc server stub and client generator
 
 Make sure that your $GOBIN is in your $PATH.
 
@@ -126,12 +126,11 @@ gwprotos:
       $(PROTO_DIR)/musicservice/v1/*.proto
 ```
 
-Notice how the parameter types are similar to one in Part 1 (when we were generating go bindings).   For each file X.proto, just like the go and go-grpc plugin, an X.pb.gw.go file is created that contains the http bindings for our service.
-
+Notice how the parameter types are similar to one in Part 1 (when we were generating go bindings). For each file X.proto, just like the go and go-grpc plugin, an X.pb.gw.go file is created that contains the http bindings for our service.
 
 ## Customizing the generated http bindings
 
-In the previous sections .pb.gw.go files were created containing default http bindings of our respective services and methods.  This is because we had not provided any URL bindings, http verbs (GET, POST etc) or parameter mappings.  We shall address that shortcoming now by adding custom http annotations to the service's definition.
+In the previous sections .pb.gw.go files were created containing default http bindings of our respective services and methods. This is because we had not provided any URL bindings, http verbs (GET, POST etc) or parameter mappings. We shall address that shortcoming now by adding custom http annotations to the service's definition.
 
 While all our services have as similar structure we will look at the Song service for its http annotations:
 
@@ -153,7 +152,7 @@ service SongService {
   /**
    * Batch gets multiple songs.
    */
-  rpc GetSongs(GetSongsRequest) returns (GetSongsResponse) { 
+  rpc GetSongs(GetSongsRequest) returns (GetSongsResponse) {
     option (google.api.http) = {
       get: "/v1/songs:batchGet",
     };
@@ -162,7 +161,7 @@ service SongService {
   /**
    * Updates specific fields of an Song
    */
-  rpc UpdateSong(UpdateSongRequest) returns (UpdateSongResponse) { 
+  rpc UpdateSong(UpdateSongRequest) returns (UpdateSongResponse) {
     option (google.api.http) = {
       patch: "/v1/songs/{song.id=*}"
       body: "song"
@@ -172,7 +171,7 @@ service SongService {
   /**
    * Deletes an song from our system.
    */
-  rpc DeleteSong(DeleteSongRequest) returns (DeleteSongResponse) { 
+  rpc DeleteSong(DeleteSongRequest) returns (DeleteSongResponse) {
     option (google.api.http) = {
       delete: "/v1/nodes/{id=*}"
     };
@@ -181,7 +180,7 @@ service SongService {
   /**
    * Finds and retrieves songs matching the particular criteria.
    */
-  rpc ListSongs(ListSongsRequest) returns (ListSongsResponse) { 
+  rpc ListSongs(ListSongsRequest) returns (ListSongsResponse) {
     option (google.api.http) = {
       get: "/v1/songs"
     };
@@ -189,11 +188,11 @@ service SongService {
 }
 ```
 
-Instead of having "empty" method definitions (eg `rpc MethodName(ReqType) returns (RespType) {}`) we are now seeing "annotations" being added inside methods.   Any number of annotations can be added and each annotation is parsed by the protoc to and passed to all the plugins invoked by it.  There are *tons of* annotations that can be passed and [this](https://github.com/grpc-ecosystem/grpc-gateway/blob/main/examples/internal/proto/examplepb/a_bit_of_everything.proto) has a "a bit of everythign* in it.
+Instead of having "empty" method definitions (eg `rpc MethodName(ReqType) returns (RespType) {}`) we are now seeing "annotations" being added inside methods. Any number of annotations can be added and each annotation is parsed by the protoc to and passed to all the plugins invoked by it. There are _tons of_ annotations that can be passed and [this](https://github.com/grpc-ecosystem/grpc-gateway/blob/main/examples/internal/proto/examplepb/a_bit_of_everything.proto) has a "a bit of everythign\* in it.
 
-Back to the http bindings use case - Typically a http annotation has a method, a url path (with bindings withing `{` and `}`) and a marking to indicating what the body parameter maps to (for PUT and  POST methods).
+Back to the http bindings use case - Typically a http annotation has a method, a url path (with bindings withing `{` and `}`) and a marking to indicating what the body parameter maps to (for PUT and POST methods).
 
-For example in the CreateSong method, the method is a POST request to "v1/songs" with the body (`*`) corresponding ot the JSON representation of the `CreateSongRequest` message type.  ie our request is expected to look like:
+For example in the CreateSong method, the method is a POST request to "v1/songs" with the body (`*`) corresponding ot the JSON representation of the `CreateSongRequest` message type. ie our request is expected to look like:
 
 ```json
 {
@@ -203,7 +202,7 @@ For example in the CreateSong method, the method is a POST request to "v1/songs"
 
 Naturally the response object of this would be the JSON representation of the CreateSongResponse message.
 
-The other examples in the song service as well as in the other services are reasonably intuitive and feel free to read through it to get any finer details.  Before we are off to the next section implementing the proxy, we need regenerate the pb.gw.go files to incorporate these new bindings:
+The other examples in the song service as well as in the other services are reasonably intuitive and feel free to read through it to get any finer details. Before we are off to the next section implementing the proxy, we need regenerate the pb.gw.go files to incorporate these new bindings:
 
 ```
 make all
@@ -216,7 +215,7 @@ google/api/annotations.proto: File not found.
 songs.proto:8:1: Import "google/api/annotations.proto" was not found or had errors.
 ```
 
-Unfortunately there is no "package manager" for protos at the present.  This void is being filled by an amazing tool called Buf.build (which will be the main topic in Part 3 of this series).  In the mean time we will resolve this by manually copying (shudder) [http.proto](https://github.com/googleapis/googleapis/blob/master/google/api/http.proto) and [annotations.proto](https://github.com/googleapis/googleapis/blob/master/google/api/annotations.proto) manually.
+Unfortunately there is no "package manager" for protos at the present. This void is being filled by an amazing tool called Buf.build (which will be the main topic in Part 3 of this series). In the mean time we will resolve this by manually copying (shudder) [http.proto](https://github.com/googleapis/googleapis/blob/master/google/api/http.proto) and [annotations.proto](https://github.com/googleapis/googleapis/blob/master/google/api/annotations.proto) manually.
 
 So our protos folder will have the following structure:
 
@@ -233,7 +232,7 @@ proto
         └── ...
 ```
 
-However we will follow a slightly different structure.  Instead of copying files to the protos folder, we will create a vendors folder at the root and symlink to it from the protos folder (this symlinking will be taken care of by our Makefile).  Our new folder structure is:
+However we will follow a slightly different structure. Instead of copying files to the protos folder, we will create a vendors folder at the root and symlink to it from the protos folder (this symlinking will be taken care of by our Makefile). Our new folder structure is:
 
 ```
 musicservice
@@ -263,7 +262,7 @@ Now running make should be error free and result in the updated bindings in the 
 
 ## Implementing the http gateway proxy
 
-Lo behold we now have a "proxy" (in the .pw.gw.go files) that translates http requests and converts them into grpc requests.  On the return path, grpc responses are also translated to HTTP responses.  What is now needed is a service that runs a http server that continuosly facilitates this translation.
+Lo behold we now have a "proxy" (in the .pw.gw.go files) that translates http requests and converts them into grpc requests. On the return path, grpc responses are also translated to HTTP responses. What is now needed is a service that runs a http server that continuosly facilitates this translation.
 
 We have now added a `startGatewayService` method in cmd/server.go that now also starts a http server to do all this back-and-forth translation:
 
@@ -306,11 +305,11 @@ func main() {
 }
 ```
 
-In this implementation, we created a new runtime.ServeMux and registered each of our grpc services' handlers using the `v1.Register<ServiceName>HandlerFromEndpoint` method.  This method associates all of the urls found in the `<ServiceName>` service's protos to this particular mux.  Note how all these handlers are associated with the port on which the grpc service is already running (port 9000 by default).  Finally the http server is started on its own port (8080 by default).
+In this implementation, we created a new runtime.ServeMux and registered each of our grpc services' handlers using the `v1.Register<ServiceName>HandlerFromEndpoint` method. This method associates all of the urls found in the `<ServiceName>` service's protos to this particular mux. Note how all these handlers are associated with the port on which the grpc service is already running (port 9000 by default). Finally the http server is started on its own port (8080 by default).
 
 ## Generating OpenAPI specs
 
-Several API consumers seek OpenAPI specs that describe Restful endpoints (methods, verbs, body payloads etc).  We can generate an OpenAPI spec file (previous swagger files) that contain information about our service methods along with their http bindings.   Add another Makefile target:
+Several API consumers seek OpenAPI specs that describe Restful endpoints (methods, verbs, body payloads etc). We can generate an OpenAPI spec file (previous swagger files) that contain information about our service methods along with their http bindings. Add another Makefile target:
 
 ```
 openapiv2:
@@ -325,13 +324,13 @@ openapiv2:
       $(PROTO_DIR)/musicservice/v1/*.proto
 ```
 
-Like all other plugins, the openapiv2 plugin also generates one .swagger.json per .proto file.  However this changes the semantics of swagger as each swagger is treated as its own "endpoint" where as in our case what we really want is a single endpoint that fronts all the services.   In order to contain a single "merged" swagger file we pass the `allow_merge=true` parameter to the above command.  In addition we also pass the name of the file to be generated (`merge_file_name=allservices`).  This results in `gen/openapiv2/allservices.swagger.json` file that can be read, visualized and tested with [SwaggerUI](https://swagger.io/tools/swagger-ui/).
+Like all other plugins, the openapiv2 plugin also generates one .swagger.json per .proto file. However this changes the semantics of swagger as each swagger is treated as its own "endpoint" where as in our case what we really want is a single endpoint that fronts all the services. In order to contain a single "merged" swagger file we pass the `allow_merge=true` parameter to the above command. In addition we also pass the name of the file to be generated (`merge_file_name=allservices`). This results in `gen/openapiv2/allservices.swagger.json` file that can be read, visualized and tested with [SwaggerUI](https://swagger.io/tools/swagger-ui/).
 
 ## Best practices
 
 ### Seperation of Gateway and GRPC endpoints
 
-In our example we served the gateway and grpc services on their own addresses.   Instead we could have directly invokved the grpc service methods (ie by directly creating `NewSongService(nil)` and invoking methods on those.  However running these two services seperately meant we could  have other (internal) services directly access the grpc service instead of going through the gateway.  This seperation of concerns also meant these two services could be deployed seperately (when on different hosts) instead of needed a full upgrade of the entire stack.
+In our example we served the gateway and grpc services on their own addresses. Instead we could have directly invokved the grpc service methods (ie by directly creating `NewSongService(nil)` and invoking methods on those. However running these two services seperately meant we could have other (internal) services directly access the grpc service instead of going through the gateway. This seperation of concerns also meant these two services could be deployed seperately (when on different hosts) instead of needed a full upgrade of the entire stack.
 
 ### HTTPS instead of HTTP
 
@@ -339,28 +338,27 @@ Though in this example the startGatewayServer method started a http server it is
 
 ### Use of authentication
 
-This example did not have any authentication built in.  However authentication (authn) and authorization (authz) are very important pillars of any service.  The gateway (and the grpc service) are no exceptions to this.  Use of middleware to handle authn and authz is critical to the gateway.  Authentication can be applied with several mechanisms like OAuth2, JWT to verify users before passing a request to the grpc service.  Alternatively the tokens could be passed as metadata to the grpc service which can perform the validation before processing the request.  Use of middleware in the gateway (and interceptors in the grpc service) will be shown in [Part 4](/blog/grpc-series/auth-and-interceptors) of this series.
+This example did not have any authentication built in. However authentication (authn) and authorization (authz) are very important pillars of any service. The gateway (and the grpc service) are no exceptions to this. Use of middleware to handle authn and authz is critical to the gateway. Authentication can be applied with several mechanisms like OAuth2, JWT to verify users before passing a request to the grpc service. Alternatively the tokens could be passed as metadata to the grpc service which can perform the validation before processing the request. Use of middleware in the gateway (and interceptors in the grpc service) will be shown in [Part 4](/blog/grpc-series/auth-and-interceptors) of this series.
 
 ### Caching for improved performance
 
-Caching improves performance by avoiding database (or heavy) lookups of data that may be frequently accessed (and/or not often modified).  The gateway server can also employ a cache responses from the grpc service (with possible expiration timeouts) to reduce the load on the grpc server and improve response times for clients.
+Caching improves performance by avoiding database (or heavy) lookups of data that may be frequently accessed (and/or not often modified). The gateway server can also employ a cache responses from the grpc service (with possible expiration timeouts) to reduce the load on the grpc server and improve response times for clients.
 
-Note - Just like authentication caching can also be performed at the grpc server.  However this would not prevent excess call that may otherwise have been prevented by the gateway service.
+Note - Just like authentication caching can also be performed at the grpc server. However this would not prevent excess call that may otherwise have been prevented by the gateway service.
 
 ### Using load balancers
 
 While also applicable to grpc servers, http load balancers (in front of the gateway) enables sharding to improve scalability and reliabilility of our services, especially to under high traffic periods.
 
-
 ## Conclusion
 
-By adding a gRPC gateway to your grpc services and applying best practices - your services can now be exposed to clients using different platforms and protocols.    Adhering to best practices also ensures reliability, security and high performance.
+By adding a gRPC gateway to your grpc services and applying best practices - your services can now be exposed to clients using different platforms and protocols. Adhering to best practices also ensures reliability, security and high performance.
 
 In this article we have:
 
-* Seen the benefits of wrapping our services with a gateway service
-* Added http bindings to an existing set of services.
-* Learnt the best practices on enacting gateway services over your grpc services.
+- Seen the benefits of wrapping our services with a gateway service
+- Added http bindings to an existing set of services.
+- Learnt the best practices on enacting gateway services over your grpc services.
 
 In the [next article](/blog/grpc-series/using-buf-build/) we will look at an amazing tool for managing plugins and tooling so we would not have to depend on Makefiles (or manually copying third party annotations).
 

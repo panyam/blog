@@ -4,13 +4,15 @@ date: 2015-12-12T15:32:08Z
 tags: ['async', 'networking', 'linux', 'sockets', 'libev']
 draft: false
 summary: A simple tutorial implementing libev for building custom servers as well as an easier wrapper for it.
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
-I’ve been asked to help people out with libev example code and usage for a while but I never got around to it since I hadnt used libev in ages.  However I have a need for a simple server framework (more on this in another post).   So I figured I’d publish a simple libev tutorial.  More importantly I will create a C library that is a wrapper on top of libev to handle and maintain multiple connections in a clean and extendible way.
+I’ve been asked to help people out with libev example code and usage for a while but I never got around to it since I hadnt used libev in ages. However I have a need for a simple server framework (more on this in another post). So I figured I’d publish a simple libev tutorial. More importantly I will create a C library that is a wrapper on top of libev to handle and maintain multiple connections in a clean and extendible way.
 
-A quick introduction to libev is in order.  Back in the day, handling multiple network client connections was either done using multiple threads (one thread per connuction) or via asynchronous apis that multiplexed between several io events across the various connections.  Several APIs existed to enable the later (select/poll, epoll, kqueue etc).  Each of the methods had their own performance guarantees and worse still had platform dependant compatibility issues.  To get around this libevent was developed to provide a uniform interface hiding platform specific details.  Libev developed later was designed to simplify and cleanup several aspects of libevent (eg stripped down, threadsafe, low watcher overhead etc).
+A quick introduction to libev is in order. Back in the day, handling multiple network client connections was either done using multiple threads (one thread per connuction) or via asynchronous apis that multiplexed between several io events across the various connections. Several APIs existed to enable the later (select/poll, epoll, kqueue etc). Each of the methods had their own performance guarantees and worse still had platform dependant compatibility issues. To get around this libevent was developed to provide a uniform interface hiding platform specific details. Libev developed later was designed to simplify and cleanup several aspects of libevent (eg stripped down, threadsafe, low watcher overhead etc).
 
-The core concept in libev is that of an event loop – a loop that runs continuously listening registered events and calling the associated callback functions.   Events could be io events like file descriptors ready for reads/writes, socket connections accepted etc.
+The core concept in libev is that of an event loop – a loop that runs continuously listening registered events and calling the associated callback functions. Events could be io events like file descriptors ready for reads/writes, socket connections accepted etc.
 
 With that it is time to dive in.
 
@@ -18,7 +20,7 @@ Let us first start with a socket server structure that is the context for all th
 
 ```c showLineNumbers
 struct LEWSocketServer {
-    // A pointer to the event loop that is handling event on 
+    // A pointer to the event loop that is handling event on
     // this server socket.
     struct ev_loop *eventLoop;
 
@@ -76,10 +78,7 @@ typedef struct LEWSocketServerListener {
 } LEWSocketServerListener;
 ```
 
-
 The general structure of a connection follows:
-
-
 
 1. Server socket is in listen state
 2. When a new connection is accepted, a client socket is created and added libev’s eventloop for read events.
@@ -113,16 +112,16 @@ void *createConnectionContextCallback()
     return out;
 }
 
-/** 
+/**
  * Called when data has been received for this connection from a client.
- */ 
+ */
 void processDataCallback(LEWConnection *connection, const char *data, size_t length)
-{   
+{
     EchoConnection *echoconn = (EchoConnection *)lew_connection_get_context(connection);
     memcpy(echoconn->readBuffer, data, length);
     echoconn->length = length;
     lew_connection_set_writeable(connection);
-}   
+}
 
 /**
  * Called to indicate connection was closed.
@@ -130,7 +129,7 @@ void processDataCallback(LEWConnection *connection, const char *data, size_t len
 void connectionClosedCallback(LEWConnection *connection)
 {
     printf("Connection closed...\n");
-} 
+}
 
 /**
  * Called to ask the connection handler for data that can be written.
@@ -168,8 +167,6 @@ int main(void)
 }
 ```
 
-
 While there is still some work to be done to handle edge cases this would be relegated to the library rather than leaking out to the client code and most the client code is actually to do with connection logic rather than messing about with event loops.
 
 Full source code is available at: [https://github.com/panyam/LibEvWrapper](https://github.com/panyam/LibEvWrapper)
-

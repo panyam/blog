@@ -1,9 +1,18 @@
 ---
 title: EPI 5.8 - Spreadsheet column encoding
 date: 2014-01-24T15:32:08Z
-tags: ['elements of programming interviews', 'algorithms', 'programming', 'sreadsheet', 'column encoding']
+tags:
+  [
+    'elements of programming interviews',
+    'algorithms',
+    'programming',
+    'sreadsheet',
+    'column encoding',
+  ]
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
 ## Problem
@@ -21,7 +30,7 @@ indexOf item xs
     | otherwise = fst (head firstMatched)
     where
         matchesItem x = snd x /= item
-        firstMatched = dropWhile matchesItem 
+        firstMatched = dropWhile matchesItem
                         (zip [0 .. (length xs) - 1] xs)
 
 

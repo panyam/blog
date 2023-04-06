@@ -4,9 +4,11 @@ date: 2014-01-26T15:32:08Z
 tags: ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'rotating']
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
-###  Problem:
+### Problem:
 
 Given an Array of n elements, design an algorithm for rotating an Array right by i positions. Only O(1) additional storage is allowed.
 
@@ -30,7 +32,7 @@ would cause the following jumps: `1 -> 4 -> 7`, with A resulting in:
 m_rotations xs index size m = elems (m_rotations' (arrayFromList xs 0) index (xs!!index) size m)
     where
         len = length xs
-        m_rotations' arr curr_index curr_value size numleft 
+        m_rotations' arr curr_index curr_value size numleft
             | curr_index < 0 || size <= 0 || numleft <= 0 = arr
             | otherwise = m_rotations' (arr // [(next_index, curr_value)]) next_index next_value size (numleft - 1)
             where
@@ -42,7 +44,7 @@ Now we create the actual rotator method that calls m_rotations k times, where `k
 
 ```haskell showLineNumbers
 rotate_array xs j = rotate_array' xs 0
-    where 
+    where
         lxs = length xs
         j' = mod j lxs
         gcd_lxs_j = greatest_common_divisor lxs j'
@@ -57,6 +59,6 @@ rotate_array xs j = rotate_array' xs 0
 A simpler algorithm to perform this is very similar to reversing words in a sentence:
 
 ```haskell showLineNumbers
-rotate_array_simple xs j = reverse (take j rxs) ++ reverse (drop j rxs) 
+rotate_array_simple xs j = reverse (take j rxs) ++ reverse (drop j rxs)
         where rxs = reverse x
 ```

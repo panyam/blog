@@ -4,25 +4,32 @@ date: 2017-02-14T15:32:08Z
 tags: ['python', 'priority queue', 'dijkstra', 'heaps']
 draft: false
 summary: 'This presents the implementation of a customizable priority queue data structure where nodes can have their priorities updated in O(log n) time.'
+authors: ['Sri Panyam']
 layout: PostSimple
 ---
 
 ## The power of Nostalgia
 
-I really miss Weewar!    Weewar for those who don’t remember was a very very simple and light themed, turn-based, strategy war game.   There have been many clones since then but nothing comes close.  Here’s a video to give an idea of the mayhem:
+I really miss Weewar! Weewar for those who don’t remember was a very very simple and light themed, turn-based, strategy war game. There have been many clones since then but nothing comes close. Here’s a video to give an idea of the mayhem:
 
 <center>
-<iframe width="560" height="315" src="https://www.youtube.com/embed/H-0bLrIpk0k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/H-0bLrIpk0k"
+    frameborder="0"
+    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen
+  ></iframe>
 </center>
 
-So it all came flooding back and I embarked on what I would do when I am flooded with nostalgia.  I recreate it!    Plus now I had the added incentive of exposing my kids to some good old fashioned fun and strategy!
-
+So it all came flooding back and I embarked on what I would do when I am flooded with nostalgia. I recreate it! Plus now I had the added incentive of exposing my kids to some good old fashioned fun and strategy!
 
 ## Getting there fast!
 
-The first thing I wanted to teach my kid was around the concept of finding your way, say in a maze.   And here again, Weewar provides us with good life lessons.   Weewar, like other turn-based war games, offers different kinds of units (eg Soldier, Tank, Plane, Mortar etc) that, like other turn-based war games, can move around on different kinds of terrain (eg river, mountain, plains, swamp etc).    Each unit has several movement points (MP) and each terrain type has different costs (that would eat away at a unit’s movement cost).    So clearly it is strategically paramount that you get your units to the enemy base as quickly as possible.
+The first thing I wanted to teach my kid was around the concept of finding your way, say in a maze. And here again, Weewar provides us with good life lessons. Weewar, like other turn-based war games, offers different kinds of units (eg Soldier, Tank, Plane, Mortar etc) that, like other turn-based war games, can move around on different kinds of terrain (eg river, mountain, plains, swamp etc). Each unit has several movement points (MP) and each terrain type has different costs (that would eat away at a unit’s movement cost). So clearly it is strategically paramount that you get your units to the enemy base as quickly as possible.
 
-Given the different costs and movement points and speeds, it requires a bit of careful thought.   You cannot adopt an easy approach where you pick the terrain with the best cost and hope it would get you there as that could be a trap that leads you to a “costly” mountain!   There needs to be a way to compute the cheapest/shortest path between a given two points and this is where [Dijkstra’s shortest path algorithm](https://en.wikipedia.org/wiki/Dijkstra's_algorithm) comes in!   It looks something like (courtesy of Skienna’s [The Algorithm Design Manual](https://www.amazon.com/gp/product/1848000693/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=1848000693&linkCode=as2&tag=panyam-20&linkId=e7877d4ddde9b254283ccb379f3a7723)
+Given the different costs and movement points and speeds, it requires a bit of careful thought. You cannot adopt an easy approach where you pick the terrain with the best cost and hope it would get you there as that could be a trap that leads you to a “costly” mountain! There needs to be a way to compute the cheapest/shortest path between a given two points and this is where [Dijkstra’s shortest path algorithm](https://en.wikipedia.org/wiki/Dijkstra's_algorithm) comes in! It looks something like (courtesy of Skienna’s [The Algorithm Design Manual](https://www.amazon.com/gp/product/1848000693/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=1848000693&linkCode=as2&tag=panyam-20&linkId=e7877d4ddde9b254283ccb379f3a7723)
 
 ```python showLineNumbers
 def ShortestPath-Dijkstra(G,s,t):
@@ -37,24 +44,20 @@ def ShortestPath-Dijkstra(G,s,t):
         known = known ∪ {vnext}
 ```
 
-In line 7, in order to find a vertex with the smallest distance, a Priority Queue is usually used.   And in line 8, as the distances of new nodes are modified, they will be reorganized within the Priority Queue based on these distances (this is the decrease-key method on a Priority Queue).
-
+In line 7, in order to find a vertex with the smallest distance, a Priority Queue is usually used. And in line 8, as the distances of new nodes are modified, they will be reorganized within the Priority Queue based on these distances (this is the decrease-key method on a Priority Queue).
 
 ## Current hurdles
 
 A [python implementation of the above algorithm](https://gist.github.com/panyam/f6a6612b5ca5f773837891acc0b24410) highlights two problems:
 
-
-
 1. Finding an element is inefficient (O(n))
 2. Adjusting the position of an item in the heap after the item has been modified (the **decrease-key** operation) is not possible.
 
-All that can be done now is the child node will have to be removed (which is an O(n) operation) and then have to be re-inserted into the heap.   In the python’s heapq module a node [cannot also be easily removed](https://docs.python.org/2/library/heapq.html#priority-queue-implementation-notes).
-
+All that can be done now is the child node will have to be removed (which is an O(n) operation) and then have to be re-inserted into the heap. In the python’s heapq module a node [cannot also be easily removed](https://docs.python.org/2/library/heapq.html#priority-queue-implementation-notes).
 
 ## PriorityQ to the rescue
 
-To fix this I have developed the [priorityq](https://pypi.python.org/pypi/priorityq/) python module.   This module has the following advantages over the traditional heapq module:
+To fix this I have developed the [priorityq](https://pypi.python.org/pypi/priorityq/) python module. This module has the following advantages over the traditional heapq module:
 
 1. Finding a value is an O(1) operation
 2. Once a value is updated, it can be re-adjusted without a removal.
@@ -65,19 +68,18 @@ The new implementation with the [priorityq](https://github.com/panyam/priorityq)
 
 ## How it works?
 
-The reason this works is delightfully simple.  Current implementations refer directly to the object that is stored in the heap.   What PriorityQ does is slightly different.  Instead of dealing with the objects directly, the objects are wrapped in an [opaque handle](https://en.wikipedia.org/wiki/Opaque_pointer) which is what is returned to the user (of the library).
+The reason this works is delightfully simple. Current implementations refer directly to the object that is stored in the heap. What PriorityQ does is slightly different. Instead of dealing with the objects directly, the objects are wrapped in an [opaque handle](https://en.wikipedia.org/wiki/Opaque_pointer) which is what is returned to the user (of the library).
 
-The user, in turn, can pass these handles back to the queue to, well, do things!    Though a value can be modified, the handle remains the same and more importantly, the handle (opaquely) contains all the information required by the custom heap storage implementation to find and identify an existing element.
-
+The user, in turn, can pass these handles back to the queue to, well, do things! Though a value can be modified, the handle remains the same and more importantly, the handle (opaquely) contains all the information required by the custom heap storage implementation to find and identify an existing element.
 
 ## Benchmarks
 
-The examples folder (in the package) contains a few examples that can be used on real use cases.   Thankfully the [9th DIMACS international challenge](http://www.dis.uniroma1.it/challenge9/download.shtml) was just the arena that provided a few really good graphs.
+The examples folder (in the package) contains a few examples that can be used on real use cases. Thankfully the [9th DIMACS international challenge](http://www.dis.uniroma1.it/challenge9/download.shtml) was just the arena that provided a few really good graphs.
 
 The example can be run as follows:
 
 ```
-python examples/dijkstra/runner.py      
+python examples/dijkstra/runner.py
 ```
 
 eg:
@@ -86,32 +88,45 @@ eg:
 python examples/dijkstra/runner.py examples/dijkstra/data/USA-road-d.BAY.gr.gz   10
 ```
 
-The above runs 10 queries over randomly selected source and destination nodes in a graph that contains about 320,000 nodes and 800,000 edges.   The times (as expected) were proportional to the number of nodes processed (ie searched and adjusted).  Given the different heap storage types the following times were recorded:
-
+The above runs 10 queries over randomly selected source and destination nodes in a graph that contains about 320,000 nodes and 800,000 edges. The times (as expected) were proportional to the number of nodes processed (ie searched and adjusted). Given the different heap storage types the following times were recorded:
 
 <table>
   <thead>
-   <td><strong>Storage Strategy</strong></td>
-   <td><strong>Total Nodes Processed</strong></td>
-   <td><strong>Average Nodes Per Second</strong></td>
+    <td>
+      <strong>Storage Strategy</strong>
+    </td>
+    <td>
+      <strong>Total Nodes Processed</strong>
+    </td>
+    <td>
+      <strong>Average Nodes Per Second</strong>
+    </td>
   </thead>
-  <tr> <td>List Heap</td> <td>3,800,404</td> <td>3,610</td> </tr>
-  <tr> <td>Binary Heap</td> <td>4,857,736</td> <td>26,361</td> </tr>
-  <tr> <td>Binomial Heap</td> <td>TBD</td> <td>TBD</td> </tr>
-  <tr> <td>Pairing Heap </td> <td>TBD </td> <td>TBD </td> </tr>
+  <tr>
+    {' '}
+    <td>List Heap</td> <td>3,800,404</td> <td>3,610</td>{' '}
+  </tr>
+  <tr>
+    {' '}
+    <td>Binary Heap</td> <td>4,857,736</td> <td>26,361</td>{' '}
+  </tr>
+  <tr>
+    {' '}
+    <td>Binomial Heap</td> <td>TBD</td> <td>TBD</td>{' '}
+  </tr>
+  <tr>
+    {' '}
+    <td>Pairing Heap </td> <td>TBD </td> <td>TBD </td>{' '}
+  </tr>
 </table>
-
 
 ## What coming next?
 
 In the upcoming parts of this series, I will talk about:
 
-
-
 1. The JS (and Swift) ports of this library
 2. More heap storage strategies (like binomial, pairing and Fibonacci heaps).
 3. Adding more “standard” algorithms that can leverage the “find” and “decrease-key” features.
-
 
 ## Useful links
 
@@ -122,4 +137,3 @@ In the upcoming parts of this series, I will talk about:
 [PriorityQueue Java Source](http://grepcode.com/file_/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/util/PriorityQueue.java/)
 
 [The skyline problem](https://uva.onlinejudge.org/index.php?option=com_onlinejudge&Itemid=8&category=3&page=show_problem&problem=41)
-

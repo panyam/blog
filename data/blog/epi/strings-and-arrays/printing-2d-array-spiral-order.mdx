@@ -1,12 +1,15 @@
 ---
 title: EPI 6.15 - Printing a 2D array spirally
 date: 2014-02-27T15:32:08Z
-tags: ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'spiral printing']
+tags:
+  ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'spiral printing']
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
-###  Problem:
+### Problem:
 
 Given an nxm 2D array of integers, print it in spiral order.
 
@@ -19,7 +22,6 @@ Eg for a 3×3 matrix (with the following implicit values):
 ```
 
 Would be printed as “1 2 3 6 9 8 7 4 5”
-
 
 ### Solution:
 
@@ -63,7 +65,7 @@ print_spirally width height = print_spirally' East (0,0) 0 [width, height]
             | w == 0 || h == 0 = []
             | t < [w,h] !! curr_coord = (y * width + x + 1) : print_spirally' dir (next_pt dir (x,y)) (t+1) [w,h]
             | otherwise = print_spirally' next_dir (next_pt next_dir (prev_pt dir (x,y))) 0 [next_w,next_h]
-            where 
+            where
                 curr_coord = primary_coord dir
                 dir_vector = vector_of dir
                 next_dir = clockwise_of dir
@@ -74,8 +76,6 @@ print_spirally width height = print_spirally' East (0,0) 0 [width, height]
 
 Couple of things to note:
 
-* w,h represent the “remaining” width and height in the spiral as each time there is a change in direction, the available coordinate size reduces by one (height if beginning vertically, width if beginning horizontally).
-* t is the number of values printed in a given direction (when this value reaches “w” or “h” depending on the direction, direction is rotated and t is reset to 0).
-* When the direction needs to change (in the otherwise) the “current” point is one beyond the last point in the direction. For this reason the next point is evaluted from the previous direction in the previous point.
-
-
+- w,h represent the “remaining” width and height in the spiral as each time there is a change in direction, the available coordinate size reduces by one (height if beginning vertically, width if beginning horizontally).
+- t is the number of values printed in a given direction (when this value reaches “w” or “h” depending on the direction, direction is rotated and t is reset to 0).
+- When the direction needs to change (in the otherwise) the “current” point is one beyond the last point in the direction. For this reason the next point is evaluted from the previous direction in the previous point.

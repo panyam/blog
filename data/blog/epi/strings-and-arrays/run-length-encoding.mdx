@@ -1,12 +1,22 @@
 ---
 title: EPI 6.18 - Run-Length Encoding
 date: 2014-02-27T15:32:08Z
-tags: ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'run length', 'encoding']
+tags:
+  [
+    'elements of programming interviews',
+    'algorithms',
+    'programming',
+    'arrays',
+    'run length',
+    'encoding',
+  ]
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
-###  Problem:
+### Problem:
 
 Implement functions to run length encode a string and decode the RLE value of an encoded string.
 
@@ -30,7 +40,6 @@ run_length_encode xs = run_length_encode' 0 '|' xs
 ```
 
 Decoding is also fairly straightforward, except we just need to accumulate the “count” before that many characters can be output:
-
 
 ```
 run_length_decode :: [Char] -> [Char]

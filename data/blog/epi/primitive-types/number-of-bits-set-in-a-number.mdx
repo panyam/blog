@@ -4,11 +4,13 @@ date: 2014-01-23T15:32:08Z
 tags: ['elements of programming interviews', 'algorithms', 'programming', 'haskell']
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
 The goal is to find the number of set bits in a number, when converted to binary.
 
-So 4 (dec) -> 100 (bin)  –  has 1 bit set.
+So 4 (dec) -> 100 (bin) – has 1 bit set.
 
 Similarly 7 -> 111 -> 3
 
@@ -27,7 +29,6 @@ Apart from being O(n) this also has the disadvantage of not being tail-call recu
 
 A solution that depends is O(s) where is the number of set bits is:
 
-
 ```haskell showLineNumbers
 num_set_bits 0 = 0
 num_set_bits x = 1 + num_set_bits (clear_lowest_set_bit x)
@@ -40,4 +41,3 @@ clear_lowest_set_bit x = x .&. (x - 1)
 ```
 
 Here x & (x – 1) clears the lowest set bit in a number!
-

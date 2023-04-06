@@ -1,17 +1,26 @@
 ---
 title: EPI 6.19 - Reversing words in a string
 date: 2014-02-01T15:32:08Z
-tags: ['elements of programming interviews', 'algorithms', 'programming', 'arrays', 'strings', 'reversal']
+tags:
+  [
+    'elements of programming interviews',
+    'algorithms',
+    'programming',
+    'arrays',
+    'strings',
+    'reversal',
+  ]
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
-###  Problem:
+### Problem:
 
 Reverse the words in a sentence, eg:
 
 `hello world` -> `world hello`
-
 
 ### Solution:
 
@@ -31,4 +40,3 @@ reverse_words xs = initial_spaces ++ (reverse after_spaces) ++ reverse_words rem
 ```
 
 This is clearly not O(1) in space usage. The constant space solution would perform an in-place swapping of characters within the input array.
-

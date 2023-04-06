@@ -1,15 +1,23 @@
 ---
 title: EPI 5.7 - Generalized conversion between bases
 date: 2014-01-24T15:32:08Z
-tags: ['elements of programming interviews', 'algorithms', 'programming', 'string to integer', 'integer to string']
+tags:
+  [
+    'elements of programming interviews',
+    'algorithms',
+    'programming',
+    'string to integer',
+    'integer to string',
+  ]
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
 ## Problem
 
 Continuing on from [EPI 5.6](/blog/epi/primitive-types/string-to-integer-conversion-functions/), this problem is to convert an integer encoded as S1 in base b1, to S2 in base b2:
-
 
 ## Solution
 
@@ -20,4 +28,3 @@ base1ToBase2 b1 s1 b2 = intToString b2 (stringToInt b1 s1)
 ```
 
 Anybody looking for a version without the intermediate conversion to base 10?
-

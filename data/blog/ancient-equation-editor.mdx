@@ -5,20 +5,25 @@ tags: ['equation editor', 'MML', 'applet', 'java']
 draft: false
 summary: 'A basic implementation of the class Equation Editor (in Windows) about 25 years ago in Java as an applet'
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
+Each time I buy a new laptop, I usually copy and backup the contents of my old laptop and it just keeps accumulating. I was just taking a trip down memory lane and stumbled upon some really old code I had written (about 16 years old to be precise – [here at github now](https://github.com/panyam/oldjava)). You know the code is _really_ old as it is a collection of applets (yep java applets). One thing that really caught my attention was an equation editor I wrote back then (you can get it up and running from the repo, but here is a screenshot of it):
 
-Each time I buy a new laptop, I usually copy and backup the contents of my old laptop and it just keeps accumulating.   I was just taking a trip down memory lane and stumbled upon some really old code I had written (about 16 years old to be precise – [here at github now](https://github.com/panyam/oldjava)). You know the code is *really* old as it is a collection of applets (yep java applets).   One thing that really caught my attention was an equation editor I wrote back then (you can get it up and running from the repo, but here is a screenshot of it):
-
-<Image unoptimized={true} alt="Equation Editor" src="/static/images/equation-editor.png" width={762} height={411}/>
+<Image
+  unoptimized={true}
+  alt="Equation Editor"
+  src="/static/images/equation-editor.png"
+  width={762}
+  height={411}
+/>
 
 I am still surprised it actually worked as well as it did back then given how certifiably little I knew.
 
-And given that I wanted blog a few of my learnings from [my first machine learning course](https://panyam.wordpress.com/2016/11/28/machine-learning-coursera/) not having an easy way to do equations on wordpress (short of taking screenshots of rendered latex) rekindled my interest in an equation editor again (for the modern web?).   So In the coming posts Il go through the design of a system that allows one to easily author and host equations (and math) for the web without having to a) create multiple copies or b) copy and paste from different rendered outputs.
+And given that I wanted blog a few of my learnings from [my first machine learning course](https://panyam.wordpress.com/2016/11/28/machine-learning-coursera/) not having an easy way to do equations on wordpress (short of taking screenshots of rendered latex) rekindled my interest in an equation editor again (for the modern web?). So In the coming posts Il go through the design of a system that allows one to easily author and host equations (and math) for the web without having to a) create multiple copies or b) copy and paste from different rendered outputs.
 
 Our math editor must have the following essential “features”:
-
-
 
 1. Perform as much as possible with the keyboard (ie latex style) without having to insert a symbol by clicking at some icon (see above screenshot).
 2. No “rendering” step ie any output must be directly reflected in the editor area so that the author can see the result live in the one place as they are typing the equations/math.
@@ -27,5 +32,4 @@ Our math editor must have the following essential “features”:
 5. Renderable as an image in any blogging platform without requiring plugins to be installed.
 6. Customizable templates (ie new summation templates etc) in a secure manner.
 
-That seems like a reasonable starting point.   In the next blog, Il go into a bit more detail into a possible API/data model for our content model looks like.   It is worth noting that a lot of this will build on top of existing awesome tools like latex and MathML.
-
+That seems like a reasonable starting point. In the next blog, Il go into a bit more detail into a possible API/data model for our content model looks like. It is worth noting that a lot of this will build on top of existing awesome tools like latex and MathML.

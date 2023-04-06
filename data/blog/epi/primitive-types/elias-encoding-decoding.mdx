@@ -1,9 +1,19 @@
 ---
 title: EPI 5.9 - Elias Encoding and Decoding
 date: 2014-01-24T15:32:08Z
-tags: ['elements of programming interviews', 'algorithms', 'programming', 'elias', 'encoding', 'decoding']
+tags:
+  [
+    'elements of programming interviews',
+    'algorithms',
+    'programming',
+    'elias',
+    'encoding',
+    'decoding',
+  ]
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
 ## Problem
@@ -12,13 +22,12 @@ Elias encoded version of an integer X = X in binary PREPENDED by number of zeroe
 
 So Elias of encoding of 13 (binary = 1101) would be 000 1101 (3 zeroes as length of 1101 = 4).
 
-
 ## Solution
 
 ```haskell showLineNumbers
 elias_encode_int :: Int -> [Char]
 elias_encode_int x = (take (len - 1) (repeat '0')) ++ xbase2
-    where 
+    where
         xbase2  = intToString 2 x
         len     = (length xbase2)
 

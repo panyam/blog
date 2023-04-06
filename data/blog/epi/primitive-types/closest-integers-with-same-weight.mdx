@@ -4,6 +4,8 @@ date: 2014-01-23T15:32:08Z
 tags: ['elements of programming interviews', 'algorithms', 'programming', 'haskell']
 draft: false
 images: []
+authors: ['Sri Panyam']
+layout: PostSimple
 ---
 
 ## Problem
@@ -14,18 +16,17 @@ Given a 64 bit unsigned integer x (where `W(x) != 0 and W(x) != 64`) find y such
 
 ## Solution
 
-
 An example would make this clear, eg if
 
 X = 4 (dec) = 0100 (bin)
 
 The candiates are:
 
-0001   –   Diff = 3
+0001 – Diff = 3
 
-0010   –   Diff = 2
+0010 – Diff = 2
 
-1000   –   Diff = 4
+1000 – Diff = 4
 
 So Y = 010 (bin) = 2 (dec).
 
@@ -36,7 +37,7 @@ In haskell this is (assuming a 64 bit number)
 ```haskell showLineNumbers
 import Data.Bits
 closest_neighbour_by_weight x = closest_neighbour_by_weight_aux x 0
-    where closest_neighbour_by_weight_aux x i 
+    where closest_neighbour_by_weight_aux x i
             | two_digits /= 0 && two_digits /= 3 = xor x (shiftL 3 i)
             | otherwise = closest_neighbour_by_weight_aux x (i + 1)
               where two_digits = (x `shiftR` i) .&. 3
