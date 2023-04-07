@@ -1,13 +1,15 @@
-import { writeFileSync, mkdirSync } from 'fs'
-import path from 'path'
-// import GithubSlugger from 'github-slugger'
-import { slug } from 'github-slugger'
-import { getAllBlogs, getAllTags } from '../lib/utils/contentlayer'
-import { escape } from './htmlEscaper'
 import siteMetadata from '../data/siteMetadata.js'
-// import { getAllBlogs, getAllTags } from '../lib/utils/contentlayer'
+import fs from 'fs'
+import path from 'path'
+import ContentService from '../lib/utils/contentservice'
 
-const generateRssItem = (post) => `
+async function generate() {
+  const contentsvc = await new ContentService().setup()
+  const escaper = await import('./htmlEscaper')
+  // RSS for blog post
+  const escape = escaper.escape
+
+  const generateRssItem = (post, siteMetadata) => `
   <item>
     <guid>${siteMetadata.siteUrl}/blog/${post.slug}</guid>
     <title>${escape(post.title)}</title>
@@ -19,7 +21,7 @@ const generateRssItem = (post) => `
   </item>
 `
 
-const generateRss = (posts, page = 'feed.xml') => `
+  const generateRss = (posts, page, siteMetadata) => `
   <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
       <title>${escape(siteMetadata.title)}</title>
@@ -35,26 +37,23 @@ const generateRss = (posts, page = 'feed.xml') => `
   </rss>
 `
 
-async function generate() {
-  const allBlogs = getAllBlogs()
-  // RSS for blog post
+  const allBlogs = await contentsvc.getAllBlogs()
   if (allBlogs.length > 0) {
-    const rss = generateRss(getAllBlogs())
-    writeFileSync('./public/feed.xml', rss)
+    const rss = generateRss(allBlogs, 'feed.xml', siteMetadata)
+    fs.writeFileSync('./public/feed.xml', rss)
   }
 
   // RSS for tags
-  // TODO: use AllTags from contentlayer when computed docs is ready
   if (allBlogs.length > 0) {
-    const tags = await getAllTags(allBlogs)
+    const tags = await contentsvc.getAllTags(allBlogs)
     for (const tag of Object.keys(tags)) {
-      const filteredPosts = getAllBlogs().filter(
-        (post) => post.draft !== true && post.tags.map((t) => slug(t)).includes(tag)
+      const filteredPosts = allBlogs.filter(
+        (post) => post.draft !== true && post.tags.map((t) => contentsvc.getSlug(t)).includes(tag)
       )
-      const rss = generateRss(filteredPosts, `tags/${tag}/feed.xml`)
+      const rss = generateRss(filteredPosts, `tags/${tag}/feed.xml`, siteMetadata)
       const rssPath = path.join('public', 'tags', tag)
-      mkdirSync(rssPath, { recursive: true })
-      writeFileSync(path.join(rssPath, 'feed.xml'), rss)
+      await fs.promises.mkdir(rssPath, { recursive: true })
+      await fs.promises.writeFile(path.join(rssPath, 'feed.xml'), rss)
     }
   }
 }

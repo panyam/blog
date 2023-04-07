@@ -1,13 +1,14 @@
 import siteMetadata from '@/data/siteMetadata'
 import ListLayout from '@/layouts/ListLayout'
 import { PageSEO } from '@/components/SEO'
-import { sortedBlogPost, getAllBlogs } from '@/lib/utils/contentlayer'
+import ContentService from '@/lib/utils/contentservice'
 import { InferGetStaticPropsType } from 'next'
 
 export const POSTS_PER_PAGE = 10
 
 export const getStaticProps = async () => {
-  const posts = sortedBlogPost(getAllBlogs())
+  const contentSvc = await new ContentService().setup()
+  const posts = contentSvc.sortedBlogPost()
   const initialDisplayPosts = posts.slice(0, POSTS_PER_PAGE)
   const pagination = {
     currentPage: 1,

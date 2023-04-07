@@ -3,12 +3,12 @@ import { PageSEO } from '@/components/SEO'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import kebabCase from '@/lib/utils/kebabCase'
-import { getAllTags } from '@/lib/utils/contentlayer'
+import ContentService from '@/lib/utils/contentservice'
 import { GetStaticProps, InferGetStaticPropsType } from 'next'
-import { getAllBlogs } from '@/lib/utils/contentlayer'
 
 export const getStaticProps: GetStaticProps<{ tags: Record<string, number> }> = async () => {
-  const tags = await getAllTags(getAllBlogs())
+  const contentSvc = await new ContentService().setup()
+  const tags = await contentSvc.getAllTags()
   return { props: { tags } }
 }
 

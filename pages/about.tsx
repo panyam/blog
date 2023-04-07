@@ -1,12 +1,13 @@
 import { OurMDXRemote } from '@/components/MDXComponents'
 import { renderPostContent } from '@/lib/utils/renderer'
 import { InferGetStaticPropsType } from 'next'
-import { getAllAuthors } from '@/lib/utils/contentlayer'
+import ContentService from '@/lib/utils/contentservice'
 
 const DEFAULT_LAYOUT = 'AuthorLayout'
 
 export const getStaticProps = async () => {
-  const allAuthors = getAllAuthors()
+  const contentSvc = await new ContentService().setup()
+  const allAuthors = contentSvc.getAllAuthors()
   const author = allAuthors.find((p) => p.slug === 'authors/default')
   const mdxSource = await renderPostContent(author.body.raw)
   return { props: { author, mdxSource } }

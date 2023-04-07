@@ -1,12 +1,14 @@
 import { writeFileSync } from 'fs'
 import prettier from 'prettier'
 import siteMetadata from '../data/siteMetadata.js'
-import { getAllBlogs } from '../lib/utils/contentlayer'
 import { globSync } from 'glob'
+import ContentService from '../lib/utils/contentservice'
 
 async function generate() {
   const prettierConfig = await prettier.resolveConfig('./.prettierrc.js')
-  const contentPages = getAllBlogs()
+  const svc = await new ContentService().setup()
+  const allBlogs = svc.getAllBlogs()
+  const contentPages = allBlogs
     .filter((x) => !x.draft && !x.canonicalUrl)
     .map((x) => `/${x._raw.flattenedPath}`)
   const pages = globSync(['pages/*.{js|tsx}', 'public/tags/**/*.xml'], {

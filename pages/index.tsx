@@ -3,14 +3,15 @@ import { PageSEO } from '@/components/SEO'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import formatDate from '@/lib/utils/formatDate'
-import { sortedBlogPost, getAllBlogs } from '@/lib/utils/contentlayer'
 import { InferGetStaticPropsType } from 'next'
 import NewsletterForm from '@/components/NewsletterForm'
+import ContentService from '@/lib/utils/contentservice'
 
 const MAX_DISPLAY = 10
 
 export const getStaticProps = async () => {
-  const sortedPosts = sortedBlogPost(getAllBlogs())
+  const contentSvc = await new ContentService().setup()
+  const sortedPosts = contentSvc.sortedBlogPost()
   const posts = sortedPosts
   return { props: { posts } }
 }

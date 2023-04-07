@@ -1,14 +1,14 @@
 import PageTitle from '@/components/PageTitle'
 import { OurMDXRemote } from '@/components/MDXComponents'
-import { sortedBlogPost } from '@/lib/utils/contentlayer'
 import { renderPostContent } from '@/lib/utils/renderer'
 import { InferGetStaticPropsType } from 'next'
-import { getPostAuthor, getAllBlogs } from 'lib/utils/contentlayer'
+import ContentService from '@/lib/utils/contentservice'
 
 const DEFAULT_LAYOUT = 'PostLayout'
 
 export async function getStaticPaths() {
-  const allBlogs = getAllBlogs()
+  const contentSvc = await new ContentService().setup()
+  const allBlogs = contentSvc.getAllBlogs()
   const paths = allBlogs.map((p) => ({ params: { slug: p.slug.split('/') } }))
   return {
     paths: paths,
@@ -17,8 +17,9 @@ export async function getStaticPaths() {
 }
 
 export const getStaticProps = async ({ params }) => {
+  const contentSvc = await new ContentService().setup()
   const slug = (params.slug as string[]).join('/')
-  const sortedPosts = sortedBlogPost(getAllBlogs())
+  const sortedPosts = contentSvc.sortedBlogPost()
   const postIndex = sortedPosts.findIndex((p) => p.slug === slug)
 
   const prevContent = sortedPosts[postIndex + 1] || null
@@ -26,7 +27,7 @@ export const getStaticProps = async ({ params }) => {
   const nextContent = sortedPosts[postIndex - 1] || null
   const next = nextContent || null
   const post = sortedPosts.find((p) => p.slug === slug)
-  const authorDetails = getPostAuthor(post)
+  const authorDetails = contentSvc.getPostAuthor(post)
   const mdxSource = await renderPostContent(post.body.raw)
   return {
     props: {
