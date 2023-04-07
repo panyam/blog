@@ -33,7 +33,8 @@ class CodeRenderer extends React.Component {
   componentDidMount() {
     const state = this.state
     const language = state.language
-    console.log('In Comp Did Mount: ', state.url)
+    console.log('In Comp Did Mount: ', state.url, language)
+    /*
     if (state.url) {
       console.log('Making reuqest: ', state.url)
       axios
@@ -63,6 +64,7 @@ class CodeRenderer extends React.Component {
           console.log(err)
         })
     }
+    */
   }
 
   render() {
