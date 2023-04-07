@@ -35,7 +35,7 @@ export default class ContentService {
     for (const file of files) {
       if (fs.statSync(dirPath + '/' + file).isDirectory()) {
         arrayOfFiles = this.getAllFilesRecursively(dirPath + '/' + file, arrayOfFiles)
-      } else {
+      } else if (arrayOfFiles) {
         arrayOfFiles.push(path.join(dirPath, '/', file))
       }
     }

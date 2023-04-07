@@ -17,7 +17,8 @@ const ScrollTopAndComment = () => {
     window.scrollTo({ top: 0 })
   }
   const handleScrollToComment = () => {
-    document.getElementById('comment').scrollIntoView()
+    const elem = document.getElementById('comment')
+    if (elem != null) elem.scrollIntoView()
   }
   return (
     <div
