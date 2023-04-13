@@ -163,7 +163,7 @@ const finalConfig = withMDX(
         test: /\.svg$/,
         use: ['@svgr/webpack'],
       })
-
+      if (isServer) config.devtool = 'source-map'
       if (!dev && !isServer) {
         // Replace React with Preact only in client production build
         Object.assign(config.resolve.alias, {

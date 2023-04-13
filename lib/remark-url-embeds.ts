@@ -28,13 +28,24 @@ function createTransformer(options: any): Transformer<Root> {
       tree,
       'mdxJsxFlowElement',
       (node: MdxJsxFlowElement, index: number | null, parent: Parent | null) => {
-        if (index == null || parent == null || node.name != 'div') {
+        if (index == null || parent == null || node.name != 'CodeEmbed') {
           return
         }
-        console.log('Div Node: ', inspect(node))
+        const url = getAttrib(node, 'url') || ''
+        const lang = getAttrib(node, 'language') || 'ts'
+        const title = getAttrib(node, 'title') || ''
+        const height = getAttrib(node, 'height') || '300px'
+        // console.log('Div Node: ', inspect(node))
+        allPromises.push(
+          loadUrl(url, parent, index, lang, {
+            title: title,
+            height: height,
+          })
+        )
       }
     )
 
+    /*
     visit(
       tree,
       'mdxJsxFlowElement',
@@ -47,6 +58,7 @@ function createTransformer(options: any): Transformer<Root> {
         allPromises.push(loadUrl(url, parent, index, lang, {}))
       }
     )
+   */
     await Promise.all(allPromises)
   }
 }
@@ -65,40 +77,91 @@ async function loadUrl(
   const maxHeight = configs.maxHeight || '400px'
   if (url == null) {
     // replace with a warning
-    const code = `<code><pre>Unable to laod url ${url}</pre></code>`
+    const code = `<pre><code>Unable to laod url ${url}</code></pre>`
     parent.children[index] = parseMarkup(code)
+  } else {
+    const response = await axios.get(url)
+    const content = response.data
+    const codeNode = {
+      type: 'code',
+      value: content,
+      meta: 'showLineNumbers',
+      lang: lang,
+    }
+    const divNode = {
+      name: 'div',
+      type: 'mdxJsxFlowElement',
+      attributes: [
+        {
+          type: 'mdxJsxAttribute',
+          name: 'className',
+          value: 'CodeEmbedContainer',
+        },
+      ],
+      children: [
+        {
+          name: 'h4',
+          type: 'mdxJsxFlowElement',
+          attributes: [
+            {
+              type: 'mdxJsxAttribute',
+              name: 'className',
+              value: 'CodeEmbedHeading',
+            },
+          ],
+          children: [
+            {
+              name: 'a',
+              type: 'mdxJsxFlowElement',
+              attributes: [
+                {
+                  type: 'mdxJsxAttribute',
+                  name: 'className',
+                  value: 'CodeEmbedUrlLink',
+                },
+                {
+                  type: 'mdxJsxAttribute',
+                  name: 'href',
+                  value: url,
+                },
+              ],
+              children: [
+                {
+                  type: 'text',
+                  value: configs.title || '',
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'div',
+          type: 'mdxJsxFlowElement',
+          attributes: [
+            {
+              type: 'mdxJsxAttribute',
+              name: 'className',
+              value: 'CodeEmbedBlockContainer',
+            },
+            {
+              name: 'style',
+              type: 'mdxJsxAttributeValueExpression',
+              value: `max-height: ${maxHeight}; overflow: scroll;`,
+              // type: 'mdxJsxAttribute',
+              // value: "{ height: '300px', overflow: 'scroll' }",
+              // value: { overflow: 'scroll', 'max-height': maxHeight },
+              // value: { overflow: 'scroll', 'max-height': maxHeight },
+              // value: `max-height: 300px; overflow: 'scroll';`,
+            },
+          ],
+          children: [codeNode],
+        },
+      ],
+    }
+    parent.children[index] = divNode
+    return content
   }
-  const response = await axios.get(url)
-  const content = response.data
-  const codeNode = {
-    type: 'code',
-    value: content,
-    meta: 'showLineNumbers',
-    lang: lang,
-  }
-  const divNode = {
-    name: 'div',
-    type: 'mdxJsxFlowElement',
-    attributes: [
-      {
-        type: 'mdxJsxAttribute',
-        name: 'className',
-        value: 'CodeEmbedContainer',
-      },
-      {
-        name: 'style',
-        type: 'mdxJsxAttributeValueExpression',
-        // value: { overflow: 'scroll', 'max-height': maxHeight },
-        value: `max-height: ${maxHeight}; overflow: 'scroll';`,
-        // value: { overflow: 'scroll', 'max-height': maxHeight },
-        // value: `max-height: 300px; overflow: 'scroll';`,
-      },
-    ],
-    children: [codeNode],
-  }
-
-  parent.children[index] = divNode
-  return content
+  return ''
 }
 
 function getAttrib(node: any, attribName: string): any {

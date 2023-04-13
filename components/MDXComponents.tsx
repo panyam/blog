@@ -23,7 +23,7 @@ export const MDXComponents: any = {
   TOCInline,
   a: CustomLink,
   pre: Pre,
-  CodeEmbed: CodeRenderer,
+  // CodeEmbed: CodeRenderer,
   BlogNewsletterForm,
 }
 

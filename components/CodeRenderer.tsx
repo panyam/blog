@@ -1,7 +1,9 @@
 import React from 'react'
 import Link from './Link'
-import axios from 'axios'
 import 'prismjs/plugins/line-numbers/prism-line-numbers.css'
+import 'prismjs/plugins/line-numbers/prism-line-numbers.js'
+import axios from 'axios'
+import Prism from 'prismjs'
 
 /*
 async function highlight(language: string, codeRef: React.RefObject<HTMLElement>) {
@@ -13,7 +15,7 @@ async function highlight(language: string, codeRef: React.RefObject<HTMLElement>
 }
 */
 
-class CodeRenderer extends React.Component {
+class CodeRendererClass extends React.Component {
   codeRef = React.createRef<HTMLElement>()
   state: any
 
@@ -30,17 +32,15 @@ class CodeRenderer extends React.Component {
     }
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     const state = this.state
     const language = state.language
     console.log('In Comp Did Mount: ', state.url, language)
-    /*
     if (state.url) {
       console.log('Making reuqest: ', state.url)
       axios
         .get(state.url)
         .then(async (response) => {
-          console.log('Got Resonse: ', response.data)
           this.setState((ps) => ({
             ...ps,
             contents: response.data,
@@ -64,7 +64,6 @@ class CodeRenderer extends React.Component {
           console.log(err)
         })
     }
-    */
   }
 
   render() {
@@ -88,36 +87,32 @@ class CodeRenderer extends React.Component {
   }
 }
 
-const CodeRenderer2 = (props) => {
+const CodeRendererFunc = async (props) => {
   const language = props.language
-  const [contents, setContents] = React.useState(props.contents || '')
+  // const [contents, setContents] = React.useState(props.contents || '')
   const codeRef = React.createRef<HTMLElement>()
 
   React.useEffect(() => {
-    if (props.url) {
-      axios
-        .get(props.url)
-        .then(async (response) => {
-          setContents(response.data.trim())
-          if (typeof window !== 'undefined' || !language) {
-            const Prism = await import('prismjs')
-            await import('prismjs/plugins/line-numbers/prism-line-numbers.js')
-            try {
-              await import(`prismjs/components/prism-${language}`)
-            } catch (err) {
-              console.log('Error loading lang plugin: ', language)
-            }
-            // const t1 = Date.now()
-            // Prism.highlightElement(codeRef.current)
-            Prism.highlightAll()
-            // console.log("Highlighting: ", Date.now() - t1, codeRef.current)
-          }
-        })
-        .catch((err) => {
-          console.log(err)
-        })
-    }
-  }, [contents, language])
+    import(`prismjs/components/prism-${language}`)
+      .then(() => {
+        Prism.highlightAll()
+      })
+      .catch((err) => {
+        console.log('Error loading lang plugin: ', language)
+      })
+  }, [props.url, language])
+
+  console.log('Loading Code URL: ', props.url)
+  let contents = props.contents || ''
+  if (props.url) {
+    const response = await axios.get(props.url)
+    contents = response.data.trim()
+    // const t1 = Date.now()
+    // Prism.highlightElement(codeRef.current)
+    // console.log("Highlighting: ", Date.now() - t1, codeRef.current)
+    // if (typeof window !== 'undefined' || !language) { }
+  }
+  // React.useEffect(() => { }, [props.url, contents, language])
 
   return (
     <div>
@@ -133,4 +128,4 @@ const CodeRenderer2 = (props) => {
   )
 }
 
-export default CodeRenderer
+export default CodeRendererFunc
