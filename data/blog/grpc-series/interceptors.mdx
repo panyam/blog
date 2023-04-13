@@ -1,8 +1,8 @@
 ---
-title: 'Part 4 - Authentication, Middleware and Interceptors'
+title: 'Part 4 - gRPC Interceptors'
 date: 2023-02-20T15:32:14Z
 lastmod: '2022-05-05'
-tags: ['grpc', 'buf', 'build tooling', 'plugin management']
+tags: ['grpc', 'interceptors', 'unary', 'streaming', 'middleware']
 draft: false
 summary: 'Buf.build is a modern ecosystem simplifying the plugin management when building gRPC services and addresses several pains and short-comings found in the original gRPC build ecosystem'
 authors: ['Sri Panyam']
@@ -33,9 +33,13 @@ A common thread across all these aspects is that these apply in an (almost) unif
 - Rate limiting can also be applied in a uniform way (by looking up a config of request specific limits) and only invoking the handler if within those limits.
 - Authentication can look for common request headers (if HTTP) before allowing continuing onto the request handler.
 
+In this post we will describe interceptors - a power gRPC facility for (well) intercepting and modifying requests and responses (and streams) on a gRPC server.
+
+TL;DR - If you want to get to building - Skip to [right here]().
+
 ### Middleware
 
-In a typical HTTP endpoint (api or otherwise) this is done through `middleware`. The role of middleware is to
+Before going int gRPC interceptors, let us look at their parallel in the HTTP world - the Middleware!  In a typical HTTP endpoint (api or otherwise) middleware is used extensively to wrap/decorate/filter requests. The role of middleware is to
 
 - Intercept a request a handler,
 - Reject, Modify or Forward the request as is to the underlying handler
@@ -45,25 +49,23 @@ Request handlers are typically functions that `(req: HTTPRequest) => HTTPRespons
 
 ```js showLineNumbers
 function mymiddleware(anotherHandler: HTTPHandler): HTTPHandler {
-  newHanlder = function(req: HTTPRequest): HTTPResponse {
+  newHandler = function(req: HTTPRequest): HTTPResponse {
     req = // do some preprocessing and get a modified request
 
     resp = anotherHandler(req)
 
     resp = // do some post processing and get a modified response
 
-    // return it
     return resp
-
   }
 
-  return newHandler
+  return newHandler     // Return the new handler function
 }
 ```
 
 So now we could create a very simple rate-limiter (say for a 5 minute window) with:
 
-```js showLineNumbers
+```ts showLineNumbers
 function rateLimitingMiddleware(originalHandler: HTTPHandler): HTTPHandler {
   return function (req: HTTPRequest): HTTPResponse {
     method = req.method
@@ -84,4 +86,81 @@ function rateLimitingMiddleware(originalHandler: HTTPHandler): HTTPHandler {
 }
 ```
 
-For example in a NodeJS express app, middleware can be applied
+The advantage of Middleware is that they can be chained to apply seperate concerns without the knowledge of the main request handling the business logic.
+A common pattern (say in a language like Python that supports decorators) thus would look like:
+
+```python
+@ratelimiter_middleware
+@authenticator_middleware
+@logger_middleware
+def main_handler(req: HTTPRequest) -> HTTPResponse:
+    return 200, "Hello World"
+```
+
+Without any syntactical decorator support this could be achieved with:
+
+```go showLineNumbers
+
+func createHttpserver() {
+  ...
+  ...
+
+  widgetHandler := func(w http.ResponseWriter, r *http.Request) {
+    // return a widget listing
+  }
+
+  mux := http.NewServeMux()
+  mux.Handle("/api/widgets/",
+                  authMiddleware(
+                      loggerMiddleware(
+                          rateLimitingMiddlewarea(
+                              widgetHandler))))
+
+	http.ListenAndServe("localhost:8080", mux)
+  ...
+  ...
+}
+```
+
+There are fancier things one can do like apply middleware en-masse to an entire collection of routes.  Such framework specific aesthetics are outside the scope of this article.   If you are interested check out the amazing [Gin Web Framework](https://github.com/gin-gonic/gin)!
+
+## Interceptors
+
+Now that we have seen their HTTP equivalent, interceptors are very intuitive.  Interceptors come in two types:
+
+* Unary interceptors are "oneshot" interceptors in that they either intercet a request or a response
+* Stream interceptors are "continuous" - they intercept every message in a streaming request (client -> server) or a streaming response (server -> client).
+
+Since interceptors can apply to both the client and server, we have four total favors:
+
+1. Client Unary Interceptor - For intercepting a request just as it leaves the client but before it is sent to the server.   A typical use case for these could be for a client that may look up a local (on-client) cache for queries instead of forwarding to a server.  Another example is for client side routing - where the client may decide which server-shard to forward a request to based on the entity's ID.  Other cases could be to log/monitor client-side latencies of requests, etc.
+
+2. Server Unary Interceptor - These intercept a request that is received by a server (but before forwarding to the request handler).   Server side interceptors are great for common validation of auth tokens or logging/monitoring server side latencies and errors and more.
+
+3. Client Stream Interceptor - These - similar to their Unary counterpart - intercept and process/transform each message being streamed from the client to the server.   A great use case for this could be an interceptor/agent that may collect multiple messages and collect them in a window before forwarding to the server (eg logs or metrics).
+
+4. Server Stream Interceptor - Similar to their Unary counterpart - these intercept messages in a single connection when received at the server.
+
+Interceptors provide more benefits of plain HTTP middleware:
+
+1. HTTP middleware are very language/framework specific so each framework has their own conventions for creating/enforcing this.
+2. HTTP middleware has no standard ways to decorate streams (eg Websocket packets).   Since gRPC offers framing in streaming messages, stream interceptors can intercept individual messages in a stream.  In HTTP (or Websockets) lack of a "typed message" stream means applications would have to implement their own framing of messages and decorators to process these messages in arbirary ways.
+
+## Implementing Interceptors
+
+Our example does not (yet) have any streaming rpcs.   So will add unary interceptors for now and add stream interceptors when we look at [Websockets and Streaming](/blog/grpc-series/grpc-request-and-response-streaming).  
+
+First we will add a Client Unary Interceptor to our service clients (invoked by the gRPC gateway) to ensure that only requests that contain the auth header (with username+password) are forwarded to the server.  Otherwise the call to the server is not even made.
+
+Then we will add a Server Unary Interceptor to our service to accept and validate these credentials.
+
+1. Support [basic http auth](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) in the gRPC gateway so that caller of our API can pass in a username/password to authenticate a user.
+2. The gRPC gateway (http server) extracts the username/password (from http heads) and forwards it to the service (via gRPC metadata - see below).
+3. The Server Unary Interceptor validagtes this username/password - against a static list of users/passwords.
+3a. If the credentials are invalid then the interceptor returns an error to the gRPC gateway (without invoking the gRPC handler).
+3b. If the credentials are valid the underlying service's handler is invoked
+
+Clearly this auth scheme is very simplistic and we will look at more full-fledged and complex example in the article on [Authentication](/blog/grpc-series/grpc-authentication).
+
+We will also add a second client and server unary interceptor to log client and server side response latencies.  These interceptors will not have any knowledge of each other.
+
