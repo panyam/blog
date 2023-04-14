@@ -288,7 +288,7 @@ func startGatewayServer(grpc_addr string, gw_addr string) {
 
     opts := []grpc.DialOption{
         grpc.WithInsecure(),
-        # Add our interceptor as a DialOption
+        // Add our interceptor as a DialOption
         grpc.WithUnaryInterceptor(EnsureAuthExists),
     }
     ...
@@ -401,11 +401,9 @@ $ curl localhost:8080/v1/albums -u login:password
 Passing the right password fixes this:
 
 ```
-```
 $ curl localhost:8080/v1/albums -u login:login123
 
 {"albums":[], "nextPageKey":""}
-```
 ```
 
 That's it.  That's all there is to interceptors.   Stream interceptors are very similar but not covered here.  Wait for it though!
