@@ -1,6 +1,5 @@
 type Blog = any
 type Author = any
-type DocumentTypes = any
 const DEFAULT_AUTHOR = 'authors/default'
 
 export function dateSortDesc(a: string, b: string) {

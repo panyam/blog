@@ -1,13 +1,14 @@
 import jsx from 'acorn-jsx'
 import { Parser } from 'acorn'
 import { Parent, Root } from 'mdast'
-import { MdxJsxFlowElement, MdxFlowExpression } from 'mdast-util-mdx'
+import { MdxJsxFlowElement } from 'mdast-util-mdx'
+// import { MdxFlowExpression } from 'mdast-util-mdx'
 import { visit } from 'unist-util-visit'
 import { Plugin, Transformer } from 'unified'
-import util from 'util'
+// import util from 'util'
 const axios = require('axios')
 
-const inspect = (result: any) => util.inspect(result, false, null, true)
+// const inspect = (result: any) => util.inspect(result, false, null, true)
 const OUR_NODE_NAME = 'CodeEmbed'
 
 /**
@@ -21,6 +22,7 @@ const OUR_NODE_NAME = 'CodeEmbed'
  */
 
 function createTransformer(options: any): Transformer<Root> {
+  options = options || {}
   return async (tree: Parent & { lang?: string }) => {
     const allPromises = [] as Promise<string>[]
 
@@ -28,13 +30,13 @@ function createTransformer(options: any): Transformer<Root> {
       tree,
       'mdxJsxFlowElement',
       (node: MdxJsxFlowElement, index: number | null, parent: Parent | null) => {
-        if (index == null || parent == null || node.name != 'CodeEmbed') {
+        if (index == null || parent == null || node.name != OUR_NODE_NAME) {
           return
         }
         const url = getAttrib(node, 'url') || ''
         const lang = getAttrib(node, 'language') || 'ts'
         const title = getAttrib(node, 'title') || ''
-        const height = getAttrib(node, 'height') || '300px'
+        const height = getAttrib(node, 'height') || options.defaultCodeHeight || '300px'
         // console.log('Div Node: ', inspect(node))
         allPromises.push(
           loadUrl(url, parent, index, lang, {

@@ -9,11 +9,13 @@ import Comments from '@/components/comments'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import { ReactNode } from 'react'
 
+/*
 const editUrl = (slug) => `${siteMetadata.siteRepo}/blob/master/data/blog/${slug}`
 const discussUrl = (slug) =>
   `https://mobile.twitter.com/search?q=${encodeURIComponent(
     `${siteMetadata.siteUrl}/blog/${slug}`
   )}`
+*/
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',

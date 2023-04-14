@@ -4,8 +4,18 @@ import Image from './Image'
 import CustomLink from './Link'
 import TOCInline from './TOCInline'
 import Pre from './Pre'
-import CodeRenderer from './CodeRenderer'
 import { BlogNewsletterForm } from './NewsletterForm'
+
+export const MDXComponents: any = {
+  Image,
+  TOCInline,
+  a: CustomLink,
+  pre: Pre,
+  // CodeEmbed: CodeRenderer,
+  BlogNewsletterForm,
+}
+
+/*
 
 interface MDXLayout {
   layout: string
@@ -18,16 +28,6 @@ interface Wrapper {
   [key: string]: unknown
 }
 
-export const MDXComponents: any = {
-  Image,
-  TOCInline,
-  a: CustomLink,
-  pre: Pre,
-  // CodeEmbed: CodeRenderer,
-  BlogNewsletterForm,
-}
-
-/*
 export const MDXLayoutRenderer = ({ layout, content, ...rest }: MDXLayout) => {
   const MDXLayout = useMDXComponent(content.body.code)
   const mainContent = content // coreContent(content);

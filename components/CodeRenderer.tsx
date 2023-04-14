@@ -52,7 +52,7 @@ class CodeRendererClass extends React.Component {
             try {
               await import(`prismjs/components/prism-${language}`)
             } catch (err) {
-              console.log('Error loading lang plugin: ', language)
+              console.log('Error loading lang plugin: ', language, err)
             }
             // const t1 = Date.now()
             // Prism.highlightElement(codeRef.current)
