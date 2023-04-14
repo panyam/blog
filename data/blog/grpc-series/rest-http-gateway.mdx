@@ -277,7 +277,8 @@ import (
 )
 
 func startGatewayServer(grpc_addr string, gw_addr string) {
-ctx := context.Background()
+
+    ctx := context.Background()
     mux := runtime.NewServeMux()
 
     opts := []grpc.DialOption{grpc.WithInsecure()}
@@ -306,6 +307,10 @@ func main() {
 ```
 
 In this implementation, we created a new runtime.ServeMux and registered each of our grpc services' handlers using the `v1.Register<ServiceName>HandlerFromEndpoint` method. This method associates all of the urls found in the `<ServiceName>` service's protos to this particular mux. Note how all these handlers are associated with the port on which the grpc service is already running (port 9000 by default). Finally the http server is started on its own port (8080 by default).
+
+You might be wondering why we are using the <BookMark name="RuntimeNewServeMux" />NewServeMux in the `github.com/grpc-ecosystem/grpc-gateway/v2/runtime` module and not the version in the [standard library's `net/http` module](https://pkg.go.dev/net/http#NewServeMux).
+
+This is because the [grpc-gateway/v2/runtime](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2/runtime#NewServeMux) module's ServeMux is customized to act specifically as a router for the underlying grpc services it is fronting.  It also accepts a list of [ServeMuxOption](https://github.com/grpc-ecosystem/grpc-gateway/blob/v2.15.2/runtime/mux.go#L69) (ServeMux handler) methods that act as middleware for intercepting a http call that is in the process of being converted to a gRPC message sent to the underlying gRPC service.   These middleware can be used to set extra metadata in needed by the gRPC service in a common way transparently.   We will see more about this in our tour of [gRPC interceptors](/blog/grpc-series/grpc-interceptors)
 
 ## Generating OpenAPI specs
 

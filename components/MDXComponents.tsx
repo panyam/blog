@@ -4,6 +4,7 @@ import Image from './Image'
 import CustomLink from './Link'
 import TOCInline from './TOCInline'
 import Pre from './Pre'
+import BookMark from './BookMark'
 import { BlogNewsletterForm } from './NewsletterForm'
 
 export const MDXComponents: any = {
@@ -11,6 +12,7 @@ export const MDXComponents: any = {
   TOCInline,
   a: CustomLink,
   pre: Pre,
+  BookMark: BookMark,
   // CodeEmbed: CodeRenderer,
   BlogNewsletterForm,
 }
