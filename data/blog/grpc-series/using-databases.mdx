@@ -1,11 +1,109 @@
 ---
 title: 'Part 5 - Persisting your data - Using a Database (Part 1)'
-date: 2023-03-01T15:32:14Z
+date: 2022-12-04T15:32:14Z
 lastmod: '2022-05-05'
 tags: ['grpc', 'services', 'databases', 'postgres', 'gorm']
 draft: false
-summary: 'While memory stores make it easy to start off building your services, it is very toilsome to re-seed your data on each load.  We can overcome that by using a database to persist your data.   In this is article let us persist our data using a good old fashioned local database - sqlite - and with some frameworks to make it easier to port to other databases'
+summary: 'While memory stores make it easy to start off building your services, it is very toilsome to re-seed your data on each load.  We can overcome that by using a database to persist your data.   In this is article let us persist our data using a popular relational database - Postgres - and the popular GORM (ORM) frameworks.'
 authors: ['Sri Panyam']
 layout: PostSimple
 ---
 
+## Introduction 
+
+We have a somewhat bare banes music service [so far](../index).   Our service, exposes endpoints for managing albums, artists, labels and songs.   To show case some key concepts we have been using a makeshift in-memory store that shamelessly provides no durability guarantees.   A basic and essential building block in any (web) service is a datastore (for storing, organizing and retrieving data securily and efficiently).  In this tutorial we will improve the durability, organization and persistence of data by introducing a database.  There are several choice of databases - in-memory (a very basic form of which we have used earlier), object oriented databases, key-value stores, relational databases and more.   We will not repeat an indepth comparison of these here and instead defer to [others](https://www.prisma.io/dataguide/intro/comparing-database-types).
+
+Furthermore in this article we will use a relational (SQL) database as our underlying datastore.   We will use the popular [GORM](https://gorm.io/) library (an ORM framework) to simplify access to our our database.    There are several relational databases available - both free as well as commercial.   We will use Sqlite (a very popular, free and lightweight database) for our service.  We will look at different ways of accessing the database in Go and see what it would take to swap one relational DB with another (hint - very little).   
+
+## Setting up the database
+
+Our general strategy is:
+
+```
+|---------------|      |-----------|     |------------|       |------|
+| Request Proto | <->  |  Service  | <-> |  SQL Stmt  |  <->  |  DB  |
+|---------------|      |-----------|     |------------|       |------|
+```
+
+1. A grpc request is received by the service
+2. The service converts the model proto (eg Song) contained in the request (eg CreateSongRequest) into a SQL statement
+3. The SQL statment is passed to the DB (eg an insert or update)
+
+### Install Sqlite
+
+Since we are starting off with Sqlite our setup (outside of our service code) is *really* minimal.  Simply install Sqlite (in OSX):
+
+```
+brew install sqlite3
+brew install sqlite-utils
+```
+
+Sqlite stores the entire DB in a single file on the disk.  So no further setup is required beyond providing a path to the file which will store the database.   This is clearly not a scalable solution but for use cases where the database needs to be "embedded" with the service this is an excellent choice and Sqlite offers excellent performance as well SQL standards compliance which goes a long way in getting one started.
+
+### Initialize the Database
+
+Now that we have installed the database, it is time to initialize it with the schemas for each of our models.  Schemas despribe the blueprint (similar to class in object oriented languages) of the data being stored in (and retrieved form) a database.
+
+Let us do this for the simple 
+
+If we were NOT using a helper framework like GORM we would have had to setup our database manually (with steps possibly specific to different databases).  For example the table setup for the [Artist](https://github.com/panyam/grpcdemos/blob/06e2de1a4c95b35e5c1af0690f2ff1d9f7b9acf0/musicservice/protos/musicservice/v1/models.proto#L29) entity, the table setup would have required:
+
+```
+# Open the DB
+
+sqlite3 ourdb.db
+```
+
+```
+# Add the table schema 
+
+sqlite > CREATE TABLE artists (
+          id STRING NOT NULL PRIMARY KEY,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          name STRING NOT NULL,
+          country STRING DEFAULT(''),
+          date_of_birth DATE
+        );
+```
+
+Similarly an insertion would also have been manual construction of SQL statements, eg:
+
+```
+sqlite > INSERT INTO artists 
+        ( id, name, country, date_of_birth )
+        VALUES ( "1", "Bono", "Ireland", "1960-05-10" );
+```
+
+... followed by a verification of the saved results:
+
+```
+sqlite > select * from artists ; 
+
+1|2023-04-21 19:09:32|2023-04-21 19:09:32|Bono|Ireland|1960-05-10
+
+```
+
+This can get pretty tedious (and error prone with vulnerability to [sql injection attacks](https://www.w3schools.com/sql/sql_injection.asp)).   Let us GORM to simplify this.
+
+## Create DB models 
+
+The grpc service interface (for each of our 4 services) offers a logical view of the data.  However, data is seldom stored in this same structure in a database - especially when normalization is required since (in a relational database) data is organized in a normalized form across many tables (more on this later).   We will establish a few conventions along the way to standardize how we will keep interface models/schemas different from datastore schemas in order to not mix concerns between the two domains (service and datastores).
+
+## Data Access Conventions
+
+### Convention 1 - Create Separate DB Models
+
+Our first convention is to (for each "key" interface model) create one or more accompanying Datastore models and datastore access methods  The purpose of the Datastore models (similar to [data access objects](https://en.wikipedia.org/wiki/Data_access_object)) is to guarantee a clean seperation in how data is organized/stored/retrieved vs how it is served and viewed by customers of our application(s).
+
+Let us look at the Artist model's datastore representation (using the GORM) framework:
+
+<CodeEmbed
+  title="Artist"
+  language="protobuf"
+  url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/models.proto"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+### Convention 2 - Define a data access interface for your entities
