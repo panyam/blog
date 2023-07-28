@@ -1,9 +1,9 @@
 ---
 title: 'Part 2 - REST/Http gateway for a gRPC service'
-date: 2022-09-15T15:32:14Z
+date: 2023-07-28T05:32:14Z
 tags: ['grpc', 'services', 'rest', 'http gateway', 'openapi']
-draft: true
-summary: 'In this guide we will improve our music service by building a rest/http gateway fronting it.'
+draft: false
+summary: 'In this guide we will improve our group chat service by building a rest/http gateway fronting it.'
 authors: ['Sri Panyam']
 layout: PostSimple
 ---
@@ -12,7 +12,7 @@ layout: PostSimple
 
 In [Part 1](/blog/grpc-series/simple-grpc-service/):
 
-- We built a simple gRPC service for managing labels, albums, artists and songs for a music related site/app.
+- We built a simple gRPC service for managing topics and messages in a chat service (like a very simple version of Slack or Teams).
 - gRPC provided a very easy way to represent the services and operations for this app.
 - We were able to serve (a very rudimentary implementation) from localhost on an arbitrary port (9000 by default) on a custom TCP protocol.
 - We were able to call the methods on these services both via a CLI utility (grpc_cli) as well as through generated clients (via tests).
@@ -26,9 +26,9 @@ At a high level, the downsides to this approach to this are:
 
 ## Use a familiar cover - grpc-gateway
 
-We can have the best of both worlds by enacting a proxy in front our service that translates gRPC to/from the familiar REST/HTTP to/from the outside world. Given the amazing ecosystem of plugins in gRPC just such a plugin exists - the [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway). The repo itself contains a very indepth set of examples and tutorials on how to integrate it into a service. In this guide we shall apply it to our canonical music service in small increments.
+We can have the best of both worlds by enacting a proxy in front our service that translates gRPC to/from the familiar REST/HTTP to/from the outside world. Given the amazing ecosystem of plugins in gRPC just such a plugin exists - the [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway). The repo itself contains a very indepth set of examples and tutorials on how to integrate it into a service. In this guide we shall apply it to our canonical chat service in small increments.
 
-A very high level image (courtesy grpc-gateway) shows the final wrapper architecture around our service:
+A very high level image (courtesy of [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)) shows the final wrapper architecture around our service:
 
 <img src="/static/images/grpc_architecture_diagram.svg" width={800} height={400} />
 
@@ -47,16 +47,16 @@ You might have already guessed - protoc plugins again comes to the rescue. In ou
 protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
        --go-grpc_out=$OUT_DIR --go-grpc_opt=paths=source_relative     \
        --proto_path=$PROTO_DIR                                        \
-        $PROTO_DIR/musicservice/v1/*.proto
+        $PROTO_DIR/onehub/v1/*.proto
 ```
 
 ### A brief introduction to plugins
 
-The magic of the protoc plugin is that it does not any generation on its own but orchestrates plugins by passing the a parsed Abstract Syntax Tree (AST) across plugins. This is illustrated below:
+The magic of the protoc plugin is that it does not perform any generation on its own but orchestrates plugins by passing the a parsed Abstract Syntax Tree (AST) across plugins. This is illustrated below:
 
 <img src="/static/images/protoc_plugin_flow.png" width={800} height={400} />
 
-- Step 0 - Input files (in the above case musicservice/v1/\*.proto) are passed to the protoc plugin
+- Step 0 - Input files (in the above case onehub/v1/\*.proto) are passed to the protoc plugin
 - Step 1 - The protoc tool first parses and validate all proto files.
 - Step 2 - protoc then invokes each plugin in its list command line arguments in turn by passing a serialized version of _all_ the proto files it has parsed into an AST.
 - Step 3 - Each proto plugin (in this case `go` and `go-grpc` reads this serialized AST via its stdin. The plugin that processes/analyzes these AST representations and generates File artifacts.
@@ -75,11 +75,9 @@ Any command line argument to protoc in the format `--<pluginname>_out` is a plug
 protoc uses a convention of finding an executable with the name `protoc-gen-<pluginname>`. This executable must be found in the folders in the $PATH variable.
 Since plugins are just plain executables these can be written in any language.
 
-##### <u>**What is the serialization format of the AST?**</u>
+##### <u>**How can i serialize/deserialize the AST?**</u>
 
 The wire-format for the AST is not needed. Protoc has libraries (in several languages) that can be included by the executables that can deserialize ASTs from stdin and serialize generated file artifacts onto stdout.
-
-**We will build a custom plugin in [Part 4](/blog/grpc-series/custom-grpc-plugins/) of this series.**
 
 ## Setup
 
@@ -122,8 +120,8 @@ gwprotos:
     --grpc-gateway_opt logtostderr=true 									\
     --grpc-gateway_opt paths=source_relative 									\
     --grpc-gateway_opt generate_unbound_methods=true 								\
-    --proto_path=$(PROTO_DIR)/musicservice/v1/ 									\
-      $(PROTO_DIR)/musicservice/v1/*.proto
+    --proto_path=$(PROTO_DIR)/onehub/v1/ 									\
+      $(PROTO_DIR)/onehub/v1/*.proto
 ```
 
 Notice how the parameter types are similar to one in Part 1 (when we were generating go bindings). For each file X.proto, just like the go and go-grpc plugin, an X.pb.gw.go file is created that contains the http bindings for our service.
@@ -132,77 +130,31 @@ Notice how the parameter types are similar to one in Part 1 (when we were genera
 
 In the previous sections .pb.gw.go files were created containing default http bindings of our respective services and methods. This is because we had not provided any URL bindings, http verbs (GET, POST etc) or parameter mappings. We shall address that shortcoming now by adding custom http annotations to the service's definition.
 
-While all our services have as similar structure we will look at the Song service for its http annotations:
+While all our services have as similar structure we will look at the Topic service for its http annotations:
 
-```protobuf showLineNumbers
-/**
- * Our Song Service
- */
-service SongService {
-  /**
-   * Create a new Song
-   */
-  rpc CreateSong(CreateSongRequest) returns (CreateSongResponse) {
-    option (google.api.http) = {
-      post: "/v1/songs",
-      body: "*",
-    };
-  }
+<CodeEmbed
+  title="Topic service with http annotations"
+  language="protobuf"
+  url="https://raw.githubusercontent.com/panyam/onehub/RESTHTTPGW/protos/onehub/v1/topics.proto"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
 
-  /**
-   * Batch gets multiple songs.
-   */
-  rpc GetSongs(GetSongsRequest) returns (GetSongsResponse) {
-    option (google.api.http) = {
-      get: "/v1/songs:batchGet",
-    };
-  }
+Instead of having "empty" method definitions (eg `rpc MethodName(ReqType) returns (RespType) {}`) we are now seeing "annotations" being added inside methods. Any number of annotations can be added and each annotation is parsed by the protoc to and passed to all the plugins invoked by it. There are _tons of_ annotations that can be passed and [this](https://github.com/grpc-ecosystem/grpc-gateway/blob/main/examples/internal/proto/examplepb/a_bit_of_everything.proto) has a "a bit of everything" in it.
 
-  /**
-   * Updates specific fields of an Song
-   */
-  rpc UpdateSong(UpdateSongRequest) returns (UpdateSongResponse) {
-    option (google.api.http) = {
-      patch: "/v1/songs/{song.id=*}"
-      body: "song"
-    };
-  }
+Back to the http bindings - Typically a http annotation has a method, a url path (with bindings withing `{` and `}`) and a marking to indicating what the body parameter maps to (for PUT and POST methods).
 
-  /**
-   * Deletes an song from our system.
-   */
-  rpc DeleteSong(DeleteSongRequest) returns (DeleteSongResponse) {
-    option (google.api.http) = {
-      delete: "/v1/nodes/{id=*}"
-    };
-  }
-
-  /**
-   * Finds and retrieves songs matching the particular criteria.
-   */
-  rpc ListSongs(ListSongsRequest) returns (ListSongsResponse) {
-    option (google.api.http) = {
-      get: "/v1/songs"
-    };
-  }
-}
-```
-
-Instead of having "empty" method definitions (eg `rpc MethodName(ReqType) returns (RespType) {}`) we are now seeing "annotations" being added inside methods. Any number of annotations can be added and each annotation is parsed by the protoc to and passed to all the plugins invoked by it. There are _tons of_ annotations that can be passed and [this](https://github.com/grpc-ecosystem/grpc-gateway/blob/main/examples/internal/proto/examplepb/a_bit_of_everything.proto) has a "a bit of everythign\* in it.
-
-Back to the http bindings use case - Typically a http annotation has a method, a url path (with bindings withing `{` and `}`) and a marking to indicating what the body parameter maps to (for PUT and POST methods).
-
-For example in the CreateSong method, the method is a POST request to "v1/songs" with the body (`*`) corresponding ot the JSON representation of the `CreateSongRequest` message type. ie our request is expected to look like:
+For example in the CreateTopic method, the method is a POST request to "v1/topic " with the body (`*`) corresponding ot the JSON representation of the `CreateTopicRequest` message type. ie our request is expected to look like:
 
 ```json
 {
-  "song": {... song object...}
+  "Topic": {... topic object...}
 }
 ```
 
-Naturally the response object of this would be the JSON representation of the CreateSongResponse message.
+Naturally the response object of this would be the JSON representation of the CreateTopicResponse message.
 
-The other examples in the song service as well as in the other services are reasonably intuitive and feel free to read through it to get any finer details. Before we are off to the next section implementing the proxy, we need regenerate the pb.gw.go files to incorporate these new bindings:
+The other examples in the topic service as well as in the other services are reasonably intuitive and feel free to read through it to get any finer details. Before we are off to the next section implementing the proxy, we need regenerate the pb.gw.go files to incorporate these new bindings:
 
 ```
 make all
@@ -212,30 +164,30 @@ We will now see the following error:
 
 ```
 google/api/annotations.proto: File not found.
-songs.proto:8:1: Import "google/api/annotations.proto" was not found or had errors.
+topics.proto:8:1: Import "google/api/annotations.proto" was not found or had errors.
 ```
 
-Unfortunately there is no "package manager" for protos at the present. This void is being filled by an amazing tool called Buf.build (which will be the main topic in Part 3 of this series). In the mean time we will resolve this by manually copying (shudder) [http.proto](https://github.com/googleapis/googleapis/blob/master/google/api/http.proto) and [annotations.proto](https://github.com/googleapis/googleapis/blob/master/google/api/annotations.proto) manually.
+Unfortunately there is no "package manager" for protos at the present. This void is being filled by an amazing tool - Buf.build (which will be the main topic in Part 3 of this series). In the mean time we will resolve this by manually copying (shudder) [http.proto](https://github.com/googleapis/googleapis/blob/master/google/api/http.proto) and [annotations.proto](https://github.com/googleapis/googleapis/blob/master/google/api/annotations.proto) manually.
 
 So our protos folder will have the following structure:
 
 ```
-proto
+protos
 ├── google
 │   └── api
 │       ├── annotations.proto
 │       └── http.proto
-└── musicservice
+└── onehub
     └── v1
-        └── songs.proto
-        └── albums.proto
+        └── topics.proto
+        └── messages.proto
         └── ...
 ```
 
 However we will follow a slightly different structure. Instead of copying files to the protos folder, we will create a vendors folder at the root and symlink to it from the protos folder (this symlinking will be taken care of by our Makefile). Our new folder structure is:
 
 ```
-musicservice
+onehub
 ├── Makefile
 ├── ...
 ├── vendors
@@ -244,19 +196,27 @@ musicservice
 │   │       ├── annotations.proto
 │   │       └── http.proto
 ├── proto
-    └── google -> musicservice/vendors/google
-    └── musicservice
+    └── google -> onehub/vendors/google
+    └── onehub
         └── v1
-            └── songs.proto
-            └── albums.proto
+            └── topics.proto
+            └── messages.proto
             └── ...
 ```
 
 Our updated Makefile is shown below:
 
 ```
-EMBED Makefile from PART2 branch
+EMBED Makefile from RESTHTTPGW branch
 ```
+
+<CodeEmbed
+  title="Makefile for http bindings"
+  language="Makefile"
+  url="https://raw.githubusercontent.com/panyam/onehub/RESTHTTPGW/Makefile"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
 
 Now running make should be error free and result in the updated bindings in the .pb.gw.go files.
 
@@ -283,16 +243,10 @@ func startGatewayServer(grpc_addr string, gw_addr string) {
 
     opts := []grpc.DialOption{grpc.WithInsecure()}
     // Register each server with the mux here
-    if err := v1.RegisterSongServiceHandlerFromEndpoint(ctx, mux, grpc_addr, opts); err != nil {
+    if err := v1.RegisterTopicServiceHandlerFromEndpoint(ctx, mux, grpc_addr, opts); err != nil {
         log.Fatal(err)
     }
-    if err := v1.RegisterAlbumServiceHandlerFromEndpoint(ctx, mux, grpc_addr, opts); err != nil {
-        log.Fatal(err)
-    }
-    if err := v1.RegisterArtistServiceHandlerFromEndpoint(ctx, mux, grpc_addr, opts); err != nil {
-        log.Fatal(err)
-    }
-    if err := v1.RegisterLabelServiceHandlerFromEndpoint(ctx, mux, grpc_addr, opts); err != nil {
+    if err := v1.RegisterMessageServiceHandlerFromEndpoint(ctx, mux, grpc_addr, opts); err != nil {
         log.Fatal(err)
     }
 
@@ -314,7 +268,7 @@ This is because the [grpc-gateway/v2/runtime](https://pkg.go.dev/github.com/grpc
 
 ## Generating OpenAPI specs
 
-Several API consumers seek OpenAPI specs that describe Restful endpoints (methods, verbs, body payloads etc). We can generate an OpenAPI spec file (previous swagger files) that contain information about our service methods along with their http bindings. Add another Makefile target:
+Several API consumers seek OpenAPI specs that describe Restful endpoints (methods, verbs, body payloads etc). We can generate an OpenAPI spec file (previously - swagger files) that contain information about our service methods along with their http bindings. Add another Makefile target:
 
 ```
 openapiv2:
@@ -324,9 +278,8 @@ openapiv2:
     --openapiv2_opt generate_unbound_methods=true 					\
     --openapiv2_opt allow_merge=true 										\
     --openapiv2_opt merge_file_name=allservices 						\
-    --proto_path=$(PROTO_DIR)/musicservice/v1/ 							\
     --proto_path=$(PROTO_DIR) 											\
-      $(PROTO_DIR)/musicservice/v1/*.proto
+      $(PROTO_DIR)/onehub/v1/*.proto
 ```
 
 Like all other plugins, the openapiv2 plugin also generates one .swagger.json per .proto file. However this changes the semantics of swagger as each swagger is treated as its own "endpoint" where as in our case what we really want is a single endpoint that fronts all the services. In order to contain a single "merged" swagger file we pass the `allow_merge=true` parameter to the above command. In addition we also pass the name of the file to be generated (`merge_file_name=allservices`). This results in `gen/openapiv2/allservices.swagger.json` file that can be read, visualized and tested with [SwaggerUI](https://swagger.io/tools/swagger-ui/).
@@ -335,7 +288,7 @@ Like all other plugins, the openapiv2 plugin also generates one .swagger.json pe
 
 ### Seperation of Gateway and GRPC endpoints
 
-In our example we served the gateway and grpc services on their own addresses. Instead we could have directly invokved the grpc service methods (ie by directly creating `NewSongService(nil)` and invoking methods on those. However running these two services seperately meant we could have other (internal) services directly access the grpc service instead of going through the gateway. This seperation of concerns also meant these two services could be deployed seperately (when on different hosts) instead of needed a full upgrade of the entire stack.
+In our example we served the gateway and grpc services on their own addresses. Instead we could have directly invokved the grpc service methods (ie by directly creating `NewTopicService(nil)` and invoking methods on those. However running these two services seperately meant we could have other (internal) services directly access the grpc service instead of going through the gateway. This seperation of concerns also meant these two services could be deployed seperately (when on different hosts) instead of needed a full upgrade of the entire stack.
 
 ### HTTPS instead of HTTP
 
