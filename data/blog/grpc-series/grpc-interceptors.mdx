@@ -1,7 +1,7 @@
 ---
 title: 'Part 4 - gRPC Interceptors'
-date: 2022-12-02T15:32:14Z
-lastmod: '2022-05-05'
+date: 2023-07-30T15:32:14Z
+lastmod: '2023-07-30'
 tags: ['grpc', 'interceptors', 'unary', 'streaming', 'middleware']
 draft: false
 summary: 'gRPC interceptors provide powerful middleware facilities in a standardized manner to grpc clients and services in both unary and streaming mode.'
@@ -209,8 +209,8 @@ func startGatewayServer(grpc_addr string, gw_addr string) {
         //
         if username, password, ok := request.BasicAuth(); ok {
           md := metadata.Pairs()
-          md.Append("MusicServiceUsername", username)
-          md.Append("MusicServicePassword", password)
+          md.Append("OneHubUsername", username)
+          md.Append("OneHubPassword", password)
           return md
         } else {
           return nil
@@ -227,12 +227,12 @@ func startGatewayServer(grpc_addr string, gw_addr string) {
 The aditions are pretty minimal:
 
 1. We modify the NewServeMux to include our first ServeMuxOption function (middleware)
-2. This ServeMuxOption function extracts username/password basic auth params from the headers.
+2. This ServeMuxOption function extracts username/password [basic auth](https://en.wikipedia.org/wiki/Basic_access_authentication) params from the headers.
 3. If the basic auth params are found they are wrapped as 2 metadata pairs and returned (to be passed to the service).
 
 ### Step 2 - Ensure Auth Params in Client originating Metadata
 
-Here is our first Client Unary Interceptor that before even forwarding a request to the gRPC service will ensure that the MusicServiceUsername and MusicServicePassword metadata pairs are set.  Why even send an unauthenticated request to the service to begin with.
+Here is our first Client Unary Interceptor that before even forwarding a request to the gRPC service will ensure that the OneHubUsername and OneHubPassword metadata pairs are set.  Why even send an unauthenticated request to the service to begin with.
 
 Going back to our startGatewayServer method - once we are past the ServeMux, it is time to configure our DialOptions.  [gprc.DialOption](https://pkg.go.dev/google.golang.org/grpc#DialOption) simply configure how a connection is to be made to the service.  In our example so far we just specified that we would like to configure our connection over an Insecure transport.
 
@@ -263,8 +263,8 @@ func EnsureAuthExists(ctx context.Context,
 
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if ok {
-		usernames := md.Get("MusicServiceUsername")
-		passwords := md.Get("MusicServicePassword")
+		usernames := md.Get("OneHubUsername")
+		passwords := md.Get("OneHubPassword")
 		if len(usernames) > 0 && len(passwords) > 0 {
 			username := strings.TrimSpace(usernames[0])
 			password := strings.TrimSpace(passwords[0])
@@ -299,11 +299,11 @@ func startGatewayServer(grpc_addr string, gw_addr string) {
 
 [grpc.WithUnaryInterceptor](https://pkg.go.dev/google.golang.org/grpc#WithUnaryInterceptor) takes a Unary Client Interceptor function and turns it into a DialOption.  That's it!
 
-Now start the server again (`go cmd/server.go`) let us test calls to our music service and see how this works.
+Now start the server again (`go cmd/server.go`) let us test calls to our chat service and see how this works.
 
 First let us try an unauthenticated call:
 ```
-$ curl localhost:8080/v1/albums
+$ curl localhost:8080/v1/topics
 
 {"code":5,"message":"BasicAuth params not found","details":[]}
 ```
@@ -313,9 +313,9 @@ As expected the call without Basic Auth headers was intercepted and rejected.
 Now let us try with a username/password:
 
 ```
-$ curl localhost:8080/v1/albums -u login:password
+$ curl localhost:8080/v1/topics -u login:password
 
-{"albums":[], "nextPageKey":""}
+{"topics":[], "nextPageKey":""}
 ```
 
 And out went our request from the client to be handled by the (unauthenticating) server.
@@ -355,8 +355,8 @@ func EnsureAuthIsValid(ctx context.Context,
 	handler grpc.UnaryHandler) (resp interface{}, err error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		usernames := md.Get("MusicServiceUsername")
-		passwords := md.Get("MusicServicePassword")
+		usernames := md.Get("OneHubUsername")
+		passwords := md.Get("OneHubPassword")
 		if len(usernames) > 0 && len(passwords) > 0 {
 			username := strings.TrimSpace(usernames[0])
 			password := strings.TrimSpace(passwords[0])
@@ -393,7 +393,7 @@ func startGRPCServer(addr string) {
 Let us test it again now.  Passing the last `login:password` combo while valid from the client should now get rejected by the server (note the different error messages):
 
 ```
-$ curl localhost:8080/v1/albums -u login:password
+$ curl localhost:8080/v1/topics -u login:password
 
 {"code":5, "message":"Invalid username/password", "details":[]}
 ```
@@ -401,9 +401,9 @@ $ curl localhost:8080/v1/albums -u login:password
 Passing the right password fixes this:
 
 ```
-$ curl localhost:8080/v1/albums -u login:login123
+$ curl localhost:8080/v1/topics -u login:login123
 
-{"albums":[], "nextPageKey":""}
+{"topics":[], "nextPageKey":""}
 ```
 
 That's it.  That's all there is to interceptors.   Stream interceptors are very similar but not covered here.  Wait for it though!
