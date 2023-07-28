@@ -1,6 +1,6 @@
 ---
 title: 'Part 1 - A simple gRPC service'
-date: 2022-09-03T15:32:14Z
+date: 2023-07-27T15:32:14Z
 tags: ['grpc', 'services', 'grpc_cli', 'tutorial']
 draft: false
 summary: 'In this guide we shall build a very simple gRPC service in Go showing some of the tooling setup and common conventions.'
@@ -38,20 +38,19 @@ In this article we will build a simple gRPC service to show case common features
 
 ## Motivating Example
 
-Let us build a simple service for a music site with the following entities:
+Let us build a simple service for power a group chat application (eg like Whatsapp or Slack or Teams etc).   Our goal is not to displace any of the existing popular services but rather to demonstrate the various aspects in a robust service powering a popular application genre.  Our chat service - OneHub - is simple enough.  It has:
 
-- Songs - Composition of music that are performed by different artists.
-- Artists - Performers who play/sing/perform songs for their loyal fans.
-- Albums - A collection of songs performed by a bunch of artists.
-- Labels - Record label companies who produce albums
+- Topics - A place where a group of related users (by team, project, or interest) can share messages to communicate with each other.   Very similar to (but also much more simpler than) channels in Slack or Microsoft.
+- Messages - The message being sent in the topic by users.
 
-(Kudos if you have noticed that the "User" is missing - we will come to all things about Auth, User management and even social features in a future article). This service is rudimentary yet provides enough scope to take it in several directions which will be the topic of dedicated posts in the future.
+(Kudos if you have noticed that the "User" is missing.   For now we will ignore logins/auth and treat users simply an opaque user id.  This will simply testing our service across a number of features without worrying about login mechanisms etc.   We will come to all things about Auth, User management and even social features in a future article). This service is rudimentary yet provides enough scope to take it in several directions which will be the topic of future dedicated posts.
 
 ## Prerequisites
 
 This tutorial assumes you have the following already installed:
 
 - [golang](https://go.dev/doc/install) (1.18+)
+- Install [protoc](https://grpc.io/docs/protoc-installation/).  On OSX it is as simple as `brew install protobuf`
 - gRPC protoc tools for generating Go
   - `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
   - `go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`
@@ -59,40 +58,39 @@ This tutorial assumes you have the following already installed:
 **Optional** - We wont go too much into building services _outside_ Go but just for fun we will also generate some of the Python stubs to show easy it all is and if there is popular demand one day there could be an extension to this series covering other languages in more detail.
 
 - gRPC protoc tools for generating Python
-  - `virtualenv env`
-  - `source env/bin/activate`
+  - `pyenv virtualenv onehub`
+  - `pyenv activate onehub`
   - `pip install grpcio`
   - `pip install grpcio-tools`
 
 ## Setup your project
 
-Code for this can already be found in the [grpcdemos](https://github.com/panyam/grpcdemos/musicservice) repo. The repo is organized by service and tags are used as checkpoints aligned with end of each part in this series for easier revisiting.
+Code for this can already be found in the [OneHub](https://github.com/panyam/onehub) repo. The repo is organized by service and branches are used as checkpoints aligned with end of each part in this series for easier revisiting.
 
 ```
-mkdir musicservice
-cd musicservice
-go mod init music.com/musicservice
-mkdir -p protos/musicservice/v1
-touch protos/musicservice/v1/models.proto
-touch protos/musicservice/v1/labels.proto
-touch protos/musicservice/v1/songs.proto
-touch protos/musicservice/v1/albums.proto
-touch protos/musicservice/v1/artists.proto
+mkdir onehub
+cd onehub
+# Replace this with your own github repo path
+go mod init github.com/panyam/onehub
+mkdir -p protos/onehub/v1
+touch protos/onehub/v1/models.proto
+touch protos/onehub/v1/messages.proto
+touch protos/onehub/v1/topics.proto
 
 # Install dependencies
 go get google.golang.org/grpc
-github.com/stretchr/testify/assert
+go get github.com/stretchr/testify/assert
 ```
 
 Note when creating your protos it is good practise to have them versioned (v1 above).
 
 There are several ways to organize your protos, for example (and not limited to):
 
-1. One giant proto for the entire service encompassing all models and protos (eg musicservice.proto)
+1. One giant proto for the entire service encompassing all models and protos (eg onehub.proto)
 2. All Foo entity related models and services in foo.proto
 3. All models in a single proto (models.proto) accompanied by services for entity Foo in foo.proto.
 
-In this series we are using the 3rd approach as it also allows us to share models across service while still having clean and easy to absorb protos.
+In this series we are using the 3rd approach as it also allows us to share models across service while still seperating the individual entity services cleanly.
 
 ## Define your Service
 
@@ -101,25 +99,28 @@ The .proto files are the starting point of a gRPC, so we can start there with so
 <CodeEmbed
   title="Models"
   language="protobuf"
-  url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/models.proto"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART1/protos/onehub/v1/models.proto"
   height="300px"
   style="height: 300px; overflow: scroll"
 />
 
 <CodeEmbed
-  title="Song Service"
+  title="Topic Service"
   language="protobuf"
-  url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/songs.proto"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART1/protos/onehub/v1/topics.proto"
   height="300px"
 />
 
-Similarly other service definitions can be found in:
+<CodeEmbed
+  title="Message Service"
+  language="protobuf"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART1/protos/onehub/v1/messages.proto"
+  height="300px"
+/>
 
-- [albums.proto]("https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/albums.proto) - RPC specs for the Albums service
-- [artists.proto]("https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/artists.proto) - RPC specs for the Artists service
-- [labels.proto]("https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/labels.proto) - RPC specs for the Labels service
+Note each entity was relegated to its own service - though this does not translate to a seperate server (or even process).   This is merely for convinience.
 
-We have a chosen a few conventions (without forcing any design practices):
+For the most part, [resource oriented designs](https://google.aip.dev/121) have been adopted for the entities, their respective services and methods.  As a summary:
 
 - Entities (in models.proto) have an id field to denote their primary key/object ID
 - All entities have a created/updated timestamp which are set in the create and update methods respectively.
@@ -132,11 +133,11 @@ We have a chosen a few conventions (without forcing any design practices):
 - FooServer.Create methods take a Foo instance and set the instances id, created_at and updated_at fields
 - FooService.Update methods take a Foo instance along with a update_mask to highlight fields being changed and updates the fields. Additionally it also ignores the id method so an id cannot be over-written.
 
-Both Albums as well as Labels contain parent-child relationship (Album contains songs and artists) and Labels "own" Albums and use different representations appropriately.
+The entities (and relationships) are very straightforward.  Some (slightly) noteworthy aspects are:
 
-Albums store artists and songs (as ids) in its record. It is upto a front end to hydrate this list by making another call to fetch the artists and songs corresponding to the artist and song ids respectively.
-
-In the case of Labels - the Albums are accessed via a List apis and Albums are added to/removed from a Label's ownership via respective Add/Remove methods.
+1. Topics have a list of ids representing the participants in the topic (we are not focussing on the scalability bottlenecks from a large number of users in a Topic yet).
+2. Messages hold a reference to the Topic (via topic_id).
+3. The Message is very simple and only supports text messages (along with a way to pass in extra information or *slightly* custom message types - via content_data).
 
 ## Generate the service stubs and clients
 
@@ -145,13 +146,13 @@ The `protoc` command-line tool ensures that server (stubs) and clients are gener
 The magic of protoc is that it does not generate anything on its own. Instead it uses plugins for different "purposes" to generate custom artifacts. First let us generate go artifacts:
 
 ```
-SRC_DIR=<ABSOLUTE_PATH_OF_MUSICSERVICE>
+SRC_DIR=<ABSOLUTE_PATH_OF_ONEHUB>
 PROTO_DIR:=$SRC_DIR/protos
 OUT_DIR:=$SRC_DIR/gen/go
 protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
        --go-grpc_out=$OUT_DIR --go-grpc_opt=paths=source_relative     \
        --proto_path=$(PROTO_DIR)                                      \
-        $PROTO_DIR/musicservice/v1/*.proto
+        $PROTO_DIR/onehub/v1/*.proto
 ```
 
 This is quite cumbersome so we can add this into a Makefile and simply run `make all` to generate protos and build everything going forward.
@@ -159,42 +160,42 @@ This is quite cumbersome so we can add this into a Makefile and simply run `make
 <CodeEmbed
   title="Makefile"
   language="bash"
-  url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/Makefile"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART1/Makefile"
 />
 
-Now all generated stubs can be found in the `gen/go/musicservice/v1` folder (because our protos folder hosted the service defs within musicservice/v1).
+Now all generated stubs can be found in the `gen/go/onehub/v1` folder (because our protos folder hosted the service defs within onehub/v1).
 
 Briefly the following are created:
 
-- For every X.proto file a gen/go/musicservice/v1/X.pb.go is created. This file contains the model definition of every "message" in the .proto file (eg Song, Label, CreateSongRequest, CreateSongResponse etc).
+- For every X.proto file a gen/go/onehub/v1/X.pb.go is created. This file contains the model definition of every "message" in the .proto file (eg Topic and Message).
 - For every Y.proto file that contains `service` definitions a X_grpc.pb.go file is generated that contains:
   - A server interface that must be implemented (coming in the next section).
-  - For a service X, an interface called XService is generated where the methods are all the rpc methods stilated in the Y.proto file.
+  - For a service X, an interface called XService is generated where the methods are all the rpc methods stipulated in the Y.proto file.
   - A client is generated that can talk to a running implementation of the XService interface (coming below).
 
 Pretty powerful isn't it! Now let us look at actually implementing the services.
 
 ## Implementing your Service
 
-Our services are very simple. They store the different instances in memory as a simple collection of elements added in the order in which they were created (we wont fiddle with databases for now) and serve them by querying and updating this collection. Since all the services have (mostly) similar implementations (CRUD) a base store object has been created to represent the in-memory collection and the services simply use this store.
+Our services are very simple. They store the different instances in memory as a simple collection of elements added in the order in which they were created (we will look at using a real database in the next part) and serve them by querying and updating this collection. Since all the services have (mostly) similar implementations (CRUD) a base store object has been created to represent the in-memory collection and the services simply use this store.
 
 This (simple) base entity looks like:
 
 <CodeEmbed
   title="Base Entity Store"
   language="go"
-  url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/services/base.go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART1/services/base.go"
 />
 
-Using this the Song service is now very simple:
+Using this the Topic service is now very simple:
 
 <CodeEmbed
-  title="Song Service Implementation"
+  title="Topic Service Implementation"
   language="go"
-  url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/services/songs.go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART1/services/topics.go"
 />
 
-Other models are also eerily similar to this and can be found in the repo.
+The Message service is also eerily similar and can [here](https://raw.githubusercontent.com/panyam/onehub/PART1/services/messages.go).
 
 ## Wrap it all with a runner
 
@@ -209,7 +210,7 @@ The general steps are:
 <CodeEmbed
   title="Main Server CLI"
   language="go"
-  url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/cmd/server.go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART1/cmd/server.go"
 />
 
 This server can now be run (by default on port 9000) with:
@@ -241,173 +242,141 @@ If the server is not running then go ahead and start it (as per the previous sec
 `grpc_cli ls localhost:9000 -l`
 
 ```protobuf showLineNumbers
+filename: grpc/reflection/v1/reflection.proto
+package: grpc.reflection.v1;
+service ServerReflection {
+  rpc ServerReflectionInfo(stream grpc.reflection.v1.ServerReflectionRequest) returns (stream grpc.reflection.v1.ServerReflectionResponse) {}
+}
+
 filename: grpc/reflection/v1alpha/reflection.proto
 package: grpc.reflection.v1alpha;
 service ServerReflection {
   rpc ServerReflectionInfo(stream grpc.reflection.v1alpha.ServerReflectionRequest) returns (stream grpc.reflection.v1alpha.ServerReflectionResponse) {}
 }
 
-filename: albums.proto
-package: musicservice;
-service AlbumService {
-  rpc CreateAlbum(musicservice.CreateAlbumRequest) returns (musicservice.CreateAlbumResponse) {}
-  rpc GetAlbums(musicservice.GetAlbumsRequest) returns (musicservice.GetAlbumsResponse) {}
-  rpc UpdateAlbum(musicservice.UpdateAlbumRequest) returns (musicservice.UpdateAlbumResponse) {}
-  rpc DeleteAlbum(musicservice.DeleteAlbumRequest) returns (musicservice.DeleteAlbumResponse) {}
-  rpc ListAlbums(musicservice.ListAlbumsRequest) returns (musicservice.ListAlbumsResponse) {}
+filename: onehub/v1/messages.proto
+package: onehub.v1;
+service MessageService {
+  rpc CreateMessage(onehub.v1.CreateMessageRequest) returns (onehub.v1.CreateMessageResponse) {}
+  rpc ListMessages(onehub.v1.ListMessagesRequest) returns (onehub.v1.ListMessagesResponse) {}
+  rpc GetMessage(onehub.v1.GetMessageRequest) returns (onehub.v1.GetMessageResponse) {}
+  rpc GetMessages(onehub.v1.GetMessagesRequest) returns (onehub.v1.GetMessagesResponse) {}
+  rpc DeleteMessage(onehub.v1.DeleteMessageRequest) returns (onehub.v1.DeleteMessageResponse) {}
+  rpc UpdateMessage(onehub.v1.UpdateMessageRequest) returns (onehub.v1.UpdateMessageResponse) {}
 }
 
-filename: artists.proto
-package: musicservice;
-service ArtistService {
-  rpc CreateArtist(musicservice.CreateArtistRequest) returns (musicservice.CreateArtistResponse) {}
-  rpc GetArtists(musicservice.GetArtistsRequest) returns (musicservice.GetArtistsResponse) {}
-  rpc UpdateArtist(musicservice.UpdateArtistRequest) returns (musicservice.UpdateArtistResponse) {}
-  rpc DeleteArtist(musicservice.DeleteArtistRequest) returns (musicservice.DeleteArtistResponse) {}
-  rpc ListArtists(musicservice.ListArtistsRequest) returns (musicservice.ListArtistsResponse) {}
-}
-
-filename: labels.proto
-package: musicservice;
-service LabelService {
-  rpc CreateLabel(musicservice.CreateLabelRequest) returns (musicservice.CreateLabelResponse) {}
-  rpc GetLabels(musicservice.GetLabelsRequest) returns (musicservice.GetLabelsResponse) {}
-  rpc UpdateLabel(musicservice.UpdateLabelRequest) returns (musicservice.UpdateLabelResponse) {}
-  rpc DeleteLabel(musicservice.DeleteLabelRequest) returns (musicservice.DeleteLabelResponse) {}
-  rpc ListLabels(musicservice.ListLabelsRequest) returns (musicservice.ListLabelsResponse) {}
-  rpc AddAlbum(musicservice.AddAlbumRequest) returns (musicservice.AddAlbumResponse) {}
-  rpc RemoveAlbum(musicservice.RemoveAlbumRequest) returns (musicservice.RemoveAlbumResponse) {}
-  rpc ListAlbums(musicservice.ListAlbumsInLabelRequest) returns (musicservice.ListAlbumsInLabelResponse) {}
-}
-
-filename: songs.proto
-package: musicservice;
-service SongService {
-  rpc CreateSong(musicservice.CreateSongRequest) returns (musicservice.CreateSongResponse) {}
-  rpc GetSongs(musicservice.GetSongsRequest) returns (musicservice.GetSongsResponse) {}
-  rpc UpdateSong(musicservice.UpdateSongRequest) returns (musicservice.UpdateSongResponse) {}
-  rpc DeleteSong(musicservice.DeleteSongRequest) returns (musicservice.DeleteSongResponse) {}
-  rpc ListSongs(musicservice.ListSongsRequest) returns (musicservice.ListSongsResponse) {}
+filename: onehub/v1/topics.proto
+package: onehub.v1;
+service TopicService {
+  rpc CreateTopic(onehub.v1.CreateTopicRequest) returns (onehub.v1.CreateTopicResponse) {}
+  rpc ListTopics(onehub.v1.ListTopicsRequest) returns (onehub.v1.ListTopicsResponse) {}
+  rpc GetTopic(onehub.v1.GetTopicRequest) returns (onehub.v1.GetTopicResponse) {}
+  rpc GetTopics(onehub.v1.GetTopicsRequest) returns (onehub.v1.GetTopicsResponse) {}
+  rpc DeleteTopic(onehub.v1.DeleteTopicRequest) returns (onehub.v1.DeleteTopicResponse) {}
+  rpc UpdateTopic(onehub.v1.UpdateTopicRequest) returns (onehub.v1.UpdateTopicResponse) {}
 }
 ```
 
-#### Create a song
+#### Create a Topic
 
-`grpc_cli --json_input --json_output call localhost:9000 CreateSong '{song: {name: "first song", performer_ids: ["1", "2"]}}'`
+`grpc_cli --json_input --json_output call localhost:9000 CreateTopic '{topic: {name: "First Topic", creator_id: "user1"}}'`
 
 ```json showLineNumbers
-connecting to localhost:9000
 {
- "song": {
-  "createdAt": "2023-03-24T00:54:50.292101Z",
-  "updatedAt": "2023-03-24T00:54:50.292101Z",
+ "topic": {
+  "createdAt": "2023-07-28T07:30:54.633005Z",
+  "updatedAt": "2023-07-28T07:30:54.633006Z",
   "id": "1",
-  "name": "first song",
-  "performerIds": [
-   "1",
-   "2"
-  ]
+  "creatorId": "user1",
+  "name": "First Topic"
  }
 }
-Rpc succeeded with OK status
-
 ```
 
 and another
 
-`grpc_cli --json_input --json_output call localhost:9000 CreateSong '{song: {name: "a really cool song", performer_ids: ["3", "2", "4"], homepage: "http://music.com/songs/1.html"}}'`
+`grpc_cli --json_input --json_output call localhost:9000 CreateTopic '{topic: {name: "Urgent topic", creator_id: "user2", users: ["user1", "user2", "user3"]}}'`
 
 ```json showLineNumbers
 {
- "song": {
-  "createdAt": "2023-03-24T00:56:46.556392Z",
-  "updatedAt": "2023-03-24T00:56:46.556392Z",
+ "topic": {
+  "createdAt": "2023-07-28T07:32:04.821800Z",
+  "updatedAt": "2023-07-28T07:32:04.821801Z",
   "id": "2",
-  "name": "a really cool song",
-  "homepage": "http://music.com/songs/1.html",
-  "performerIds": [
-   "3",
-   "2",
-   "4"
+  "creatorId": "user2",
+  "name": "Urgent topic",
+  "users": [
+   "user1",
+   "user2",
+   "user3"
   ]
  }
 }
-Rpc succeeded with OK status
 ```
 
-#### List all songs
+#### List all topics
 
-`grpc_cli --json_input --json_output call localhost:9000 ListSongs {}`
+`grpc_cli --json_input --json_output call localhost:9000 ListTopics {}`
 
 ```json showLineNumbers
-connecting to localhost:9000
 {
- "songs": [
+ "topics": [
   {
-   "createdAt": "2023-03-24T00:56:46.556392Z",
-   "updatedAt": "2023-03-24T00:56:46.556392Z",
-   "id": "2",
-   "name": "a really cool song",
-   "homepage": "http://music.com/songs/1.html",
-   "performerIds": [
-    "3",
-    "2",
-    "4"
-   ]
+   "createdAt": "2023-07-28T07:30:54.633005Z",
+   "updatedAt": "2023-07-28T07:30:54.633006Z",
+   "id": "1",
+   "creatorId": "user1",
+   "name": "First Topic"
   },
   {
-   "createdAt": "2023-03-24T00:54:50.292101Z",
-   "updatedAt": "2023-03-24T00:54:50.292101Z",
-   "id": "1",
-   "name": "first song",
-   "performerIds": [
-    "1",
-    "2"
+   "createdAt": "2023-07-28T07:32:04.821800Z",
+   "updatedAt": "2023-07-28T07:32:04.821801Z",
+   "id": "2",
+   "creatorId": "user2",
+   "name": "Urgent topic",
+   "users": [
+    "user1",
+    "user2",
+    "user3"
    ]
   }
  ]
 }
-Rpc succeeded with OK status
 ```
 
-#### Get Songs by IDs
+#### Get Topics by IDs
 
-`grpc_cli --json_input --json_output call localhost:9000 GetSongs '{"ids": ["1", "2"]}'`
+`grpc_cli --json_input --json_output call localhost:9000 GetTopics '{"ids": ["1", "2"]}'`
 
 ```json showLineNumbers
-connecting to localhost:9000
 {
- "songs": {
+ "topics": {
   "1": {
-   "createdAt": "2023-03-24T00:54:50.292101Z",
-   "updatedAt": "2023-03-24T00:54:50.292101Z",
+   "createdAt": "2023-07-28T07:30:54.633005Z",
+   "updatedAt": "2023-07-28T07:30:54.633006Z",
    "id": "1",
-   "name": "first song",
-   "performerIds": [
-    "1",
-    "2"
-   ]
+   "creatorId": "user1",
+   "name": "First Topic"
   },
   "2": {
-   "createdAt": "2023-03-24T00:56:46.556392Z",
-   "updatedAt": "2023-03-24T00:56:46.556392Z",
+   "createdAt": "2023-07-28T07:32:04.821800Z",
+   "updatedAt": "2023-07-28T07:32:04.821801Z",
    "id": "2",
-   "name": "a really cool song",
-   "homepage": "http://music.com/songs/1.html",
-   "performerIds": [
-    "3",
-    "2",
-    "4"
+   "creatorId": "user2",
+   "name": "Urgent topic",
+   "users": [
+    "user1",
+    "user2",
+    "user3"
    ]
   }
  }
 }
-Rpc succeeded with OK status
 ```
 
-#### Delete a song followed by a Listing
+#### Delete a topic followed by a Listing
 
-`grpc_cli --json_input --json_output call localhost:9000 DeleteSong '{"id": "1"}'`
+`grpc_cli --json_input --json_output call localhost:9000 DeleteTopic '{"id": "1"}'`
 
 ```json showLineNumbers
 connecting to localhost:9000
@@ -415,27 +384,25 @@ connecting to localhost:9000
 Rpc succeeded with OK status
 ```
 
-`grpc_cli --json_input --json_output call localhost:9000 ListSongs {}`
+`grpc_cli --json_input --json_output call localhost:9000 ListTopics {}`
 
 ```json showLineNumbers
-connecting to localhost:9000
 {
- "songs": [
+ "topics": [
   {
-   "createdAt": "2023-03-24T00:56:46.556392Z",
-   "updatedAt": "2023-03-24T00:56:46.556392Z",
+   "createdAt": "2023-07-28T07:32:04.821800Z",
+   "updatedAt": "2023-07-28T07:32:04.821801Z",
    "id": "2",
-   "name": "a really cool song",
-   "homepage": "http://music.com/songs/1.html",
-   "performerIds": [
-    "3",
-    "2",
-    "4"
+   "creatorId": "user2",
+   "name": "Urgent topic",
+   "users": [
+    "user1",
+    "user2",
+    "user3"
    ]
   }
  ]
 }
-Rpc succeeded with OK status
 ```
 
 ### Programmatically calling the server
@@ -452,4 +419,4 @@ In summary, gRPC is a crucial component of modern software development that allo
 - Exercised the CLI utility to make calls to the running service
 - Exercised the generated clients while also writing tests
 
-In the [next article](/blog/grpc-series/rest-http-gateway/) we will explore how to generate REST/Http bindings for a grpc service.
+In the [next article](/blog/grpc-series/rest-http-gateway/) we will explore how to generate REST/Http bindings for a grpc service.  This would enable us to use standard http clients (like curl) to access our service.
