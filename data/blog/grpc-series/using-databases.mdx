@@ -2,7 +2,7 @@
 title: 'Part 5 - Persisting your data - Using a Database (Part 1)'
 date: 2023-07-31T15:32:14Z
 tags: ['grpc', 'services', 'databases', 'postgres', 'gorm']
-draft: true
+draft: false
 summary: 'While memory stores make it easy to start off building your services, it is very toilsome to re-seed your data on each load.  We can overcome that by using a database to persist your data.   In this is article let us persist our data using a popular relational database - Postgres - and the popular GORM (ORM) frameworks.'
 authors: ['Sri Panyam']
 layout: PostSimple
@@ -10,9 +10,9 @@ layout: PostSimple
 
 ## Introduction 
 
-We have a somewhat bare banes music service [so far](../index).   Our service, exposes endpoints for managing albums, artists, labels and songs.   To show case some key concepts we have been using a makeshift in-memory store that shamelessly provides no durability guarantees.   A basic and essential building block in any (web) service is a datastore (for storing, organizing and retrieving data securily and efficiently).  In this tutorial we will improve the durability, organization and persistence of data by introducing a database.  There are several choice of databases - in-memory (a very basic form of which we have used earlier), object oriented databases, key-value stores, relational databases and more.   We will not repeat an indepth comparison of these here and instead defer to [others](https://www.prisma.io/dataguide/intro/comparing-database-types).
+We have a somewhat bare banes chatservice [so far](../index).   Our service, exposes endpoints for managing topics and letting users post messages in topics.   To show case some key concepts we have been using a makeshift in-memory store that shamelessly provides no durability guarantees.   A basic and essential building block in any (web) service is a datastore (for storing, organizing and retrieving data securily and efficiently).  In this tutorial we will improve the durability, organization and persistence of data by introducing a database.  There are several choice of databases - in-memory (a very basic form of which we have used earlier), object oriented databases, key-value stores, relational databases and more.   We will not repeat an indepth comparison of these here and instead defer to [others](https://www.prisma.io/dataguide/intro/comparing-database-types).
 
-Furthermore in this article we will use a relational (SQL) database as our underlying datastore.   We will use the popular [GORM](https://gorm.io/) library (an ORM framework) to simplify access to our our database.    There are several relational databases available - both free as well as commercial.   We will use Sqlite (a very popular, free and lightweight database) for our service.  We will look at different ways of accessing the database in Go and see what it would take to swap one relational DB with another (hint - very little).   
+Furthermore in this article we will use a relational (SQL) database as our underlying datastore.   We will use the popular [GORM](https://gorm.io/) library (an ORM framework) to simplify access to our our database.    There are several relational databases available - both free as well as commercial.   We will use Postgres (a very popular, free, lightweight and easy to manage database) for our service.  Postgres is also an ideal choice for a primary source-of-truth datastore becuase of the the strong durability and consistency guarantees it provides.
 
 ## Setting up the database
 
@@ -28,81 +28,426 @@ Our general strategy is:
 2. The service converts the model proto (eg Song) contained in the request (eg CreateSongRequest) into a SQL statement
 3. The SQL statment is passed to the DB (eg an insert or update)
 
-### Install Sqlite
+### Setting up Postgres
 
-Since we are starting off with Sqlite our setup (outside of our service code) is *really* minimal.  Simply install Sqlite (in OSX):
+We could follow the traditional way of installing Postgres (by downloading and installing its binaries for the specific platforms).  However this makes the setup and distribution complicated and hard.  Instead we will start using docker (and docker compose) going forward to get and start a compact setup.
+
+#### Setup docker
+
+Setup [Docker Desktop](https://www.docker.com/products/docker-desktop/) for your platform following the instructions.
+
+#### Add postgres to docker-compose
+
+Now that docker is setup, we can add different containers to this so we can build out the various components and services OneHub requires.
+
+<CodeEmbed
+  title="docker-compose.yml"
+  language="yaml"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/docker-compose.yml"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+That's it.  A few key things to note are:
+
+1. The docker compose file is an easy way to get started with containers - especially on a single host without needing complicated orchestration engines (like GKE etc).
+2. The main part of a docker compose files are the services section which describe the containers for each of the services that docker compose will be executing as a "single unit in a private network".  This is a great way to package multiple related services needed for an application and bring them all up and down in one step instead of having to manage them one by one individually.  The later is not just cumbersome but also error prone (manual dependency management, logging, port checking etc).
+3. For now we have added one service - Postgres - running on port 5432. 
+4. Since the services are running in an isolated context, environment variables can be set to initialize/control the behaviour of the services.  These environment variables are read from a specific .env file (below).  This file can also be passed as a cli flag or as a parameter but for now we are using the default .env file.   Some configuration parameters here are the postgres username, password and database name.
+
+<CodeEmbed
+  title=".env"
+  language="yaml"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/.env"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+5. All data in a container is transient and is lost when the container is shut down.  In order to make our database durable, we will store the data *outside* the container and map it as a _volume_.   This way from within the container, postgres will read/write to its local directory (`/var/lib/postgresql/data`) even though all reads/writes are sent to the host's file system (`./.pgdata`)
+6. Another great benefit of using docker is all the ports used by the differetn services are "internal" to the network that docker creates.  Which means the same postgres service (which runs on port 5432) can be run on multiple docker environments without having their ports changed or checked for conflicts.   This is because by default ports used inside a docker environment are *not* exposed outside the docker environment.   Here we have chosen to expose port 5432 explicitly in the *ports* section of docker-compose.yml.
+
+That's it.  Go ahead and bring it up:
 
 ```
-brew install sqlite3
-brew install sqlite-utils
+docker compose up
 ```
 
-Sqlite stores the entire DB in a single file on the disk.  So no further setup is required beyond providing a path to the file which will store the database.   This is clearly not a scalable solution but for use cases where the database needs to be "embedded" with the service this is an excellent choice and Sqlite offers excellent performance as well SQL standards compliance which goes a long way in getting one started.
-
-### Initialize the Database
-
-Now that we have installed the database, it is time to initialize it with the schemas for each of our models.  Schemas despribe the blueprint (similar to class in object oriented languages) of the data being stored in (and retrieved form) a database.
-
-Let us do this for the simple 
-
-If we were NOT using a helper framework like GORM we would have had to setup our database manually (with steps possibly specific to different databases).  For example the table setup for the [Artist](https://github.com/panyam/grpcdemos/blob/06e2de1a4c95b35e5c1af0690f2ff1d9f7b9acf0/musicservice/protos/musicservice/v1/models.proto#L29) entity, the table setup would have required:
+If all goes well you should see a new postgres database created and initialized with our username, password and db parameters from the .env file.  The database is now ready:
 
 ```
-# Open the DB
-
-sqlite3 ourdb.db
+onehub-postgres-1  | 2023-07-28 22:52:32.199 UTC [1] LOG:  starting PostgreSQL 15.3 (Debian 15.3-1.pgdg120+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+onehub-postgres-1  | 2023-07-28 22:52:32.204 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+onehub-postgres-1  | 2023-07-28 22:52:32.204 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+onehub-postgres-1  | 2023-07-28 22:52:32.209 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+onehub-postgres-1  | 2023-07-28 22:52:32.235 UTC [78] LOG:  database system was shut down at 2023-07-28 22:52:32 UTC
+onehub-postgres-1  | 2023-07-28 22:52:32.253 UTC [1] LOG:  database system is ready to accept connections
 ```
 
-```
-# Add the table schema 
+The onehub docker application should now show up in docker desktop and should look something like this:
 
-sqlite > CREATE TABLE artists (
-          id STRING NOT NULL PRIMARY KEY,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          name STRING NOT NULL,
-          country STRING DEFAULT(''),
-          date_of_birth DATE
-        );
+<img src="/static/images/docker-desktop-postgres.png" width={800} height={400} />
+
+
+### (Optional) Setup a DB Admin Interface
+
+If you would like to query or interact with the database (outside code) [pgadmin](pgadmin.org) and [adminer](https://www.adminer.org/) are great tools.   They can be downloaded as native application binaries and installed locally and played.  This is a great option if you would like to manage multiple databases (eg across multiple docker environments).
+
+...ALTERNATIVELY...
+
+If it is for this single project and downloading yet another (native app) binary is undesirable, why not just include it as a [service](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html) within docker itself!!  With that added, our docker-compose.yml now looks like:
+
+<CodeEmbed
+  title="docker-compose.yml"
+  language="yaml"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/docker-compose.yml"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+The accompanying environment variables are in our .env file:
+
+<CodeEmbed
+  title=".env"
+  language="yaml"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/.env"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+Now you can simply visit the [pgadmin web console](http://localhost:5480/browser/) on your browser.   Use the email and password specified in the .env file and off you go!   To connect to the postgres instance running in the docker environment, simply create a connection to 'postgres' (NOTE - containers local dns names within the docker environment are the service names themselves).  
+
+1. On the left-side Object Explorer paanel, (Right) Click on `Servers >> Register >> Server...` and give a name to your server ("postgres")
+
+<img src="/static/images/docker-pgadmin-register.png" width={800}/>
+
+2. In the Connection tab use the host name "postgres" and set names of the database, username and password as set in the .env file for the POSTGRES_DB, POSTGRES_USER and POSTGRES_PASSWORD variables respectively.
+
+<img src="/static/images/docker-pgadmin-connection.png" width={800}/>
+
+3. Click Save and off you go!
+
+<img src="/static/images/docker-pgadmin-newserver.png" width={800}/>
+
+### Introducing Object Relational Mappers
+
+Before we start updating our service code to access the database, you may be wondering why the grpc service itself is not packaged in our docker-compose.yml file.  Without this we would still have to start our service from the command line (or a debugger).  This will be detailed [later]() in this post.
+
+In a typical database initializing a database (after the user, DB setup) would entail creating and running SQL scripts to initialize tables, checking for new versions and so on.  One example of a table creation statement (that can be executed via psql or via pgadmin) is:
+
+```
+CREATE TABLE topics (
+  id          STRING NOT NULL PRIMARY KEY,
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+  name        STRING NOT NULL,
+  users       TEXT[],
+);
 ```
 
 Similarly an insertion would also have been manual construction of SQL statements, eg:
 
 ```
-sqlite > INSERT INTO artists 
-        ( id, name, country, date_of_birth )
-        VALUES ( "1", "Bono", "Ireland", "1960-05-10" );
+INSERT INTO topics
+        ( id, name )
+        VALUES ( "1", "Taylor Swift" );
 ```
 
 ... followed by a verification of the saved results:
 
 ```
-sqlite > select * from artists ; 
-
-1|2023-04-21 19:09:32|2023-04-21 19:09:32|Bono|Ireland|1960-05-10
-
+select * from topics ; 
 ```
 
-This can get pretty tedious (and error prone with vulnerability to [sql injection attacks](https://www.w3schools.com/sql/sql_injection.asp)).   Let us GORM to simplify this.
+This can get pretty tedious (and error prone with vulnerability to [sql injection attacks](https://www.w3schools.com/sql/sql_injection.asp)).   SQL expertise is highly valuable but seldom feasible - especially being fluent with the different standards, different vendors etc.  Even though Postgres does a great job in being as standards compliant as possible - for developers - some ease of use with databases is highly desirable.
+
+ORM libraries are very valuable - especially for developers not dealing with SQL on a regular basis.   ORM (Object Relational Mappers) provide an object oriented interface onto a relational database.   This makes it easy to access data in our Tables (ie rows) as application level classes (Data Access Ojects).   Table creations and migrations can also be managed by ORM libraries.  Behind the scenes ORM libraries are generating and executing SQL queries on the underlying databases they are used to access.
+
+There are downsides to using an ORM:
+
+1. ORMs still incur a learning cost for developers during adoption.  Interface design choices can play a role in impacting developer productivity.
+2. ORMs can be thought of as a schema compiler.   The underlying sql generated by them may not be straightforward or efficient.  This results in ORM access to a database being slower than raw SQL - especially for complex queries.  However for complex queries or complex data pattern accesses - other scalability techniques may need to be applied (eg sharding, denormalization etc)
+3. The queries generated by ORMs may not be clear or straightforward resulting in increased debugging times on slow or complex queries.
+
+Despite these downsides, ORMs can be put to good use when not overly relied upon.   We shall use a popular ORM library - [GORM](https://gorm.io/).   GORM comes with a great set of examples and documentation and the [quick start](https://gorm.io/docs/) is a great starting point.
 
 ## Create DB models 
 
-The grpc service interface (for each of our 4 services) offers a logical view of the data.  However, data is seldom stored in this same structure in a database - especially when normalization is required since (in a relational database) data is organized in a normalized form across many tables (more on this later).   We will establish a few conventions along the way to standardize how we will keep interface models/schemas different from datastore schemas in order to not mix concerns between the two domains (service and datastores).
-
-## Data Access Conventions
-
-### Convention 1 - Create Separate DB Models
-
-Our first convention is to (for each "key" interface model) create one or more accompanying Datastore models and datastore access methods  The purpose of the Datastore models (similar to [data access objects](https://en.wikipedia.org/wiki/Data_access_object)) is to guarantee a clean seperation in how data is organized/stored/retrieved vs how it is served and viewed by customers of our application(s).
-
-Let us look at the Artist model's datastore representation (using the GORM) framework:
+GORM models are our DB models.  GORM Models are simple golang structs with [struct tags](https://www.digitalocean.com/community/tutorials/how-to-use-struct-tags-in-go) on each member to identify the member's database type.  Our User, Topic and Message models are simply this:
 
 <CodeEmbed
-  title="Artist"
-  language="protobuf"
-  url="https://raw.githubusercontent.com/panyam/grpcdemos/PART1/musicservice/protos/musicservice/v1/models.proto"
+  title="Topic, Message, User models"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/models.go"
   height="300px"
   style="height: 300px; overflow: scroll"
 />
 
-### Convention 2 - Define a data access interface for your entities
+Why are these models needed when we have already defined models in our .proto files?  Recall that the models we use need to reflect the domain they are operating in.  For example our grpc structs (in .proto files) reflect the models and programming models from the application's perspective.   If/When we build a UI [view-models](https://learn.microsoft.com/en-us/dotnet/architecture/maui/mvvm#viewmodel) would reflect the ui/view perspectives (eg a FrontPage view model could be a merge of multiple data models).
+
+Similarly when storing data in a database the models need to convey intent and type information that can be understood and processed by the database (engine).   This is why GORM expects data models to have annotations on its (struct) member variables to convey database specific information like column types, index definitions, index column orderings etc.  A good example of this in our data model is the SortByTopicAndCreation index (which as the name suggests helps us list topics sorted by their creation timestamp).
+
+[Database indexes](https://en.wikipedia.org/wiki/Database_index) are one or more (re)organizations of data in a database that speed up retrievals of certain queries (at the cost of increased write times and storage space).  We wont go into indexes deeply   There are [fantastic](https://www.amazon.com/Database-Management-Systems-Raghu-Ramakrishnan/dp/0072465638) [resources](https://www.amazon.com/Database-Internals-Deep-Distributed-Systems/dp/1492040347) which offer a deep dive into the various internals of database systems in great detail (and would be highly recommended).
+
+The increased writes and storage space must be considered when creating more indexes in a database.  We have (in our service) been mindful about creating more indexes and kept these to the bare minimum (to suit certain types of queries).  As we scale our services (in future posts) we will revisit how to address these costs by exploring asynchronous index building techniques.
+
+## Data Access Layer Conventions
+
+We now have DB models.  We could at this point directly call the GORM apis from our service implementation to read and write data from our (postgres) database.  But first a brief detail on the conventions we have decided to choose.
+
+### Motivations
+
+Database use can be thought off as being in two extreme spectrums:
+
+<img src="/static/images/dbspectrums.png" width={800}/>
+
+On the one hand a "database" can be treated as a better filesystem with objects written by some key to prevent dataloss.   Any structure or consitency guarantees or optimization or indexes are fully the responsibility of the application layer.   This gets very complicated, erro-prone and hard *very* fast.
+
+On the other extreme - Use the database engine as the undisputed brains (the kitchen sink) of your application.   Every data access for every view in your application is offered (only) by one or very few number of (possibly complex) queries.   This view while localizes data access in a single place, it makes the databse a bottleneck and its scalability very challenging.   In reality vertical scaling (getting beefier machines) is the easiest (but most expensive solution - which most vendors will happily embrace) in such cases.  Horizontal scaling (getting *more* machines) is hard as increased data coupling and probabilities of node failures (network partitions) means more complicated and careful tradeoffs between [consistency and availability](https://en.wikipedia.org/wiki/CAP_theorem)
+
+Our sweetspot is somewhere in the bottle.  While ORMs (like GORM) provide an almost 1:1 interface compatibility between SQL and the application needs, being judicious with SQL still remains advantageous and should be based on the (data and operational) needs of the application.  For out chat application, some desirable (data) traits are:
+
+1. Messages from users must not be lost (Durability)
+2. Ordering of messages is important (within a topic)
+3. Few standard query types:
+   - CRUD on Users, Topics, Messages.
+   - Messsage ordering by timestamp but limited to either within a topic or by a user (for last N messages)
+
+Given our data "shapes" are simple and given the read usage of our system is much higher especially given read/write amplication (ie 1 message posted is read by many participants on a Topic) - we are choosing to optimize for write consistency, simplicity and read availability (at undegraded latency).
+
+The query patterns/conventions we choose are discussed next.
+
+### Unified Database Object
+
+First we will add a simple data access layer which will encapsulate all the calls to the database for each particular model (topic, messages, users).  Let us create an overarching "DB" object that representing out postgres DB (in [db/db.go](https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/db.go)):
+
+```
+type OneHubDB struct {
+  storage *gorm.DB
+}
+```
+
+This tells gorm that we have a database object (possibly with a connection) to the underlying DB.   The [Topic Store](https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/topicds.go), [User Store](https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/userds.go) and [Message Store](https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/messageds.go) modules all operate on this single DB instance (via GORM) to read/write data from their respective tables (topics, users, messages)   Note that this is just one possible convention.   We could have instead used three different different DB (gorm.DB) instances - one for each entity type - eg TopicDB, UserDB and MessageDB.
+
+### Use custom IDs instead of auto-generated ones
+
+We are choosing to generate our own primary key (IDs) for topics, users and messages instead of depending on the auto-increment (or auto-id) generation by the database engine.  This was for the following reasons:
+
+1. An auto generated key is localized to the database instance that generates it.  This means if/when we add more partitions to our databases (for horizontal scaling) these keys will need to be syncronized and migrating existing keys to avoid duplications at a global level is much harder.
+2. Auto increment keys offer reduced randomness - making it easy for attackers to "iterate" through all entities.
+3. Sometimes we may simply want string keys that are custom assignable if they are available (for SEO purposes).
+4. Lack of attribution to keys (eg a central/global key server can also allow attribution/annotation to keys for analytics purposes)
+
+For this purpose we have added a GenId table that keeps track of all used IDs so we can perform collission detection etc:
+
+```go
+type GenId struct {
+    Class     string `gorm:"primaryKey"`
+    Id        string `gorm:"primaryKey"`
+    CreatedAt time.Time
+}
+```
+
+Naturally this is not a scalable solution when data volume is large but suffices for our demo and we can move this table to a different DB and still preserve the keys/ids.  Note that GenId itself is also managed by GORM and uses the combination of Class+Id as its primary key.  An example of this is `Class=Topic and Id=123`.
+
+Random IDs are assigned BY THE APPLICAtion in a simple manner:
+
+```go
+func randid(maxlen int) string {
+  max_id := int64(math.Pow(36, maxlen))
+  randval := rand.Int63() % max_id
+  return strconv.FormatInt(randval, 36)
+}
+
+func (tdb *OneHubDB) NextId(cls string) string {
+  for {
+    gid := GenId{Id: randid(), Class: cls, CreatedAt: time.Now()}
+    err := tdb.storage.Create(gid).Error
+    log.Println("ID Create Error: ", err)
+    if err == nil {
+      return gid.Id
+    }
+  }
+}
+```
+
+1. The method `randid` generates a maxlen sized string of random characters.  This is as simple as `(2^63) mod maxid` where `maxid = 36 ^ maxlen`.
+2. The NextId method is used by the different entity create methods (below) to repeatedly generate random IDs if collissions exist.  In case you are worried about excessive collissions or interested understanding their probabilities - you can learn about them [here](https://preshing.com/20110504/hash-collision-probabilities/).
+
+### Judicious use of indexes
+
+Indexes are very beneficial to speed up certain data retrieval operation at the expense of increased writes and storage.   We have limited our use of indexes to a very handful of cases where strong consistency was needed (and could be scaled easily):
+
+1. Topics sorted by name (for an alphabetical sorting of topics)
+2. Messages sorted by Topic and Creation time stamp (for the message list natural ordering)
+
+What is the impact of this on our application?
+
+#### Topic Creations and Indexes
+
+When a topic is created (or its name is updated) an index write would be required.  Topic creations/updates are relatively low frequency operations (compared to message postings).  So a slightly increased write latency is acceptable.  In a more realworld chat application a topic creation is a bit more heavy weight (due to the need to check permissions, apply compliance rules etc).   So this latency hit is acceptable.  Infact this index would only be needed when "searching" for topics and even an asynchronous index update would have sufficed.  But error and failure handling complexities on an asynchronous pipeline were not worth it.
+
+#### Message related indexes
+
+To consider the value of Message related indexes let us look at some usage numbers.   This is a very simple application so these scalability issues most likely wont be a concer so feel free to skip this section.   If your goals are a bit more lofty, looking at [Slack's usage numbers](https://webtribunal.net/blog/slack-stats/#gref) we can estimate/project some usage numbers for our own application to make it interesting:
+
+1. Number of daily active topics: 100
+2. Number active users per topic: 10
+3. Message sent by an active user in a topic - every 5 minutes (assume time to type, to read others messages, research, think etc)
+
+Number of messages created each day
+<pre><code>
+  = 100 * 10 * (1400 minutes in a day / 5 minutes)
+
+  = 280k messages per day
+
+  ~ 3 messages per second
+</code></pre>
+
+In the context of these numbers if we were to create a message every 3 seconds, even with an extra index (or three) we can handle this load comfortably in a typical database that can handle 10k iops.
+
+It is easy to wonder if this scales as the number of topics or active users per topic or the creation frenzy increased.  Let us consider a more intense setup (in a larger or busier organization).  Instead of the the numbers above if we had 10k topics and 100 active users with a message every minute (instead of 5 minutes), our write QPS would be:
+
+WriteQPS
+<pre><code>
+  = 10000 * 100 * 1400 / 1
+
+  = 1.4B messages per day
+
+  ~ 14k messages per second
+</code></pre>
+
+That is quite a considerable blow up.  We can solve this in a couple of ways:
+
+1. Accept a higher latency on writes - ie instead of requiring a write happen in a few milliseconds - accept an SLO of say 500ms.
+
+2. Update indexes asynchonosly - this doesnt get us *that* much further as the *number* of writes in a system has not changed - only the *when* has changed.
+
+3. **Shard our data**
+
+Let us look at sharding!   Our write QPS is in aggregate.  On a per-topic level it is quite level (14k / 10000 = 1.4 qps).  However user behaviour (for our application) is that such activities on a topic are fairly isolated.   We only want our messages to be consistent and ordered *within* a message.   We now have the opportunity to dynamically scale our databases (or message tables) to be partitioned by topic IDs.  Infact we could build a layer (a control plane) that dynamically spins up database shards and moves topics around reacting to load as appropriate.  We will build just such a control plane in a future post!
+
+
+It is understandable that this deep dive was not required right now.   However by understanding our data and user experience needs we could make careful tradeoffs on where in the DB usage spectrum we can choose to fall on.  In fact going forward such mini dives will benefit us immensely as we want to quickly evaluate tradeoffs (when building/adding new features).
+
+### Store specific implementations
+
+Now that we have our basic DB and common methods we can go to each of the entity methods' implementations.  For each our entity methods we will create the basic CRUD methods:
+
+1. Create
+2. Update
+3. Get
+4. Delete
+5. List/Search
+
+* The Create and Update methods are combined into a single "Save" method to do the following:
+  - If an ID is not provided then treat as a create
+  - If an ID *is* provided treat it as an update-or-insert (upsert) operation by using the NextId method if necessary
+
+* Since we have a base model, Create and Update will set CreatedAt and UpdatedAt fields respectively.
+
+* The delete method is straight forward.  Only key thing here is instead of leveraging GORM's cascading deletes capabilities we also delete the related entities in a separate call.  We will not worry about consistency issues resulting from this (eg errors in subsequent delete methods).
+
+* For the Get method we fetch using a standard gorm get query pattern based on a common id column we are using for all models.  If an entity does not exist then we return a nil.
+
+#### Users DB
+
+Our user entity methods are pretty straightforward using the above conventions  The Delete method additionally also deletes all Messages for/by the user first before deleting the user itself.  This ordering is to ensure that if deletion of topics fails then the user deletion wont proceed giving the caller to retry.
+
+<CodeEmbed
+  title="User entity methods"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/userds.go"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+#### Topics DB
+
+Our topic entity methods are also pretty straightforward using the above conventions  The Delete method additionally also deletes all messages in the topic first before deleting the user itself.  This ordering is to ensure that if deletion of topics fails then the user deletion wont proceed giving the caller to retry.
+
+<CodeEmbed
+  title="Topic entity methods"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/topicds.go"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+#### Messages DB
+
+<CodeEmbed
+  title="Message entity methods"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/messageds.go"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+The Messages entity methods are slightly more involved.   Unlike the other two, Messages entity methods also include Searching by Topic and Searching by User (for ease).  
+
+This is done in the GetMessages method that provides paginated (and ordered) retrieval of messages for a topic or by a user.
+
+
+## Write converters to/from Service/DB models
+
+We are almost there.   Kudos to your patience in sticking through the details.   Our database is ready to read/write data.  It just needs to be invoked by the service.  Going back to our original plan:
+
+```
+|---------------|      |-----------|     |--------|       |------|
+| Request Proto | <->  |  Service  | <-> |  GORM  |  <->  |  DB  |
+|---------------|      |-----------|     |--------|       |------|
+```
+We have our service models (generated by protobuf tools) and we have our DB models that GORM understand.  We will now add converters to convert between the two.  Converters for Entity X will follow these conventions:
+
+1. A method XToProto of type `func(input *datastore.X) (out *protos.X)`
+2. A method XFromProto of type `func(input *protos.X) (out *datastore.X)`
+
+With that our converters are quite simply (and boringly):
+
+<CodeEmbed
+  title="Service/DB Models Converters"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/services/converters.go"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+## Hook up the converters in the Service Definitions
+
+Ok NOW we are finally there.   Our last step is to invoke the converters above in the service implemntation.   An example is the TopicService below that shows use of our DB using the converters:
+
+<CodeEmbed
+  title="Topic Service implementation with DB"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/services/topics.go"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+The methods are pretty straight forward.
+
+**CreateTopic**
+
+1. During creation we allow custom IDs to be passed in.  If an entity with the ID exists the request is rejected.  If an ID is not passed in a random one is assigned.
+2. Creator and Name parameters are required fields.
+3. The topic is converted to a "DBTopic" model and saved by calling the SaveTopic method.
+
+
+**UpdateTopic**
+
+All our Update{Entity} methods follow a similar pattern:
+
+1. Fetch the existing entity (by ID) from the DB.
+2. Update the entity fields based on fields marked in the update_mask (so patches are allowed)
+3. Update with any extra entity specific operations (eg AddUsers, RemoveUsers etc) - these are just for convinience so the caller would not have to provide an entire "final" users list each time.
+4. Convert the updated proto to a "DB Model"
+5. Call SaveTopic on the DB.  SaveTopic uses the "version" field in our DB to perform an optimistically concurrent write.  This ensures tha if by the time the model is loaded and it is being written, a write by another request/thread will not be overwritten.
+
+The Delete, List and Get methods are fairly straightward.  The [UserService](https://raw.githubusercontent.com/panyam/onehub/PART5_DB/services/users.go) and [MessageService](https://raw.githubusercontent.com/panyam/onehub/PART5_DB/services/messages.go) also are built in a very similar way with minor differences to suit application specific requirements.
+
+## Testing it all out
+
+Ok third time lucky.  This time we ARE really almost there!  With the data base up (`docker compose up`) and service running (`go run cmd/server.go`) we can start calling methods on our service:
+
+```
+```
