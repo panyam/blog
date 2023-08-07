@@ -284,6 +284,136 @@ openapiv2:
 
 Like all other plugins, the openapiv2 plugin also generates one .swagger.json per .proto file. However this changes the semantics of swagger as each swagger is treated as its own "endpoint" where as in our case what we really want is a single endpoint that fronts all the services. In order to contain a single "merged" swagger file we pass the `allow_merge=true` parameter to the above command. In addition we also pass the name of the file to be generated (`merge_file_name=allservices`). This results in `gen/openapiv2/allservices.swagger.json` file that can be read, visualized and tested with [SwaggerUI](https://swagger.io/tools/swagger-ui/).
 
+## Testing it all out
+
+#### Create a Topic
+
+`grpc_cli --json_input --json_output call localhost:9000 CreateTopic '{topic: {name: "First Topic", creator_id: "user1"}}'`
+
+```json showLineNumbers
+{
+ "topic": {
+  "createdAt": "2023-07-28T07:30:54.633005Z",
+  "updatedAt": "2023-07-28T07:30:54.633006Z",
+  "id": "1",
+  "creatorId": "user1",
+  "name": "First Topic"
+ }
+}
+```
+
+and another
+
+`grpc_cli --json_input --json_output call localhost:9000 CreateTopic '{topic: {name: "Urgent topic", creator_id: "user2", users: ["user1", "user2", "user3"]}}'`
+
+```json showLineNumbers
+{
+ "topic": {
+  "createdAt": "2023-07-28T07:32:04.821800Z",
+  "updatedAt": "2023-07-28T07:32:04.821801Z",
+  "id": "2",
+  "creatorId": "user2",
+  "name": "Urgent topic",
+  "users": [
+   "user1",
+   "user2",
+   "user3"
+  ]
+ }
+}
+```
+
+#### List all topics
+
+`grpc_cli --json_input --json_output call localhost:9000 ListTopics {}`
+
+```json showLineNumbers
+{
+ "topics": [
+  {
+   "createdAt": "2023-07-28T07:30:54.633005Z",
+   "updatedAt": "2023-07-28T07:30:54.633006Z",
+   "id": "1",
+   "creatorId": "user1",
+   "name": "First Topic"
+  },
+  {
+   "createdAt": "2023-07-28T07:32:04.821800Z",
+   "updatedAt": "2023-07-28T07:32:04.821801Z",
+   "id": "2",
+   "creatorId": "user2",
+   "name": "Urgent topic",
+   "users": [
+    "user1",
+    "user2",
+    "user3"
+   ]
+  }
+ ]
+}
+```
+
+#### Get Topics by IDs
+
+`grpc_cli --json_input --json_output call localhost:9000 GetTopics '{"ids": ["1", "2"]}'`
+
+```json showLineNumbers
+{
+ "topics": {
+  "1": {
+   "createdAt": "2023-07-28T07:30:54.633005Z",
+   "updatedAt": "2023-07-28T07:30:54.633006Z",
+   "id": "1",
+   "creatorId": "user1",
+   "name": "First Topic"
+  },
+  "2": {
+   "createdAt": "2023-07-28T07:32:04.821800Z",
+   "updatedAt": "2023-07-28T07:32:04.821801Z",
+   "id": "2",
+   "creatorId": "user2",
+   "name": "Urgent topic",
+   "users": [
+    "user1",
+    "user2",
+    "user3"
+   ]
+  }
+ }
+}
+```
+
+#### Delete a topic followed by a Listing
+
+`grpc_cli --json_input --json_output call localhost:9000 DeleteTopic '{"id": "1"}'`
+
+```json showLineNumbers
+connecting to localhost:9000
+{}
+Rpc succeeded with OK status
+```
+
+`grpc_cli --json_input --json_output call localhost:9000 ListTopics {}`
+
+```json showLineNumbers
+{
+ "topics": [
+  {
+   "createdAt": "2023-07-28T07:32:04.821800Z",
+   "updatedAt": "2023-07-28T07:32:04.821801Z",
+   "id": "2",
+   "creatorId": "user2",
+   "name": "Urgent topic",
+   "users": [
+    "user1",
+    "user2",
+    "user3"
+   ]
+  }
+ ]
+}
+```
+
 ## Best practices
 
 ### Seperation of Gateway and GRPC endpoints

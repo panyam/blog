@@ -278,7 +278,7 @@ func EnsureAuthExists(ctx context.Context,
 }
 ```
 
-Note that metadata entries are really key/value-list pairs (much like headers or query-parms in http).  Hence getting the list of username/passwords.
+Note that metadata entries are really key/value-list pairs (much like headers or query-params in http).  Hence getting the list of username/passwords.
 
 Now all that is left is to add this to our DialOptions in the client:
 
@@ -404,6 +404,59 @@ Passing the right password fixes this:
 $ curl localhost:8080/v1/topics -u login:login123
 
 {"topics":[], "nextPageKey":""}
+```
+
+
+### Step 4 - Use metadata 
+
+Up until now our service methods have been shielded so that they wont even be called if an auth param was not passed or was invalid (albeit with a simple check for a "123" prefix).   Sometimes it is necessary for the service methods to obtain and use this information.  For example when an entity is created the service may want to enforce that the "creator" is set to the logged-in/authenticated user instead of an arbitrary value passed by the caller.
+
+This is quite simple.  Let us take the `CreateTopic` method:
+
+```go
+func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicRequest) (resp *protos.CreateTopicResponse, err error) {
+	resp = &protos.CreateTopicResponse{}
+	resp.Topic = s.EntityStore.Create(req.Topic)
+	return
+}
+```
+
+It can now use the auth info passed in via the interceptors:
+
+```go
+func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicRequest) (resp *protos.CreateTopicResponse, err error) {
+	resp = &protos.CreateTopicResponse{}
+  req.Topic.CreatorId = GetAuthedUser(ctx)
+  if req.Topic.CreatorId == "" {
+    return nil, status.Error(codes.PermissionDenied, "User is not authenticated to create a topic")
+  }
+	resp.Topic = s.EntityStore.Create(req.Topic)
+	return
+}
+```
+
+If we try to create a topic any custom will be overwritten by the ID of the logged in user:
+
+```bash
+curl -X POST localhost:8080/v1/topics  \
+     -u auser:auser123       \
+     -H 'Content-Type: application/json' \
+     -d '{"topic": {"name": "First Topic", "creator_id": "user1"}}' | json_pp
+```
+
+yielding:
+
+```json
+{
+   "topic" : {
+      "createdAt" : "2023-08-04T08:52:52.861406Z",
+      "creatorId" : "auser",
+      "id" : "1",
+      "name" : "First Topic",
+      "updatedAt" : "2023-08-04T08:52:52.861407Z",
+      "users" : []
+   }
+}
 ```
 
 That's it.  That's all there is to interceptors.   Stream interceptors are very similar but not covered here.  Wait for it though!

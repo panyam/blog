@@ -16,17 +16,17 @@ Furthermore in this article we will use a relational (SQL) database as our under
 
 ## Setting up the database
 
-Our general strategy is:
+A typical pattern when using a database in a service is:
 
 ```
 |---------------|      |-----------|     |------------|       |------|
-| Request Proto | <->  |  Service  | <-> |  SQL Stmt  |  <->  |  DB  |
+| Request Proto | <->  |  Service  | <-> |  ORM/SQL   |  <->  |  DB  |
 |---------------|      |-----------|     |------------|       |------|
 ```
 
 1. A grpc request is received by the service
-2. The service converts the model proto (eg Song) contained in the request (eg CreateSongRequest) into a SQL statement
-3. The SQL statment is passed to the DB (eg an insert or update)
+2. The service converts the model proto (eg Song) contained in the request (eg CreateSongRequest) into the ORM library.
+3. The ORM library generates the necessary SQL and executes it on the DB (and returns any results).
 
 ### Setting up Postgres
 
@@ -134,7 +134,7 @@ Before we start updating our service code to access the database, you may be won
 
 In a typical database initializing a database (after the user, DB setup) would entail creating and running SQL scripts to initialize tables, checking for new versions and so on.  One example of a table creation statement (that can be executed via psql or via pgadmin) is:
 
-```
+```sql showLineNumbers
 CREATE TABLE topics (
   id          STRING NOT NULL PRIMARY KEY,
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -146,7 +146,7 @@ CREATE TABLE topics (
 
 Similarly an insertion would also have been manual construction of SQL statements, eg:
 
-```
+```sql showLineNumbers
 INSERT INTO topics
         ( id, name )
         VALUES ( "1", "Taylor Swift" );
@@ -220,7 +220,7 @@ The query patterns/conventions we choose are discussed next.
 
 First we will add a simple data access layer which will encapsulate all the calls to the database for each particular model (topic, messages, users).  Let us create an overarching "DB" object that representing out postgres DB (in [db/db.go](https://raw.githubusercontent.com/panyam/onehub/PART5_DB/datastore/db.go)):
 
-```
+```go showLineNumbers
 type OneHubDB struct {
   storage *gorm.DB
 }
@@ -251,7 +251,7 @@ Naturally this is not a scalable solution when data volume is large but suffices
 
 Random IDs are assigned BY THE APPLICAtion in a simple manner:
 
-```go
+```go showLineNumbers
 func randid(maxlen int) string {
   max_id := int64(math.Pow(36, maxlen))
   randval := rand.Int63() % max_id
@@ -435,7 +435,7 @@ The methods are pretty straight forward.
 
 **UpdateTopic**
 
-All our Update{Entity} methods follow a similar pattern:
+All our Update&lt;Entity&gt; methods follow a similar pattern:
 
 1. Fetch the existing entity (by ID) from the DB.
 2. Update the entity fields based on fields marked in the update_mask (so patches are allowed)
@@ -447,7 +447,234 @@ The Delete, List and Get methods are fairly straightward.  The [UserService](htt
 
 ## Testing it all out
 
-Ok third time lucky.  This time we ARE really almost there!  With the data base up (`docker compose up`) and service running (`go run cmd/server.go`) we can start calling methods on our service:
+Ok third time lucky.  This time we ARE really almost there!   We have a database up and running (go ahead and start it with `docker compse up`).   We have converters to/from service and database models.    We have implemented up our service code to access this database.    We just need to connect to this (running) database and pass a connection object to our services in our runner binary ([cmd/server.go](https://github.com/panyam/onehub/blob/PART5_DB/cmd/server.go)):
+
+* Add an extra flag to accept a path to the DB.  This can be used to change the DB path if needed.
+
+```go showLineNumbers
+var (
+	addr    = flag.String("addr", ":9000", "Address to start the onehub grpc server on.")
+	gw_addr = flag.String("gw_addr", ":8080", "Address to start the grpc gateway server on.")
+
+	db_endpoint = flag.String("db_endpoint", "", fmt.Sprintf("Endpoint of DB where all topics/messages state are persisted.  Default value: ONEHUB_DB_ENDPOINT environment variable or %s", DEFAULT_DB_ENDPOINT))
+)
+```
+
+* Create `*gorm.DB` instance from the db_endpoint value
+
+We have already created a little utility method for opening a (gorm compatible) SQL DB given an address:
+
+<CodeEmbed
+  title="cmd/utils/db.go"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART5_DB/cmd/utils/db.go"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+Now let us create the method `OpenOHDB` - which is a simple wrapper that also checks for a db_endpoint value from an environment variables (if it is not provided) and subsequently opens a gorm.DB instance needed for a OneHubDB instance:
+
+```go showLineNumbers
+func OpenOHDB() *ds.OneHubDB {
+	if *db_endpoint == "" {
+		*db_endpoint = cmdutils.GetEnvOrDefault("ONEHUB_DB_ENDPOINT", DEFAULT_DB_ENDPOINT)
+	}
+	db, err := cmdutils.OpenDB(*db_endpoint)
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+	return ds.NewOneHubDB(db)
+}
+```
+
+With the above two we need a simple change to our main method:
+
+```go showLineNumbers
+func main() {
+	flag.Parse()
+	ohdb := OpenOHDB()
+	go startGRPCServer(*addr, ohdb)
+	startGatewayServer(*gw_addr, *addr)
+}
+```
+
+We are now also passing the `ohdb` instance to the GRPC service creation methods.
+
+Now we are ready to test our durable setup with database!  Remember we setup auth in a previous part so we need to pass login credentials - albeit fake ones where `password = login + "123"`)
+
+#### Create a Topic
+
+`curl localhost:8080/v1/topics -u auser:auser123 | json_pp`
+
+```json
+{
+   "nextPageKey" : "",
+   "topics" : []
+}
+```
+
+That's right.  We do not have any topics yet so let us create some.
+
+```bash
+curl -X POST localhost:8080/v1/topics  \
+     -u auser:auser123       \
+     -H 'Content-Type: application/json' \
+     -d '{"topic": {"name": "First Topic"}}' | json_pp
+```
+
+yielding:
+
+```json
+{
+   "topic" : {
+      "createdAt" : "1970-01-01T00:00:00Z",
+      "creatorId" : "auser",
+      "id" : "q43u",
+      "name" : "First Topic",
+      "updatedAt" : "2023-08-04T08:14:56.413050Z",
+      "users" : {}
+   }
+}
+```
+
+Let us create a couple more:
 
 ```
+curl -X POST localhost:8080/v1/topics  \
+     -u auser:auser123       \
+     -H 'Content-Type: application/json' \
+     -d '{"topic": {"name": "First Topic", "id": "1"}}' | json_pp
+
+curl -X POST localhost:8080/v1/topics  \
+     -u auser:auser123       \
+     -H 'Content-Type: application/json' \
+     -d '{"topic": {"name": "Second Topic", "id": "2"}}' | json_pp
+
+curl -X POST localhost:8080/v1/topics  \
+     -u auser:auser123       \
+     -H 'Content-Type: application/json' \
+     -d '{"topic": {"name": "Third Topic", "id": "3"}}' | json_pp
 ```
+
+with a list query returning:
+
+```json
+{
+   "nextPageKey" : "",
+   "topics" : [
+      {
+         "createdAt" : "1970-01-01T00:00:00Z",
+         "creatorId" : "auser",
+         "id" : "q43u",
+         "name" : "First Topic",
+         "updatedAt" : "2023-08-04T08:14:56.413050Z",
+         "users" : {}
+      },
+      {
+         "createdAt" : "1970-01-01T00:00:00Z",
+         "creatorId" : "auser",
+         "id" : "dejc",
+         "name" : "Second Topic",
+         "updatedAt" : "2023-08-05T06:52:33.923076Z",
+         "users" : {}
+      },
+      {
+         "createdAt" : "1970-01-01T00:00:00Z",
+         "creatorId" : "auser",
+         "id" : "zuoz",
+         "name" : "Third Topic",
+         "updatedAt" : "2023-08-05T06:52:35.100552Z",
+         "users" : {}
+      }
+   ]
+}
+```
+
+#### Get Topic by ID
+
+We can do a listing as in the previous section.  We can also obtain individual topics:
+
+`curl localhost:8080/v1/topics/q43u -u auser:auser123 | json_pp`
+
+```json
+{
+   "topic" : {
+      "createdAt" : "1970-01-01T00:00:00Z",
+      "creatorId" : "auser",
+      "id" : "q43u",
+      "name" : "First Topic",
+      "updatedAt" : "2023-08-04T08:14:56.413050Z",
+      "users" : {}
+   }
+}
+```
+
+#### Send and List messages on a topic
+
+Let us send a few messages on the "First Topic" (id = "q43u"):
+
+```
+curl -X POST localhost:8080/v1/topics/q43u/messages -u 'auser:auser123' -H 'Content-Type: application/json'     -d '{"message": {"content_text": "Message 1"}}'
+curl -X POST localhost:8080/v1/topics/q43u/messages -u 'auser:auser123' -H 'Content-Type: application/json'     -d '{"message": {"content_text": "Message 2"}}'
+curl -X POST localhost:8080/v1/topics/q43u/messages -u 'auser:auser123' -H 'Content-Type: application/json'     -d '{"message": {"content_text": "Message 3"}}'
+```
+
+Now to list them:
+
+
+```curl localhost:8080/v1/topics/q43u/messages -u 'auser:auser123' | json_pp```
+
+```
+{
+   "messages" : [
+      {
+         "contentData" : null,
+         "contentText" : "Message 1",
+         "contentType" : "",
+         "createdAt" : "0001-01-01T00:00:00Z",
+         "id" : "hlso",
+         "topicId" : "q43u",
+         "updatedAt" : "2023-08-07T05:00:36.547072Z",
+         "userId" : "auser"
+      },
+      {
+         "contentData" : null,
+         "contentText" : "Message 2",
+         "contentType" : "",
+         "createdAt" : "0001-01-01T00:00:00Z",
+         "id" : "t3lr",
+         "topicId" : "q43u",
+         "updatedAt" : "2023-08-07T05:00:39.504294Z",
+         "userId" : "auser"
+      },
+      {
+         "contentData" : null,
+         "contentText" : "Message 3",
+         "contentType" : "",
+         "createdAt" : "0001-01-01T00:00:00Z",
+         "id" : "8ohi",
+         "topicId" : "q43u",
+         "updatedAt" : "2023-08-07T05:00:42.598521Z",
+         "userId" : "auser"
+      }
+   ],
+   "nextPageKey" : ""
+}
+```
+
+## Conclusion
+
+Who would have thought using a database would have been such a meaty topic.   We covered a lot of ground here that will both give us a good "functioning" service as well as with foundational ideas when implementing new ideas for the future:
+
+* We chose a relational database - Postgres - for its strong modelling capabilities, consistency guarantees, performance and versatility.
+* We also chose an ORM library (GORM) to improve our velocity and portability if we need to switch to another relational datastore
+* We eased the setup by hosting both postgres and its admin ui (Pgadmin) in a docker-compose file.
+* We not only chose a relational database - Postgres - () but also decided to use a GORM carefully and judiciously to improve our velocity.
+* We discussed some conventions that will help us along in our application design and extensions.
+* We also addressed a way to assess, analyse and address scalability challenges as they might arise and use that to guide our tradeoff decisions (eg type and number of indexes, etc).
+* We wrote data models that GORM could use to read/write from the database.
+* We wrote converters methods to convert between service and data models.
+* We finally used the converters in our service to offer a "real" persistent implementation of a chat service where messages can be posted and read.
+
+We are just getting started now that we have a "minimum usable app" and there are a lot of features and cool things to add to our service to make it more and more production ready.  Take a breather and see you soon in continuing the exciting adventure!
