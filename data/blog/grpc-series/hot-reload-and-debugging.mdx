@@ -1,6 +1,6 @@
 ---
 title: 'Part 7 - Hot reload and Debugging'
-date: 2023-08-05T15:32:14Z
+date: 2023-06-05T15:32:14Z
 tags: ['grpc', 'hot reload', 'air', 'debugging', 'docker', 'Dockerfile']
 draft: false
 summary: 'We held off on packaging our main app in the docker-compose file since go binaries could not be hot reloaded (on file changes) by default.  We will use the popular Air framework to enable hot reloading of our service on file changes and then package this via docker.  We will also enable remote debugging of these services running in Docker'
