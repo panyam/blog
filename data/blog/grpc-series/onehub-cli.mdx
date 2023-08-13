@@ -1,0 +1,608 @@
+---
+title: 'Part 6 - A simple CLI for Onehub'
+date: 2023-08-03T11:29:10Z
+lastmod: '2022-05-05'
+tags: ['spf13', 'cobra', 'command line', 'go']
+draft: false
+authors: ['Sri Panyam']
+layout: PostSimple
+summary: The OneHub service can be interacted by using CURL as well as grpc_cli.  However a more custom CLI can make accessing and interacting with our service much more easier (and enjoyable).  We will quickly build a simple CLI using the popular Cobra library for building CLI applications in Go.
+---
+
+## Introduction
+
+Our OneHub chat service can be accessed both by the grpc_cli tool as well as via a REST interface.  Even with these standard tools there is room for simplifying our access with a custom command line interface (CLI).   For example we can hide away the need to expose customer http headers and content types.   We will build our CLI - also in Go - using the popular [Cobra](https://github.com/spf13/cobra) library.
+
+## Getting Started
+
+Our code for this can be found in the [PART6_CLI branch](https://github.com/panyam/onehub/tree/PART6_CLI) of the [OneHub repo](https://github.com/panyam/onehub).
+
+We could have created a new repository for this.  Instead we will add it as a module within the same repository.  Create a cli folder and initialize a module:
+
+```bash
+mkdir cli
+cd cli
+go mod init ohcli
+```
+
+We will use [cobra-cli](https://github.com/spf13/cobra) to simplifying scaffolding:
+
+```bash
+go install github.com/spf13/cobra-cli@latest
+```
+
+Now running `cobra-cli init` in the cli folder will generate the following files:
+
+```
+cli
+ |-- LICENSE
+ |-- go.mod
+ |-- go.sum
+ |-- main.go
+ |-- cmd
+     |-- root.go
+```
+
+`root.go` contains a sample command.  We can run our command with `go run main.go` or we can build/install it with:
+
+```bash
+go build
+go install
+```
+
+This will install the `oh` binary into the [`$GOBIN`](https://www.programming-books.io/essential/go/gopath-goroot-gobin-d6da4b8481f94757bae43be1fdfa9e73) folder.  Ensure `$GOBIN` is in your `$PATH`.  We can add the above to our [Makefile](https://github.com/panyam/onehub/blob/PART6_CLI/cli/Makefile).
+
+Try it out!
+
+```bash
+% oh
+```
+
+```
+A longer description that spans multiple lines and likely contains
+examples and usage of using your application. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.
+```
+
+The `cmd` folder will host all our commands.   For our application we will follow a REST like convention:
+
+* `cmd/<entity>.go` will contain the commands for a given entity (eg users, topics, messages).
+* Each `cmd/<entity>.go` will contain methods similar to what we have defined in our proto def files.
+
+eg (from the cli folder):
+
+```bash
+oh topics get
+oh topics create <creation params>
+```
+
+## Add Sub-commands
+
+With the cobra-cli we can add the entity related sub commands:
+
+```bash
+cobra-cli add users
+cobra-cli add topics
+cobra-cli add msgs
+```
+
+Running the main cli now shows:
+
+```bash
+% oh --help
+```
+
+```
+The CLI for interacting with OneHub in a simpler but more flexible way
+
+Usage:
+  oh [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  msgs        A brief description of your command
+  topics      A brief description of your command
+  users       A brief description of your command
+
+Flags:
+  -h, --help     help for oh
+  -t, --toggle   Help message for toggle
+
+Use "oh [command] --help" for more information about a command.
+```
+
+For example our topics.go file simply contains:
+
+```go showLineNumbers
+var topicsCmd = &cobra.Command{
+	Use:   "topics",
+	Short: "Manage topics",
+	Long:  `Group of commands to manage and interact with topic`,
+}
+```
+
+Now we can add other commands (like listTopics, getTopic etc to match our REST api):
+
+```go showLineNumbers
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List topics",
+	Long:  `List topics in the system optionally filtered by name`,
+	Run: func(cmd *cobra.Command, args []string) {
+		name, _ := cmd.Flags().GetString("name")
+		if name != "" {
+			fmt.Println("Listing topics by name: ", name)
+		} else {
+			fmt.Println("Listing all topics")
+		}
+	},
+}
+
+var getCmd = &cobra.Command{
+	Use:   "get TOPICID [...TOPICIDS]",
+	Long:  `Get one or more topics by ID (or list of IDs`,
+	Args:  cobra.MinimumNArgs(1),
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+    if len(args) < 1 {
+      return errors.New("Atleast one topic ID must be specified")
+    }
+    return nil
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+    log.Printf("Getting a Topic: %s", args[0])
+	},
+}
+
+func init() {
+  // Add "topics" as sub command of the main rootCmd defined in root.go
+	rootCmd.AddCommand(topicsCmd)
+
+	// Add the get command to our topics group
+	topicsCmd.AddCommand(getCmd)
+
+	// Add the list command to our topics group
+	topicsCmd.AddCommand(listCmd)
+	listCmd.Flags().StringP("name", "n", "", "Match topics with name")
+}
+```
+
+We have done a few things here:
+
+* In the `list` command we added an optional "flag" (`name`) that allows us to either search for topics by name or list all topics.
+* In the `get` command we enforced minimum number of arguments - using a `PreRunE` method that returns an error appropriately.
+* We have added a Run method that is the heart of all our commands.
+
+### Functional approach to commands
+
+The cobra-cli generates each command as a global variable in seperate files (eg topicCmd, userCmd etc).  The disadvantage with this is approach - apart from cluttering the global namespace - is declaration of flags is seperated from the commands themselves (above the listCmd flags are declared in the `init` method while the listCmd is a global).
+
+Instead we will adopt a more functional approach where each command is defined in its own function - along with all its flags - and built up together in a bottom-up approach.   Using this approach the list and get commands are transformed to:
+
+```go showLineNumbers
+func listCommand() *cobra.Command {
+	out := &cobra.Command{
+		Use:   "list",
+		Short: "List topics",
+		Long:  `List topics in the system optionally filtered by name`,
+		Run: func(cmd *cobra.Command, args []string) {
+      name, _ := cmd.Flags().GetString("name")
+      if name != "" {
+        fmt.Println("Listing topics by name: ", name)
+      } else {
+        fmt.Println("Listing all topics")
+      }
+		},
+	}
+	out.Flags().StringP("name", "n", "", "Match topics with name")
+	return out
+}
+
+func getCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "get",
+		Short: "Get topics",
+		Long:  `Get one or more topics by ID (or list of IDs`,
+    PreRunE: func(cmd *cobra.Command, args []string) error {
+      if len(args) < 1 {
+        return errors.New("Atleast one topic ID must be specified")
+      }
+      return nil
+    },
+    Run: func(cmd *cobra.Command, args []string) {
+      log.Printf("Getting a Topic: %s", args[0])
+    },
+	}
+}
+```
+
+Our root method is now:
+
+```go showLineNumbers
+package cmd
+
+import (
+	"os"
+
+	"github.com/spf13/cobra"
+)
+
+
+// rootCmd represents the base command when called without any subcommands
+func rootCommand() *cobra.Command {
+	out := &cobra.Command{
+		Use:   "oh",
+		Short: "The OneHub CLI",
+		Long:  `The CLI for interacting with OneHub in a simpler but more flexible way`,
+	}
+	return out
+}
+
+var rootCmd = rootCommand()
+
+func Execute() {
+	err := rootCmd.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
+}
+```
+
+## Adding a simple http client wrapper
+
+Ultimately our cli will make http calls to the rest endpoint (generated by the grpc-gateway plugin in [part 2](/grpc-series/rest-http-gateway/) of this series).   So a easy way to make http calls that follows our conventions (auth headers, json in/json out, etc) is useful.  There are [excellent libraries](https://awesome-go.com/http-clients/) for wrapping the native Go http library.  But since our requirements are simple, let us add our own wrapper for use in here.  Our goals are simple:
+
+1. Json In, Json Out
+2. Basic Auth using username/password (for now)
+3. Simple with few dependencies
+
+Here's one we have whipped out - The OHClient.   It will be used by all commands (that will create soon) to make http calls to our server.
+
+<CodeEmbed
+  title="OneHub HTTP Client"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART6_CLI/cli/cmd/client.go"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+Key things to note are:
+
+* The OHClient instance holds all details needed to make a http call (username/password, hostname, transport details etc)
+* Similar to python's [requests](https://pypi.org/project/requests/) library the single Call method takes all that is needed to make a request (method, path, json payload, headers).
+* The Call method creates a [http.Request](https://pkg.go.dev/net/http#Request) instance, sets up the body and custom headers (if provided)
+* The Call method also enforces basic auth and content-type
+* The received body is parsed as JSON and fails if the body is not valid JSON
+* A default Insecure transport is used so that we can test against a locally running server instance.  [Transport](https://pkg.go.dev/net/http#Transport) can be reused and is safe for concurrent use by multiple goroutines.
+
+That is it!  All that is left is to create an instance of a Client and use it in our commands.  As part of this we will also add persistent flags to customize the host, username and password (optionally by taking them in from appropriate environment variables) across all commands:
+
+<CodeEmbed
+  title="OneHub Root command with Shared Context"
+  language="go"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART6_CLI/cli/cmd/root.go"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+
+## Implementing commands
+
+We now have our basic command structure and we have a simple client.  Let us put them together.
+
+Take the list command:
+
+```go showLineNumbers
+func listCommand() *cobra.Command {
+	out := &cobra.Command{
+		Use:   "list",
+		Short: "List topics",
+		Long:  `List topics in the system optionally filtered by name`,
+		Run: func(cmd *cobra.Command, args []string) {
+			name, _ := cmd.Flags().GetString("name")
+			if name != "" {
+				Client.Call("GET", fmt.Sprintf("/v1/topics?name=%s", name), nil, nil, nil)
+			} else {
+				Client.Call("GET", "/v1/topics", nil, nil, nil)
+			}
+		},
+	}
+	out.Flags().StringP("name", "n", "", "Match topics with name")
+	return out
+}
+```
+
+Here we take the command flags, construct the right URL and call it through our client.
+
+Running this we get:
+
+
+```bash
+% export OneHubUsername=auser
+
+% export OneHubPassword=auser123
+
+% oh topics list
+```
+
+```json
+{
+  "nextPageKey": "",
+  "topics": []
+}
+```
+
+Surely enough we need to create some Topics first.  Let us implement the creation command:
+
+```go showLineNumbers
+func createCommand() *cobra.Command {
+	out := &cobra.Command{
+		Use:        "new topic_name",
+		ValidArgs:  []string{"TOPIC_NAME"},
+		Args:       cobra.MinimumNArgs(1),
+		ArgAliases: []string{"TOPIC_NAME"},
+		Short:      "Create a new topic",
+		Run: func(cmd *cobra.Command, args []string) {
+			id, _ := cmd.Flags().GetString("id")
+			name := args[0]
+			params := StringMap{
+				"id":   id,
+				"name": name,
+			}
+			Client.Call("POST", "/v1/topics", nil, nil, StringMap{"topic": params})
+		},
+	}
+	out.Flags().StringP("id", "i", "", "A custom ID to use instead of auto generating one")
+	return out
+}
+```
+
+And create some Topics:
+
+```bash
+% oh topics new "Topic 1" --id t1
+```
+
+```json
+{
+  "topic": {
+    "createdAt": "1970-01-01T00:00:00Z",
+    "creatorId": "auser",
+    "id": "t1",
+    "name": "Topic 1",
+    "updatedAt": "2023-08-12T05:46:45.981803Z",
+    "users": {}
+  }
+}
+```
+
+```bash
+% oh topics new "Topic 2" --id t2
+```
+
+```json
+{
+  "topic": {
+    "createdAt": "1970-01-01T00:00:00Z",
+    "creatorId": "auser",
+    "id": "t2",
+    "name": "Topic 2",
+    "updatedAt": "2023-08-12T05:47:01.380518Z",
+    "users": {}
+  }
+}
+```
+
+```bash
+% oh topics new "Topic 3" --id t3
+```
+
+```json
+{
+  "topic": {
+    "createdAt": "1970-01-01T00:00:00Z",
+    "creatorId": "auser",
+    "id": "t3",
+    "name": "Topic 3",
+    "updatedAt": "2023-08-12T06:13:03.488044Z",
+    "users": {}
+  }
+}
+```
+
+Now the listing:
+
+```bash
+% oh topics list
+```
+
+```json
+{
+  "nextPageKey": "",
+  "topics": [
+    {
+      "createdAt": "1970-01-01T00:00:00Z",
+      "creatorId": "auser",
+      "id": "t1",
+      "name": "Topic 1",
+      "updatedAt": "2023-08-12T05:46:45.981803Z",
+      "users": {}
+    },
+    {
+      "createdAt": "1970-01-01T00:00:00Z",
+      "creatorId": "auser",
+      "id": "t2",
+      "name": "Topic 2",
+      "updatedAt": "2023-08-12T05:47:01.380518Z",
+      "users": {}
+    },
+    {
+      "createdAt": "1970-01-01T00:00:00Z",
+      "creatorId": "auser",
+      "id": "t3",
+      "name": "Topic 3",
+      "updatedAt": "2023-08-12T06:13:03.488044Z",
+      "users": {}
+    }
+  ]
+}
+```
+
+With the implementation of the rest of the [topics](https://github.com/panyam/onehub/blob/PART6_CLI/cli/cmd/topics.go), [users](https://github.com/panyam/onehub/blob/PART6_CLI/cli/cmd/users.go) and [message](https://github.com/panyam/onehub/blob/PART6_CLI/cli/cmd/msgs.go) cli commands, let us put our cli to the test:
+
+### Update a topic
+
+```bash
+oh topics update t1 --name "Computing"
+```
+
+```json
+{
+  "topic": {
+    "createdAt": "1970-01-01T00:00:00Z",
+    "creatorId": "auser",
+    "id": "t1",
+    "name": "Computing",
+    "updatedAt": "2023-08-12T16:12:23.314694Z",
+    "users": {}
+  }
+}
+```
+
+### Delete a topic
+
+```bash
+oh topics delete t2
+```
+
+```json
+{}
+```
+
+### Send a message on a topic
+
+Let us send 3 messages on a topic:
+
+```bash
+oh msg send t1 "My first message"
+oh msg send t1 "My second message"
+oh msg send t1 'Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.'
+```
+
+```json
+{
+  "message": {
+    "contentData": null,
+    "contentText": "My first message",
+    "contentType": "text",
+    "createdAt": "1970-01-01T00:00:00Z",
+    "id": "hlaz",
+    "topicId": "t1",
+    "updatedAt": "2023-08-12T16:35:31.935017Z",
+    "userId": "auser"
+  }
+}
+```
+
+```json
+{
+  "message": {
+    "contentData": null,
+    "contentText": "My second and longer message",
+    "contentType": "text",
+    "createdAt": "1970-01-01T00:00:00Z",
+    "id": "apgz",
+    "topicId": "t1",
+    "updatedAt": "2023-08-12T16:41:35.827131Z",
+    "userId": "auser"
+  }
+}
+```
+
+```json
+{
+  "message": {
+    "contentData": null,
+    "contentText": "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of \"de Finibus Bonorum et Malorum\" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, \"Lorem ipsum dolor sit amet..\", comes from a line in section 1.10.32.",
+    "contentType": "text",
+    "createdAt": "1970-01-01T00:00:00Z",
+    "id": "6y2q",
+    "topicId": "t1",
+    "updatedAt": "2023-08-12T16:41:46.878823Z",
+    "userId": "auser"
+  }
+}
+```
+
+### Listing messages in a topic
+
+```bash
+% oh msg list t1
+```
+
+```json
+{
+  "messages": [
+    {
+      "contentData": null,
+      "contentText": "My first message",
+      "contentType": "text",
+      "createdAt": "0001-01-01T00:00:00Z",
+      "id": "hlaz",
+      "topicId": "t1",
+      "updatedAt": "2023-08-12T16:35:31.935017Z",
+      "userId": "auser"
+    },
+    {
+      "contentData": null,
+      "contentText": "My second and longer message",
+      "contentType": "text",
+      "createdAt": "0001-01-01T00:00:00Z",
+      "id": "apgz",
+      "topicId": "t1",
+      "updatedAt": "2023-08-12T16:41:35.827131Z",
+      "userId": "auser"
+    },
+    {
+      "contentData": null,
+      "contentText": "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of \"de Finibus Bonorum et Malorum\" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, \"Lorem ipsum dolor sit amet..\", comes from a line in section 1.10.32.",
+      "contentType": "text",
+      "createdAt": "0001-01-01T00:00:00Z",
+      "id": "6y2q",
+      "topicId": "t1",
+      "updatedAt": "2023-08-12T16:41:46.878823Z",
+      "userId": "auser"
+    }
+  ],
+  "nextPageKey": ""
+}
+```
+
+### Deleting messages
+
+```bash
+% oh msg delete hlaz apgz 6y2q
+% oh msg list t1
+```
+
+```json
+{
+  "messages": [],
+  "nextPageKey": ""
+}
+```
+
+## Conclusion
+
+In this deep-dive we built a basic CLI for accessing our OneHub (chat) service.  We will build upon this CLI in future posts for more advanced use cases (shell command integration, subscribing to streams etc).
+
+In a future post we will look at a few more advance use cases:
+
+* Commands to "listen" to messages posted on a topic and connecting via websockets
+* Sending more custom messages to topics
+* Streaming shell command outputs to topics
+* Configuration management by integrating with [Viper](https://github.com/spf13/viper).
+* And more

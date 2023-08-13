@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "watch": "next-remote-watch",
     "devbuild": "rm -Rf build && NODE_OPTIONS=--enable-source-maps next build",
     "build": "rm -Rf build && next build",
     "start": "next start",
