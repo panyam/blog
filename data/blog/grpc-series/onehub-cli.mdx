@@ -317,14 +317,25 @@ func listCommand() *cobra.Command {
 
 Here we take the command flags, construct the right URL and call it through our client.
 
-Running this we get:
+Before running our shiny new CLI, make sure the database and server are started:
+
+```bash
+docker compose up -d
+go run cmd/server.go
+```
+
+We could pass the `--username` and `--password` flags each time but it is easier to just set them as environment variables for ease:
 
 
 ```bash
 % export OneHubUsername=auser
 
 % export OneHubPassword=auser123
+```
 
+And off you go:
+
+```bash
 % oh topics list
 ```
 

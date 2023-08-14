@@ -1,0 +1,143 @@
+---
+title: 'Part 7 - Live Reload and Debugging'
+date: 2023-06-05T15:32:14Z
+tags: ['grpc', 'delve', 'live reload', 'air', 'debugging', 'docker', 'Dockerfile']
+draft: false
+summary: 'We held off on packaging our main app in the docker-compose file since go binaries could not be live reloaded (on file changes) by default.  We will use the popular Air framework to enable live reloading of our service on file changes and then package this via docker.  We will also enable remote debugging of these services running in Docker'
+authors: ['Sri Panyam']
+layout: PostSimple
+---
+
+## Introduction
+
+Our OneHub chat service is taking shape in our [gRPC Series](/blog/grpc-series/index).  In [Part 5]() we introduced Docker for packaging all the components of our services.  At that point it only contained the Database (postgres and pgadmin) but we left out the main service binary out of this packaging (via docker-compose.yml file).  This was because go binaries needed a rebuild each time source files changed and this in turn would need a rebuild of our docker image - a time consuming process.  A live reload/compilation of the service binary without a rebuild of the docker image was missing.
+
+In this post we will rectify this by using the popular [Air](https://github.com/cosmtrek/air) framework to enable live reloading/compilation of our service binaries.
+
+To summarize, our goals are:
+
+* Enable live reloading so that we can avoid restarts (`go run cmd/server.go`) when making changes.
+* Ensure our servers can be connected via debugger (eg VSCode)
+* Package and run the server as a docker image in our docker-compose setup so that we can run a single `docker compose up` command to bring up everything instead of starting the server seperately.
+
+## Getting started
+
+Our code for this part can be found in the [PART7_AIR branch](https://github.com/panyam/onehub/tree/PART7_AIR) of the [OneHub repo](https://github.com/panyam/onehub).
+
+We will be installing 2 main tools:
+
+* [Air](https://github.com/cosmtrek/air) - For enabling live reloading
+* [Delve](https://github.com/go-delve/delve) - For debugging go binaries/services.
+
+Both of these have excellent documentation and we will be pretty much following those here.
+
+To install these:
+
+```bash
+go install github.com/go-delve/delve/cmd/dlv@latest
+go install github.com/cosmtrek/air@latest
+```
+
+## Initializing and Running Air
+
+Initialize Air by running:
+
+```
+air init
+```
+
+This would create a `.air.toml` config file that instructs air on how to build binaries, how to run the built binaries (in case any flags/env vars are to be passed) and which files to watch for changes.
+
+<CodeEmbed
+  title="Modified .air.toml"
+  language="yaml"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART7_AIR/.air.toml"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+Key things to notice are:
+
+* `build.cmd` - Specifies How to build the binary that we will run (`cmd/server.go`)
+* `build.bin` - How to run the built binary.  Instead of just running the binary, we are running it through delve so that we can connec to this via a debugger (such as VSCode).  This is especially useful when our binary will be running as a docker image in our docker-compose setup.
+* `build.exclude_dir` - Specifies which files/folders are NOT to be watched.  This will ensure are do not over-trigger rebuilding and restarting our binary.
+* `build.exclude_regex` - Specifies which file patterns are to be ignored.
+
+Other than this by default all files and sub directories in the project's path will be watched.
+
+## Running our watched Server
+
+Now we can run our server in watched mode (make sure the database is also running first):
+
+```
+air -c .air.toml
+```
+
+(_-c_ is optional and by default air uses .air.toml as its config file)
+
+With this Air will first build the binary (`./tmp/main`) and execute it.  Try changing one of the source files and see air rebuild and restart the binary!  (Note - simply `touch`ing a file willnot work as air compares file contents too for changes to count).
+
+## Dockerizing our setup
+
+Now that we have air setup and live reloading enabled, we are ready to dockerize our services so we can bring up all the components (the database, service binary etc) as one packaged unit (via `docker compose up`) instead of seperately.
+
+We will create a `Dockerfile` that will describe how our docker images (for our service) are to be built.  We wont go into details on Dockerfiles here.   The [Dockerfile reference](https://docs.docker.com/engine/reference/builder/) is an amazing resource.
+
+<CodeEmbed
+  title="Service Dockerfile"
+  language="yaml"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART7_AIR/Dockerfile"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+We now have a base image that:
+
+* Installs Air, Delve (to be used soon)
+* Copies our go.mod file and downloads dependencies so that when air takes over it can find these for rebuilding our binary.
+
+Now that we have a base image, we need to add an extra service to our `docker-compose.yml`:
+
+```yaml
+  service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    depends_on:
+      postgres:
+          condition: service_healthy
+            # webapp: condition: service_healthy
+    volumes:
+      - ./cmd:/app/cmd
+      - ./gen:/app/gen
+      - ./datastore:/app/datastore
+      - ./services:/app/services
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ONEHUB_DB_ENDPOINT: ${ONEHUB_DB_ENDOINT}
+    ports:
+      - 8080:8080
+      - 9000:9000
+```
+
+This ensures that all our "source" folders (cmd, gen, datastore, services) are mounted *into* the docker image as volumes.  This is needed so that Air can find the needed files when it initiates a rebuild.
+
+Now with the image built we are ready to try out this single endpoint:
+
+```bash
+# Bring down if already up
+docker compose down
+
+# Bring it up again
+docker compose up
+```
+
+Now you will see both the database and the service running!   Go ahead and make some calls to it either via our CLI or using curl, eg:
+
+```
+oh topics list --username auser --password auser123
+```
+
+You should see results from the service!
