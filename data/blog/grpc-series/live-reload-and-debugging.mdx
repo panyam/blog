@@ -96,10 +96,10 @@ We now have a base image that:
 * Installs Air, Delve (to be used soon)
 * Copies our go.mod file and downloads dependencies so that when air takes over it can find these for rebuilding our binary.
 
-Now that we have a base image, we need to add an extra service to our `docker-compose.yml`:
+Now that we have a base image, we need to add an extra service to our [`docker-compose.yml`](https://github.com/panyam/onehub/blob/PART7_AIR/docker-compose.yml):
 
 ```yaml
-  service:
+  onehub:
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -120,9 +120,10 @@ Now that we have a base image, we need to add an extra service to our `docker-co
     ports:
       - 8080:8080
       - 9000:9000
+      - 9091:9091
 ```
 
-This ensures that all our "source" folders (cmd, gen, datastore, services) are mounted *into* the docker image as volumes.  This is needed so that Air can find the needed files when it initiates a rebuild.
+This ensures that all our "source" folders (cmd, gen, datastore, services) are mounted *into* the docker image as volumes.  This is needed so that Air can find the needed files when it initiates a rebuild.   We are also exposing an extra port - 9091 - which will be used by Delve to enable remote debugging described later.
 
 Now with the image built we are ready to try out this single endpoint:
 
@@ -141,3 +142,53 @@ oh topics list --username auser --password auser123
 ```
 
 You should see results from the service!
+
+A few reminders:
+
+* If you add/remove dependencies to go.mod a rebuild of the docker image will be needed:
+
+```
+docker compose build --no-cache
+```
+
+* If you add new folders for sources - then make sure to add them to the volumes list in the `onhub service` section of the `docker-compose.yml` file (so it is available for builds) and restart (docker compose).
+
+* Note that we are adding the gen folder as a Volume mapping.  So if protos change make sure to regenerate the artifacts (`buf generate`) and restart (docker compose).
+
+## Enable Debugging
+
+When we run the service outside docker it was easy to bring it up via VSCode or any other IDE to debug it interactively.  However doing so for a binary running inside a docker image needs a few small changes.   Delve is the standard tool for enable remote attaching/debugging of Go applications.   Thankfully we had already Delve in our dependencies above.
+
+All that is needed now is to modify our `.air.toml` file to run our app "wrapped" by Delve instead of running it directly.  Our "build.bin" value is now:
+
+```
+  bin = "/go/bin/dlv --listen=:9091 --headless=true --log=true --accept-multiclient --api-version=2 exec --continue ./tmp/main"
+```
+
+Delve is now running the app with a debug server running port 9091.  GO IDEs can now connect to this port and interactively debug the binary.
+
+As an example, if you are using VSCode, add the following configuration to `.vscode/launch.json`:
+
+```json
+{
+    "name": "Remote Debugger for OneHub",
+    "type": "go",
+    "request": "attach",
+    "mode": "remote",
+    "port": 9091,
+    "showLog": true,
+    "host": "127.0.0.1"
+}
+```
+
+Now launch this configuration and you will be able to interactively debug the service (eg by setting breakpoints, stepping in/out/over etc).
+
+## Conclusion 
+
+That's it we now have a Dockerized setup with Live Reloading and Debugging enabled which lets us:
+
+1. Package all components and start/stop them as a single unit instead of with multiple start/stop commands
+2. Live reload/rebuild/restart our service when any source files change so we do not have to remember to do this each time.
+3. Enabled a remote debugger so that we can attach a debugger to our service running in a docker container.
+
+We can now build upon these foundations in future posts as we add more features and operational capabilities to our OneHub service.
