@@ -1,71 +1,71 @@
-<mxfile host="app.diagrams.net" modified="2023-08-15T04:50:59.042Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="AWHHqbaij43hNUPMSwtF" version="21.6.8" type="github">
+<mxfile host="app.diagrams.net" modified="2023-08-15T05:10:23.675Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="mF6uqTYsaWIdv1hl0aMI" version="21.6.8" type="github">
   <diagram name="Page-1" id="-JPuS-_Eib0aC4rEOsTi">
     <mxGraphModel dx="1012" dy="643" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-1" value="http-handler" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-1" value="http-handler" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="380" y="202" width="90" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-2" value="Users" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-2" value="Users" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
           <mxGeometry x="390" y="90" width="70" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-4" value="Database&lt;br&gt;(Postgres)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.generic_database;" vertex="1" parent="1">
-          <mxGeometry x="380" y="610" width="80" height="105.76" as="geometry" />
-        </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-5" value="grpc-gateway" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-5" value="grpc-gateway" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="380" y="350" width="90" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-6" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-1" target="ZFk9QuI-Hcgdrmsdoadk-5">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-6" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-1" target="ZFk9QuI-Hcgdrmsdoadk-5">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="360" as="sourcePoint" />
             <mxPoint x="450" y="310" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-7" value="Topic Service" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-7" value="Topic Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="268" y="490" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-8" value="Message Service" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-8" value="Message Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="450" y="490" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-9" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-5" target="ZFk9QuI-Hcgdrmsdoadk-7">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-9" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-5" target="ZFk9QuI-Hcgdrmsdoadk-7">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="550" y="470" as="sourcePoint" />
             <mxPoint x="600" y="420" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-10" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-5" target="ZFk9QuI-Hcgdrmsdoadk-8">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-10" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-5" target="ZFk9QuI-Hcgdrmsdoadk-8">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="435" y="450" as="sourcePoint" />
             <mxPoint x="330" y="500" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-11" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-8">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-11" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-8" target="ZFk9QuI-Hcgdrmsdoadk-17">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="160" y="650" as="sourcePoint" />
             <mxPoint x="420" y="600" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-12" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-7">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-12" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-7" target="ZFk9QuI-Hcgdrmsdoadk-17">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="220" y="630" as="sourcePoint" />
             <mxPoint x="420" y="600" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-13" value="/v1/topics" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="293" y="450" width="70" height="30" as="geometry" />
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-13" value="/v1/topics" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=#A62828;fillColor=#e1d5e7;strokeWidth=0;" vertex="1" parent="1">
+          <mxGeometry x="286" y="442" width="70" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-14" value="/v1/messages" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="475" y="450" width="100" height="30" as="geometry" />
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-14" value="/v1/messages" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=#A62828;fillColor=#e1d5e7;strokeWidth=0;" vertex="1" parent="1">
+          <mxGeometry x="486" y="443" width="100" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-15" value="/v1/*" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="445" y="300" width="50" height="30" as="geometry" />
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-15" value="/v1/*" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=#A62828;fillColor=#e1d5e7;strokeWidth=0;" vertex="1" parent="1">
+          <mxGeometry x="432" y="301" width="50" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-16" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-2" target="ZFk9QuI-Hcgdrmsdoadk-1">
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-16" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;" edge="1" parent="1" source="ZFk9QuI-Hcgdrmsdoadk-2" target="ZFk9QuI-Hcgdrmsdoadk-1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="70" y="370" as="sourcePoint" />
             <mxPoint x="120" y="320" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="ZFk9QuI-Hcgdrmsdoadk-17" value="Datastore&lt;br&gt;(Postgres)" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="365" y="610" width="115" height="100" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
