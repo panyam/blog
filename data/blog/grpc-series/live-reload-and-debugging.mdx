@@ -51,19 +51,20 @@ This would create a `.air.toml` config file that instructs air on how to build b
 <CodeEmbed
   title="Modified .air.toml"
   language="yaml"
-  url="https://raw.githubusercontent.com/panyam/onehub/PART7_AIR/.air.toml"
+  url="https://raw.githubusercontent.com/panyam/onehub/2c3888a6e48625d2107b835ce26f01a0ee73aceb/.air.toml"
   height="300px"
   style="height: 300px; overflow: scroll"
 />
 
 Key things to notice are:
 
+* `root` - The root of the project to be watched.
 * `build.cmd` - Specifies How to build the binary that we will run (`cmd/server.go`)
 * `build.bin` - How to run the built binary.  Instead of just running the binary, we are running it through delve so that we can connec to this via a debugger (such as VSCode).  This is especially useful when our binary will be running as a docker image in our docker-compose setup.
-* `build.exclude_dir` - Specifies which files/folders are NOT to be watched.  This will ensure are do not over-trigger rebuilding and restarting our binary.
+* `build.exclude_dir` - Specifies which files/folders are NOT to be watched.  This will prevent excessive rebuilding and restarting of our binary.
 * `build.exclude_regex` - Specifies which file patterns are to be ignored.
 
-Other than this by default all files and sub directories in the project's path will be watched.
+Other than this by default all files and sub directories under the "root" path will be watched.
 
 ## Running our watched Server
 
@@ -73,9 +74,9 @@ Now we can run our server in watched mode (make sure the database is also runnin
 air -c .air.toml
 ```
 
-(_-c_ is optional and by default air uses .air.toml as its config file)
+(**-c** is optional and by default air uses .air.toml as its config file)
 
-With this Air will first build the binary (`./tmp/main`) and execute it.  Try changing one of the source files and see air rebuild and restart the binary!  (Note - simply `touch`ing a file willnot work as air compares file contents too for changes to count).
+With this Air will first build the binary (`./tmp/main`) and execute it.  Try changing one of the source files and see air rebuild and restart the binary!  (Note - simply `touch`ing a file will not work as air compares file contents too for changes to count).
 
 ## Dockerizing our setup
 
@@ -153,11 +154,11 @@ docker compose build --no-cache
 
 * If you add new folders for sources - then make sure to add them to the volumes list in the `onhub service` section of the `docker-compose.yml` file (so it is available for builds) and restart (docker compose).
 
-* Note that we are adding the gen folder as a Volume mapping.  So if protos change make sure to regenerate the artifacts (`buf generate`) and restart (docker compose).
+* Note that we are adding the gen folder as a [Volume](https://docs.docker.com/storage/volumes/) mapping.  So if the protos change we will simply regenerate the artifacts (`buf generate`) and restart (docker compose down/up).
 
 ## Enable Debugging
 
-When we run the service outside docker it was easy to bring it up via VSCode or any other IDE to debug it interactively.  However doing so for a binary running inside a docker image needs a few small changes.   Delve is the standard tool for enable remote attaching/debugging of Go applications.   Thankfully we had already Delve in our dependencies above.
+Bringing up our service from an IDE (say VSCode) was simple and made interactive debugging a breeze.   However doing so for a binary running inside a docker container needs a few small changes.   Delve is the standard tool for remote attaching/debugging of Go applications.   Thankfully we had already installed Delve in our dependencies above.
 
 All that is needed now is to modify our `.air.toml` file to run our app "wrapped" by Delve instead of running it directly.  Our "build.bin" value is now:
 
@@ -165,9 +166,9 @@ All that is needed now is to modify our `.air.toml` file to run our app "wrapped
   bin = "/go/bin/dlv --listen=:9091 --headless=true --log=true --accept-multiclient --api-version=2 exec --continue ./tmp/main"
 ```
 
-Delve is now running the app with a debug server running port 9091.  GO IDEs can now connect to this port and interactively debug the binary.
+Here we are instructing Air to use Delve as the binary which in turns loads our real binary (`./tmp/main`).   Delve is also instructed to start the debugger service on port 9091.  (Go) IDEs can now connect to this port and interactively debug the binary.
 
-As an example, if you are using VSCode, add the following configuration to `.vscode/launch.json`:
+As an example, if you are using VSCode, add the following configuration to `.vscode/launch.json` (along with other configurations):
 
 ```json
 {
