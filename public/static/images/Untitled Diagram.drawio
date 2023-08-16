@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-08-16T07:21:05.171Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="vNWWyoYk681zyq8sEH69" version="21.6.8" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2023-08-16T07:23:15.539Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="LFZde-yPxmHmKVSV3EIu" version="21.6.8" type="github" pages="2">
   <diagram name="Current Architecture" id="-JPuS-_Eib0aC4rEOsTi">
     <mxGraphModel dx="1012" dy="643" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -73,9 +73,9 @@
         <mxCell id="0z7UrHsTXnvzhj-5PGaQ-0" />
         <mxCell id="0z7UrHsTXnvzhj-5PGaQ-1" parent="0z7UrHsTXnvzhj-5PGaQ-0" />
         <mxCell id="0z7UrHsTXnvzhj-5PGaQ-2" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.basic.rect;fillColor2=none;strokeWidth=1;size=20;indent=5;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
-          <mxGeometry x="170" y="290" width="510" height="290" as="geometry" />
+          <mxGeometry x="240" y="290" width="340" height="290" as="geometry" />
         </mxCell>
-        <mxCell id="0z7UrHsTXnvzhj-5PGaQ-3" value="????" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
+        <mxCell id="0z7UrHsTXnvzhj-5PGaQ-3" value="Router&lt;br&gt;????" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
           <mxGeometry x="586" y="162" width="90" height="90" as="geometry" />
         </mxCell>
         <mxCell id="0z7UrHsTXnvzhj-5PGaQ-4" value="Users" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
@@ -139,7 +139,27 @@
           <mxGeometry x="365" y="610" width="115" height="100" as="geometry" />
         </mxCell>
         <mxCell id="0z7UrHsTXnvzhj-5PGaQ-18" value="OneHub Service&lt;br&gt;(cmd/server.go)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
-          <mxGeometry x="170" y="296" width="110" height="40" as="geometry" />
+          <mxGeometry x="246" y="291" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="8qNKQKcETZL-HLPWV8Y--0" value="FrontEnd&lt;br&gt;Service&lt;br&gt;(eg NextJS App)" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
+          <mxGeometry x="730" y="296" width="110" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="8qNKQKcETZL-HLPWV8Y--1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;" edge="1" parent="0z7UrHsTXnvzhj-5PGaQ-1" source="0z7UrHsTXnvzhj-5PGaQ-3" target="8qNKQKcETZL-HLPWV8Y--0">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="641" y="262" as="sourcePoint" />
+            <mxPoint x="435" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8qNKQKcETZL-HLPWV8Y--2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;" edge="1" parent="0z7UrHsTXnvzhj-5PGaQ-1" source="8qNKQKcETZL-HLPWV8Y--0" target="0z7UrHsTXnvzhj-5PGaQ-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="641" y="262" as="sourcePoint" />
+            <mxPoint x="795" y="306" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8qNKQKcETZL-HLPWV8Y--3" value="API Calls (AJAX)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="8qNKQKcETZL-HLPWV8Y--2">
+          <mxGeometry x="-0.0574" y="-3" relative="1" as="geometry">
+            <mxPoint x="23" as="offset" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
