@@ -67,14 +67,21 @@ async function loadUrl(
     const code = `<pre><code>Unable to laod url ${url}</code></pre>`
     parent.children[index] = parseMarkup(code)
   } else {
-    const response = await axios.get(url)
-    const content = response.data
     const codeNode = {
       type: 'code',
-      value: content,
+      value: '',
       meta: 'showLineNumbers',
-      lang: lang,
+    } as any
+    let content = ''
+    try {
+      const response = await axios.get(url)
+      content = response.data
+      codeNode.lang = lang
+    } catch (e) {
+      content = `Could not get url (${url}): ${e.toString()}`
+      console.log(`Error fetching url (${url}): `, e)
     }
+    codeNode.value = content
     const divNode = {
       name: 'div',
       type: 'mdxJsxFlowElement',
@@ -150,4 +157,3 @@ async function loadUrl(
   }
   return ''
 }
-

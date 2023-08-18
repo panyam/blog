@@ -2,7 +2,7 @@
 title: 'Part 8 - OneHub Web Interface'
 date: 2023-06-06T11:29:10Z
 lastmod: '2022-06-08'
-tags: ['react', 'gin-gonic', 'web', 'frontend']
+tags: ['nextjs', 'web', 'frontend']
 draft: false
 authors: ['Sri Panyam']
 layout: PostSimple
@@ -64,10 +64,10 @@ To add nginx to our set of services we add the following config to our docker-co
       - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - onehub
-      # - frontend
+      # - nextfe
 ```
 
-Here we are exposing our nginx service that forwards requests to the onehub api server or the frontend server based on request paths (frontend service will be enabled in the next section).  We are also mapping 3 files from our localfile system on to the container:
+Here we are exposing our nginx service that forwards requests to the onehub api server or the frontend server (nextfe) based on request paths (frontend service will be enabled in the next section).  We are also mapping 3 files from our localfile system on to the container:
 
 * [nginx.conf](https://github.com/panyam/onehub/blob/PART8_WEBUI/configs/nginx.conf) - For all routing, ssl configs and more
 
@@ -131,18 +131,18 @@ npm install
 npm run dev
 ```
 
-Pointing your browser to open [this](http://localhost:4000) should show a basic UI like this:
+Pointing your browser to open [this](http://localhost:4000/nextfe) should show a basic UI like this:
 
 <center> <img src="/static/images/frontend-screenshot.png" width={800} /> </center>
 
 Not much going on there clearly.  This is currently running outside our docker compose environment.  Let us move it into our docker compose setup so we have a single entry point.
 
-Add the following Dockerfile in the frontend folder:
+Add the following Dockerfile in the `nextfe` folder:
 
 <CodeEmbed
-  title="frontend/Dockerfile"
+  title="nextfe/Dockerfile"
   language="yaml"
-  url="https://raw.githubusercontent.com/panyam/onehub/PART8_WEBUI/frontend/Dockerfile"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART8_WEBUI/nextfe/Dockerfile"
   height="300px"
   style="height: 300px; overflow: scroll"
 />
@@ -152,10 +152,10 @@ With this our base image now contains our npm package information as well as all
 Now add the following service to the `docker-compose.yml` file:
 
 ```yaml
-  frontend:
-    build: ./frontend
+  nextfe:
+    build: ./nextfe
     volumes:
-       - ./frontend:/app
+       - ./nextfe:/app
        - /app/node_modules
        - /app/.next
     restart: always

@@ -31,36 +31,33 @@ function createTransformer(options: any): Transformer<Root> {
         return
       }
       console.log('In ZZZ: ', node, index)
-      const prenode = {
-        name: 'pre',
-        type: 'mdxJsxFlowElement',
-        attributes: [
-          {
-            type: 'mdxJsxAttribute',
-            name: 'className',
-            value: 'PopupNoteContentPre',
-          },
-          {
-            type: 'mdxJsxAttribute',
-            name: 'hidden',
-            value: true,
-          },
-        ],
-        children: [
-          {
-            name: 'code',
-            type: 'mdxJsxFlowElement',
-            children: [
-              {
-                name: 'text',
-                type: 'text',
-                value: node.value,
-              },
-            ],
-          },
-        ],
-      }
-      parent.children[index] = prenode
+      node.name = 'pre'
+      node.type = 'mdxJsxFlowElement'
+      node.attributes = [
+        {
+          type: 'mdxJsxAttribute',
+          name: 'className',
+          value: 'PopupNoteContentPre',
+        },
+        {
+          type: 'mdxJsxAttribute',
+          name: 'hidden',
+          value: true,
+        },
+      ]
+      node.children = [
+        {
+          name: 'code',
+          type: 'mdxJsxFlowElement',
+          children: [
+            {
+              name: 'text',
+              type: 'text',
+              value: node.value,
+            },
+          ],
+        },
+      ]
       console.log('Parent Afterwards: ', parent.children)
     })
 
@@ -71,24 +68,20 @@ function createTransformer(options: any): Transformer<Root> {
       }
       const href = url.substring('#NOTE='.length)
       console.log('Here as LINK: ', node, parent, index)
-      const linknode = {
-        name: 'a',
-        type: 'mdxJsxFlowElement',
-        attributes: [
-          {
-            type: 'mdxJsxAttribute',
-            name: 'className',
-            value: 'PopupNoteAnchor',
-          },
-          {
-            type: 'mdxJsxAttribute',
-            name: 'noteref',
-            value: href,
-          },
-        ],
-        children: node.children,
-      }
-      parent.children[index] = linknode
+      node.name = 'a'
+      node.type = 'mdxJsxFlowElement'
+      node.attributes = [
+        {
+          type: 'mdxJsxAttribute',
+          name: 'className',
+          value: 'PopupNoteAnchor',
+        },
+        {
+          type: 'mdxJsxAttribute',
+          name: 'noteref',
+          value: href,
+        },
+      ]
     })
 
     // Now go through all links and turn them into clickable notes
