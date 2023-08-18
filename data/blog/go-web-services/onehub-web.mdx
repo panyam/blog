@@ -1,0 +1,165 @@
+---
+title: 'Part 8 - OneHub Web Interface'
+date: 2023-06-06T11:29:10Z
+lastmod: '2022-06-08'
+tags: ['react', 'gin-gonic', 'web', 'frontend']
+draft: false
+authors: ['Sri Panyam']
+layout: PostSimple
+summary: A frontend/UI is a very important feature of an application accessible by users.   In this post we will show a simple frontend and evolve our service and setup to incorporate this new component going forward
+---
+
+## Introduction
+
+For OneHub (our canonical demo chat service) we have [so far](/blog/go-web-services/index) built:
+
+* A gRPC service/api for managing Topics and sending/receiving Messages
+* Restful bindings for http access
+* A CLI (in Cobra) for access via the terminal/command line
+
+For a chat application a UI is a no-brainer.  We will build a (super simple) Web UI using NextJS.   The goal of this post is **NOT** to provide a cool UI or a deep tutorial on front end technologies - which is a technically very complex area.  Instead the goal of this post is to:
+
+* Bring up a very simple web UI with standard frameworks/libraries
+* We will use NextJS for this.  NextJS was chosen because not being a front-end expert, ease of onboarding, community support and documentation/examples were key.
+* Package the frontend as its own service in our docker-compose setup.  Our key requirement is ease of use and agility - live reloading will be key.
+* Support development and production mode so that when we ready we can serve published artifacts as a static site as much as possible.
+* Demonstrate changes to our "web" layer needed to support a front-end.
+
+## Architecture Choices
+
+Below is our current architecture:
+
+<center> <img src="/static/images/current-architecture.svg" width={800} /> </center>
+
+* Currently the TopicService, MessageService and the gRPC Gateway all run as separate processes within the same process (exposed in [cmd/server.go](https://github.com/panyam/onehub/blob/PART8_WEBUI/cmd/server.go)).
+* The grpc-gateway process accepts API requests (over http) and routes these to appropriate services (topics or messages).
+
+What we want is a new frontend (FE) service that only serves front end - either staticaly or as Server Side Rendered pages.  And this FE service would make API calls to CRUD Topics, Messages and other entities.  So our proposed architecture would look something like:
+
+<center>
+<img src="/static/images/proposed-architecture.svg" width={800} />
+</center>
+
+
+In this proposed architecture we have:
+
+* Our current grpc-gateway service running as before forwards API requests to the gRPC services.
+* We are adding a new dedicated frontend (service) that is responsible for rendering all pages/screens/views of our application as well as turning UI events (from the user) into updates on the various entities.  The frontend service in our case is a simple NextJS based app (running on Port 4000).  The app also primarily serves pages and static content (js, media, css etc) and also makes API calls to our gateway to present topics and messages.
+* We are also adding a new entity - the Router - that routes http requests to either the Frontend service or our grpc gateway based on whether the request is a API request or a view/page request.  The Router is simply a [reverse proxy](https://www.nginx.com/resources/glossary/reverse-proxy-server/) that forwards client requests to the right service.
+
+There are a few reasons for a reverse proxy:
+
+* Without a reverse proxy, the clients would have individually access the different points for different uses (API, vs FE vs others).  For a reverse proxy we will be the popular [Nginx](nginx.com) and path based routing to our different services.
+* This problem is even worse when deployed to a public domain.
+* Our our frontend app accessing the grpc gateway on different ports would have resulted in CORS issues that are particularly painful to debug and fix - making local development slow!
+
+To add nginx to our set of services we add the following config to our docker-compose.yml file (in the services section):
+
+```yml
+  nginx:
+    image: nginx:latest
+    ports:
+      - 7080:80
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - onehub
+      # - frontend
+```
+
+Here we are exposing our nginx service that forwards requests to the onehub api server or the frontend server based on request paths (frontend service will be enabled in the next section).  We are also mapping 3 files from our localfile system on to the container:
+
+* [nginx.conf](https://github.com/panyam/onehub/blob/PART8_WEBUI/configs/nginx.conf) - For all routing, ssl configs and more
+
+One noteable aspect of our nginx config is we are forwarding `/api/v1/*` to `/v1/*` on the api server for a clear seperation between API and non API requests.   Obviously the api server is not aware of this transaltion.
+
+Try out the APIs as before (with the new path and first setting the Host, Username and Password environment variables):
+
+```bash
+export OneHubHost=http://localhost:7080/api
+export OneHubUsername=auser
+export OneHubPassword=auser123
+```
+
+```bash
+oh topics list
+```
+
+```
+{
+  "nextPageKey": "",
+  "topics": [
+    {
+      "createdAt": "1970-01-01T00:00:00Z",
+      "creatorId": "auser",
+      "id": "t1",
+      "name": "Computing",
+      "updatedAt": "2023-08-13T04:31:01.298535Z",
+      "users": {
+        "1": true,
+        "3": true
+      }
+    },
+    {
+      "createdAt": "1970-01-01T00:00:00Z",
+      "creatorId": "auser",
+      "id": "t2",
+      "name": "Topic 2",
+      "updatedAt": "2023-08-12T16:12:28.274891Z",
+      "users": {}
+    },
+    {
+      "createdAt": "1970-01-01T00:00:00Z",
+      "creatorId": "auser",
+      "id": "t3",
+      "name": "Topic 3",
+      "updatedAt": "2023-08-12T16:12:31.925136Z",
+      "users": {}
+    }
+  ]
+}
+```
+
+## Setup a NextJS Frontend
+
+We have built a very simple frontend webapp using NextJS and TypeScript.   We wont be diving into a tutorial on NextJS.  The [NextJS documentation](https://nextjs.org/docs) is quite brilliant as are the [several](https://nextjs.org/learn/basics/create-nextjs-app) [other](https://www.freecodecamp.org/news/build-a-full-stack-application-with-nextjs/) [brilliant](https://stackdiary.com/next-js-tutorial-getting-started/) [sources](https://www.tuthub.io/resources/topics/NextJS%20for%20beginners).
+
+To start our very basic frontend, from the `frontend` subfolder:
+
+```
+npm install
+npm run dev
+```
+
+Pointing your browser to open [this](http://localhost:4000) should show a basic UI like this:
+
+<center> <img src="/static/images/frontend-screenshot.png" width={800} /> </center>
+
+Not much going on there clearly.  This is currently running outside our docker compose environment.  Let us move it into our docker compose setup so we have a single entry point.
+
+Add the following Dockerfile in the frontend folder:
+
+<CodeEmbed
+  title="frontend/Dockerfile"
+  language="yaml"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART8_WEBUI/frontend/Dockerfile"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
+
+With this our base image now contains our npm package information as well as all the dependant modules installed.  We will map the source code via Volumes so we can again have hot reloading when we change our front end sources.
+
+Now add the following service to the `docker-compose.yml` file:
+
+```yaml
+  frontend:
+    build: ./frontend
+    volumes:
+       - ./frontend:/app
+       - /app/node_modules
+       - /app/.next
+    restart: always
+    ports:
+      - 4000:4000
+    stdin_open: true
+```

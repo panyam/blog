@@ -10,7 +10,7 @@ layout: PostSimple
 
 ## Introduction
 
-Our OneHub chat service is taking shape in our [gRPC Series](/blog/grpc-series/index).  In [Part 5]() we introduced Docker for packaging all the components of our services.  At that point it only contained the Database (postgres and pgadmin) but we left out the main service binary out of this packaging (via docker-compose.yml file).  This was because go binaries needed a rebuild each time source files changed and this in turn would need a rebuild of our docker image - a time consuming process.  A live reload/compilation of the service binary without a rebuild of the docker image was missing.
+Our OneHub chat service is taking shape in our [gRPC Series](/blog/go-web-services/index).  In [Part 5]() we introduced Docker for packaging all the components of our services.  At that point it only contained the Database (postgres and pgadmin) but we left out the main service binary out of this packaging (via docker-compose.yml file).  This was because go binaries needed a rebuild each time source files changed and this in turn would need a rebuild of our docker image - a time consuming process.  A live reload/compilation of the service binary without a rebuild of the docker image was missing.
 
 In this post we will rectify this by using the popular [Air](https://github.com/cosmtrek/air) framework to enable live reloading/compilation of our service binaries.
 

@@ -1,10 +1,9 @@
-import jsx from 'acorn-jsx'
-import { Parser } from 'acorn'
 import { Parent, Root } from 'mdast'
 import { MdxJsxFlowElement } from 'mdast-util-mdx'
 // import { MdxFlowExpression } from 'mdast-util-mdx'
 import { visit } from 'unist-util-visit'
 import { Plugin, Transformer } from 'unified'
+import { getAttrib, parseMarkup } from './utils/common'
 // import util from 'util'
 const axios = require('axios')
 
@@ -47,20 +46,6 @@ function createTransformer(options: any): Transformer<Root> {
       }
     )
 
-    /*
-    visit(
-      tree,
-      'mdxJsxFlowElement',
-      (node: MdxJsxFlowElement, index: number | null, parent: Parent) => {
-        if (index == null || parent == null || node.name != OUR_NODE_NAME) {
-          return
-        }
-        const url = getAttrib(node, 'url') || ''
-        const lang = 'ts'
-        allPromises.push(loadUrl(url, parent, index, lang, {}))
-      }
-    )
-   */
     await Promise.all(allPromises)
   }
 }
@@ -166,26 +151,3 @@ async function loadUrl(
   return ''
 }
 
-function getAttrib(node: any, attribName: string): any {
-  const attrib = node.attributes.filter(
-    (attr: any) => attr.type == 'mdxJsxAttribute' && attr.name == attribName
-  )
-  if (attrib.length == 0 || !attrib[0].value || attrib[0].value == null) {
-    return null
-  }
-  if (typeof attrib[0].value === 'string') {
-    return attrib[0].value
-  } else {
-    return attrib[0].value.value
-  }
-}
-
-const parser = Parser.extend(jsx())
-function parseMarkup(value: string): any {
-  const estree = parser.parse(value, { ecmaVersion: 'latest' })
-  return {
-    type: 'mdxFlowExpression',
-    value,
-    data: { estree },
-  }
-}

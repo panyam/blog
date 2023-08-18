@@ -10,7 +10,7 @@ layout: PostSimple
 
 ## Quick Recap
 
-In [Part 1](/blog/grpc-series/simple-grpc-service/):
+In [Part 1](/blog/go-web-services/simple-grpc-service/):
 
 - We built a simple gRPC service for managing topics and messages in a chat service (like a very simple version of [Zulip](zulip.com), [Slack](slack.com) or [Teams](https://www.microsoft.com/en-us/microsoft-teams/group-chat-software)).
 - gRPC provided a very easy way to represent the services and operations for this app.
@@ -41,7 +41,7 @@ This approach has several benefits:
 
 ## Overview
 
-You might have already guessed - protoc plugins again comes to the rescue. In our service's Makefile (see [Part 1](/blog/grpc-series/simple-grpc-service/)), we had generated message and service stubs for Go using the protoc-gen-go plugin:
+You might have already guessed - protoc plugins again comes to the rescue. In our service's Makefile (see [Part 1](/blog/go-web-services/simple-grpc-service/)), we had generated message and service stubs for Go using the protoc-gen-go plugin:
 
 ```
 protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
@@ -264,7 +264,7 @@ In this implementation, we created a new runtime.ServeMux and registered each of
 
 You might be wondering why we are using the <BookMark name="RuntimeNewServeMux" />NewServeMux in the `github.com/grpc-ecosystem/grpc-gateway/v2/runtime` module and not the version in the [standard library's `net/http` module](https://pkg.go.dev/net/http#NewServeMux).
 
-This is because the [grpc-gateway/v2/runtime](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2/runtime#NewServeMux) module's ServeMux is customized to act specifically as a router for the underlying grpc services it is fronting.  It also accepts a list of [ServeMuxOption](https://github.com/grpc-ecosystem/grpc-gateway/blob/v2.15.2/runtime/mux.go#L69) (ServeMux handler) methods that act as middleware for intercepting a http call that is in the process of being converted to a gRPC message sent to the underlying gRPC service.   These middleware can be used to set extra metadata in needed by the gRPC service in a common way transparently.   We will see more about this in our tour of [gRPC interceptors](/blog/grpc-series/grpc-interceptors)
+This is because the [grpc-gateway/v2/runtime](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2/runtime#NewServeMux) module's ServeMux is customized to act specifically as a router for the underlying grpc services it is fronting.  It also accepts a list of [ServeMuxOption](https://github.com/grpc-ecosystem/grpc-gateway/blob/v2.15.2/runtime/mux.go#L69) (ServeMux handler) methods that act as middleware for intercepting a http call that is in the process of being converted to a gRPC message sent to the underlying gRPC service.   These middleware can be used to set extra metadata in needed by the gRPC service in a common way transparently.   We will see more about this in our tour of [gRPC interceptors](/blog/go-web-services/grpc-interceptors)
 
 ## Generating OpenAPI specs
 
@@ -426,7 +426,7 @@ Though in this example the startGatewayServer method started a http server it is
 
 ### Use of authentication
 
-This example did not have any authentication built in. However authentication (authn) and authorization (authz) are very important pillars of any service. The gateway (and the grpc service) are no exceptions to this. Use of middleware to handle authn and authz is critical to the gateway. Authentication can be applied with several mechanisms like OAuth2, JWT to verify users before passing a request to the grpc service. Alternatively the tokens could be passed as metadata to the grpc service which can perform the validation before processing the request. Use of middleware in the gateway (and interceptors in the grpc service) will be shown in [Part 4](/blog/grpc-series/auth-and-interceptors) of this series.
+This example did not have any authentication built in. However authentication (authn) and authorization (authz) are very important pillars of any service. The gateway (and the grpc service) are no exceptions to this. Use of middleware to handle authn and authz is critical to the gateway. Authentication can be applied with several mechanisms like OAuth2, JWT to verify users before passing a request to the grpc service. Alternatively the tokens could be passed as metadata to the grpc service which can perform the validation before processing the request. Use of middleware in the gateway (and interceptors in the grpc service) will be shown in [Part 4](/blog/go-web-services/auth-and-interceptors) of this series.
 
 ### Caching for improved performance
 
@@ -448,7 +448,7 @@ In this article we have:
 - Added http bindings to an existing set of services.
 - Learnt the best practices on enacting gateway services over your grpc services.
 
-In the [next article](/blog/grpc-series/using-buf-build/) we will look at an amazing tool for managing plugins and tooling so we would not have to depend on Makefiles (or manually copying third party annotations).
+In the [next article](/blog/go-web-services/using-buf-build/) we will look at an amazing tool for managing plugins and tooling so we would not have to depend on Makefiles (or manually copying third party annotations).
 
 ## Additional Resources
 

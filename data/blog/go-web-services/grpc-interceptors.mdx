@@ -11,11 +11,11 @@ layout: PostSimple
 
 ## Introduction
 
-Up until now in the [gRPC Series](/blog/grpc-series/index) we have built:
+Up until now in the [gRPC Series](/blog/go-web-services/index) we have built:
 
-- [Built a simple gRPC service](/blog/grpc-series/simple-grpc-service/)
-- Added a [REST/HTTP interface](/blog/grpc-series/rest-http-gateway/) to our gRPC service showcasing the grpc plugin universe
-- [Introduced Buf.build](/blog/grpc-series/using-buf-build/) to simply managing plugins
+- [Built a simple gRPC service](/blog/go-web-services/simple-grpc-service/)
+- Added a [REST/HTTP interface](/blog/go-web-services/rest-http-gateway/) to our gRPC service showcasing the grpc plugin universe
+- [Introduced Buf.build](/blog/go-web-services/using-buf-build/) to simply managing plugins
 
 We are far from productionalizing our service. A production ready service would need several things:
 
@@ -148,7 +148,7 @@ Interceptors provide more benefits of plain HTTP middleware:
 
 ## Implementing Interceptors
 
-Our example does not (yet) have any streaming rpcs.   So will add unary interceptors for now and add stream interceptors when we look at [Websockets and Streaming](/blog/grpc-series/grpc-request-and-response-streaming).  
+Our example does not (yet) have any streaming rpcs.   So will add unary interceptors for now and add stream interceptors when we look at [Websockets and Streaming](/blog/go-web-services/grpc-request-and-response-streaming).  
 
 First we will add a Client Unary Interceptor to our service clients (invoked by the gRPC gateway) to ensure that only requests that contain the auth header (with username+password) are forwarded to the server.  Otherwise the call to the server is not even made.
 
@@ -160,13 +160,13 @@ Then we will add a Server Unary Interceptor to our service to accept and validat
 3a. If the credentials are invalid then the interceptor returns an error to the gRPC gateway (without invoking the gRPC handler).
 3b. If the credentials are valid the underlying service's handler is invoked
 
-Clearly this auth scheme is very simplistic and we will look at more full-fledged and complex example in the article on [Authentication](/blog/grpc-series/grpc-authentication).
+Clearly this auth scheme is very simplistic and we will look at more full-fledged and complex example in the article on [Authentication](/blog/go-web-services/grpc-authentication).
 
 Now let us look at the implementation of each of these.
 
 ### Step 1 - Extract Username/Password from HTTP Request Headers
 
-In [Part 2](/blog/grpc-series/rest-http-gateway), our startGatewayServer method simply starts a http server forwarding requests to the underlying gRPC service.  Here we also introduced the [NewServeMux](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2/runtime#NewServeMux) method in the [grpc-gateway/v2/runtime](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2/runtime) module as a better replacement over the [standard library](https://pkg.go.dev/net/http#NewServeMux)'s [NewServeMux](https://pkg.go.dev/net/http#NewServeMux) method due its close understanding of the gRPC environment.
+In [Part 2](/blog/go-web-services/rest-http-gateway), our startGatewayServer method simply starts a http server forwarding requests to the underlying gRPC service.  Here we also introduced the [NewServeMux](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2/runtime#NewServeMux) method in the [grpc-gateway/v2/runtime](https://pkg.go.dev/github.com/grpc-ecosystem/grpc-gateway/v2/runtime) module as a better replacement over the [standard library](https://pkg.go.dev/net/http#NewServeMux)'s [NewServeMux](https://pkg.go.dev/net/http#NewServeMux) method due its close understanding of the gRPC environment.
 
 The first step thus for us is to extract the Auth related http headers from the incoming http request and add it to the [Metadata](https://grpc.io/docs/what-is-grpc/core-concepts/#metadata) that will be sent to the gRPC service.  You can think of the Metadata as the headers equivalent in the gRPC environment.  These are simply key/value pairs.
 

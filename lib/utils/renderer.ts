@@ -11,6 +11,7 @@ import remarkExtractFrontmatter from '@/lib/remark-extract-frontmatter'
 import remarkCodeTitles from '@/lib/remark-code-title'
 import remarkImgToJsx from '@/lib/remark-img-to-jsx'
 import remarkUrlEmbeds from '@/lib/remark-url-embeds'
+import remarkPopupNotes from '@/lib/remark-popup-notes'
 
 // Rehype packages
 import rehypeSlug from 'rehype-slug'
@@ -30,6 +31,7 @@ export async function renderPostContent(content): Promise<any> {
         remarkExtractFrontmatter,
         remarkGfm,
         remarkUrlEmbeds,
+        remarkPopupNotes,
         remarkCodeTitles,
         [remarkFootnotes, { inlineNotes: true }],
         remarkMath,

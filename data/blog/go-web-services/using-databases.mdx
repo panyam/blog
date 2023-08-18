@@ -130,7 +130,7 @@ Now you can simply visit the [pgadmin web console](http://localhost:5480/browser
 
 ### Introducing Object Relational Mappers
 
-Before we start updating our service code to access the database, you may be wondering why the grpc service itself is not packaged in our docker-compose.yml file.  Without this we would still have to start our service from the command line (or a debugger).  This will be detailed in a [future post](/blog/grpc-series/hot-reload-and-debugging).
+Before we start updating our service code to access the database, you may be wondering why the grpc service itself is not packaged in our docker-compose.yml file.  Without this we would still have to start our service from the command line (or a debugger).  This will be detailed in a [future post](/blog/go-web-services/hot-reload-and-debugging).
 
 In a typical database initializing a database (after the user, DB setup) would entail creating and running SQL scripts to initialize tables, checking for new versions and so on.  One example of a table creation statement (that can be executed via psql or via pgadmin) is:
 
