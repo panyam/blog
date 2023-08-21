@@ -1,5 +1,5 @@
 ---
-title: 'Part 8 - OneHub Web Interface'
+title: 'Part 8 - OneHub Web'
 date: 2023-06-06T11:29:10Z
 lastmod: '2022-06-08'
 tags: ['nextjs', 'web', 'frontend']
@@ -11,7 +11,7 @@ summary: A frontend/UI is a very important feature of an application accessible 
 
 ## Introduction
 
-For OneHub (our canonical demo chat service) we have [so far](/blog/go-web-services/index) built:
+Our canonical demo chat app - OneHub [so far](/blog/go-web-services/index) has:
 
 * A gRPC service/api for managing Topics and sending/receiving Messages
 * Restful bindings for http access
@@ -20,21 +20,23 @@ For OneHub (our canonical demo chat service) we have [so far](/blog/go-web-servi
 For a chat application a UI is a no-brainer.  We will build a (super simple) Web UI using NextJS.   The goal of this post is **NOT** to provide a cool UI or a deep tutorial on front end technologies - which is a technically very complex area.  Instead the goal of this post is to:
 
 * Bring up a very simple web UI with standard frameworks/libraries
-* We will use NextJS for this.  NextJS was chosen because not being a front-end expert, ease of onboarding, community support and documentation/examples were key.
-* Package the frontend as its own service in our docker-compose setup.  Our key requirement is ease of use and agility - live reloading will be key.
+* We will use NextJS for this.  Not being being a front-end expert, ease of onboarding, community support and documentation/examples were key in making this decision.
+* Package the frontend as its own service in our docker-compose setup.  This gives us ease of distribution (live reloading WILL be key).
 * Support development and production mode so that when we ready we can serve published artifacts as a static site as much as possible.
 * Demonstrate changes to our "web" layer needed to support a front-end.
 
-## Architecture Choices
+## Current Architecture (so far)
 
 Below is our current architecture:
 
 <center> <img src="/static/images/current-architecture.svg" width={800} /> </center>
 
-* Currently the TopicService, MessageService and the gRPC Gateway all run as separate processes within the same process (exposed in [cmd/server.go](https://github.com/panyam/onehub/blob/PART8_WEBUI/cmd/server.go)).
+* Currently the TopicService, MessageService and the gRPC Gateway all run as separate processes within the same process (exposed in [cmd/server.go](https://github.com/panyam/onehub/blob/PART8_WEBUI/cmd/server.go)).   We have the flexibility to seperate them out if/when desired.
 * The grpc-gateway process accepts API requests (over http) and routes these to appropriate services (topics or messages).
 
-What we want is a new frontend (FE) service that only serves front end - either staticaly or as Server Side Rendered pages.  And this FE service would make API calls to CRUD Topics, Messages and other entities.  So our proposed architecture would look something like:
+## Proposed Architecture
+
+What we want is a new frontend (FE) service that only serves front end - either staticaly or as Server Side Rendered pages.  And this FE service would make (CRUD) API calls to Topics, Messages and other entities.  This leads to:
 
 <center>
 <img src="/static/images/proposed-architecture.svg" width={800} />
@@ -71,7 +73,7 @@ Here we are exposing our nginx service that forwards requests to the onehub api 
 
 * [nginx.conf](https://github.com/panyam/onehub/blob/PART8_WEBUI/configs/nginx.conf) - For all routing, ssl configs and more
 
-One noteable aspect of our nginx config is we are forwarding `/api/v1/*` to `/v1/*` on the api server for a clear seperation between API and non API requests.   Obviously the api server is not aware of this transaltion.
+One noteable aspect of our nginx config is we are forwarding `/api/v1/*` to `/v1/*` on the api server for a clear seperation between API and non API requests.   Obviously the api server is not aware of this translation.
 
 Try out the APIs as before (with the new path and first setting the Host, Username and Password environment variables):
 
@@ -124,14 +126,14 @@ oh topics list
 
 We have built a very simple frontend webapp using NextJS and TypeScript.   We wont be diving into a tutorial on NextJS.  The [NextJS documentation](https://nextjs.org/docs) is quite brilliant as are the [several](https://nextjs.org/learn/basics/create-nextjs-app) [other](https://www.freecodecamp.org/news/build-a-full-stack-application-with-nextjs/) [brilliant](https://stackdiary.com/next-js-tutorial-getting-started/) [sources](https://www.tuthub.io/resources/topics/NextJS%20for%20beginners).
 
-To start our very basic frontend, from the `frontend` subfolder:
+To start our very basic frontend, from the `nextfe` subfolder:
 
 ```
 npm install
 npm run dev
 ```
 
-Pointing your browser to open [this](http://localhost:4000/nextfe) should show a basic UI like this:
+Pointing your browser [here](http://localhost:4000/nextfe) should show a basic UI like this:
 
 <center> <img src="/static/images/frontend-screenshot.png" width={800} /> </center>
 
@@ -163,3 +165,8 @@ Now add the following service to the `docker-compose.yml` file:
       - 4000:4000
     stdin_open: true
 ```
+
+In our [nginx.conf](https://github.com/panyam/onehub/blob/caff9ed89238e748eeef05787c397e384852c443/configs/nginx.conf#L52) we have added the following route to forward requests to this app.  This [redirect rule] forwards all requests on `http://localhost:7080/nextfe/*` internally to the `nextfe` service!
+
+Now we can hit [`http://localhost:7080/nextfe`](http://localhost:7080/nextfe) for a single unified experience!
+
