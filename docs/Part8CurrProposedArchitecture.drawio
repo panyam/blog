@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-08-24T18:17:41.158Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="pFR2Ja20HSZbcIAe9V2L" version="21.6.8" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2023-08-24T18:18:48.554Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="fttivN6CbCfDnJRxQ8bc" version="21.6.8" type="github" pages="2">
   <diagram name="Current Architecture" id="-JPuS-_Eib0aC4rEOsTi">
     <mxGraphModel dx="789" dy="660" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -124,7 +124,7 @@
           <mxGeometry x="486" y="443" width="100" height="30" as="geometry" />
         </mxCell>
         <mxCell id="0z7UrHsTXnvzhj-5PGaQ-15" value="/v1/*" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=#A62828;fillColor=#e1d5e7;strokeWidth=0;" parent="0z7UrHsTXnvzhj-5PGaQ-1" vertex="1">
-          <mxGeometry x="432" y="301" width="50" height="30" as="geometry" />
+          <mxGeometry x="500" y="310" width="50" height="30" as="geometry" />
         </mxCell>
         <mxCell id="0z7UrHsTXnvzhj-5PGaQ-16" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;" parent="0z7UrHsTXnvzhj-5PGaQ-1" source="0z7UrHsTXnvzhj-5PGaQ-4" target="0z7UrHsTXnvzhj-5PGaQ-3" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
@@ -135,10 +135,10 @@
         <mxCell id="0z7UrHsTXnvzhj-5PGaQ-17" value="Datastore&lt;br&gt;(Postgres)" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="0z7UrHsTXnvzhj-5PGaQ-1" vertex="1">
           <mxGeometry x="365" y="610" width="115" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="0z7UrHsTXnvzhj-5PGaQ-18" value="OneHub Service&lt;br&gt;(cmd/server.go)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="0z7UrHsTXnvzhj-5PGaQ-1" vertex="1">
-          <mxGeometry x="246" y="291" width="110" height="40" as="geometry" />
+        <mxCell id="0z7UrHsTXnvzhj-5PGaQ-18" value="&lt;b&gt;OneHub Service&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="0z7UrHsTXnvzhj-5PGaQ-1" vertex="1">
+          <mxGeometry x="305" y="290" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="8qNKQKcETZL-HLPWV8Y--0" value="FrontEnd Service&lt;br&gt;(eg NextJS App - Port 4000)&lt;br&gt;&lt;br&gt;* Serving static assets (css, js, png)&lt;br&gt;* Server Side Rendering&lt;br&gt;* Auth Flows, etc" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" parent="0z7UrHsTXnvzhj-5PGaQ-1" vertex="1">
+        <mxCell id="8qNKQKcETZL-HLPWV8Y--0" value="(eg NextJS App - Port 4000)&lt;br&gt;&lt;br&gt;* Serving static assets (css, js, png)&lt;br&gt;* Server Side Rendering&lt;br&gt;* Auth Flows, etc" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" parent="0z7UrHsTXnvzhj-5PGaQ-1" vertex="1">
           <mxGeometry x="720" y="290" width="210" height="210" as="geometry" />
         </mxCell>
         <mxCell id="8qNKQKcETZL-HLPWV8Y--1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#A62828;strokeWidth=2;fillColor=#e1d5e7;" parent="0z7UrHsTXnvzhj-5PGaQ-1" source="0z7UrHsTXnvzhj-5PGaQ-3" target="8qNKQKcETZL-HLPWV8Y--0" edge="1">
@@ -157,6 +157,9 @@
           <mxGeometry x="-0.0574" y="-3" relative="1" as="geometry">
             <mxPoint x="23" as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="FJZ6QVtIoUhchHc73C61-0" value="&lt;b&gt;FrontEnd Service&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
+          <mxGeometry x="765" y="290" width="120" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
