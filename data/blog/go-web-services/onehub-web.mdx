@@ -31,7 +31,7 @@ Below is our current architecture:
 
 <center> <img src="/static/images/current-architecture.svg" width={800} /> </center>
 
-* Currently the TopicService, MessageService and the gRPC Gateway all run as separate processes within the same process (exposed in [cmd/server.go](https://github.com/panyam/onehub/blob/PART8_WEBUI/cmd/server.go)).   We have the flexibility to seperate them out if/when desired.
+* Currently the TopicService, MessageService and the gRPC Gateway all run within the same process (exposed in [cmd/server.go](https://github.com/panyam/onehub/blob/PART8_WEBUI/cmd/server.go)).   We have the flexibility to seperate them out if/when desired (a good trigger would be when we need to separate the data into their own datastores).
 * The grpc-gateway process accepts API requests (over http) and routes these to appropriate services (topics or messages).
 
 ## Proposed Architecture
