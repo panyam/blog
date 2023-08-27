@@ -168,5 +168,42 @@ Now add the following service to the `docker-compose.yml` file:
 
 In our [nginx.conf](https://github.com/panyam/onehub/blob/caff9ed89238e748eeef05787c397e384852c443/configs/nginx.conf#L52) we have added the following route to forward requests to this app.  This [redirect rule] forwards all requests on `http://localhost:7080/nextfe/*` internally to the `nextfe` service!
 
-Now we can hit [`http://localhost:7080/nextfe`](http://localhost:7080/nextfe) for a single unified experience!
+Now we can hit [`http://localhost:7080/nextfe`](http://localhost:7080/nextfe) for a single unified experience (and still have hot reloads etc).
+
+## Common User Flows
+
+Let us go through a few flows to get started:
+
+### Signin
+
+We are still using our fake users (where password == userid + "123") so you can log in and send messages as different users for a complete (and yet completely insecure) chat experience!  
+
+To login, click on signin and put in a user ID - This can be anything you desire as long as it is a combination of numbers and letters (only):
+
+<center> <img src="/static/images/part8/usecase-signin.png" width={800} /> </center>
+
+Since this user does not yet exist you will also be prompted for your Fullname to display in the future:
+
+
+<center> <img src="/static/images/part8/usecase-fullname.png" width={800} /> </center>
+
+You are now ready to go ahead and chat.   
+
+
+## Conclusion
+
+In this part we created a simple web app (for reading/writing topics and messages) for our OneHub chat service.
+
+This entailed some new ideas:
+
+* Building a simple web app and exposing it as a parallel service in our docker compose environment (we did not dive into specific front end stacks however).
+* Introducing nginx (as a router and a reverse proxy) to separate and forward FE and API traffic to respective services.
+
+There are still a lot of things to add to this which we will address in subsequent posts:
+
+* Server to client pushes with WebSockets for data change notifications instead of polling or manually refreshing our pages.
+* Server-side rendering to offload (more) rendering onto a server.  NextJS offers server side rendering however with a lockin into the Node ecosystem.   We want to leverage our powerful and scalable Go dev ecosystem that is at our desposal.  We will address this short coming and more.
+* Get to *real* users with proper authentication (Oauth, Logins etc)!
+* Bidirectional Integration with chat services (eg Slack, Teams, Discord etc) to send and receive messages.
+* (Easily maintainable/upgradable) Search indexes for powerful and efficient search capabilities.
 
