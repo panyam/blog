@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-09-02T23:50:50.144Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36" etag="twcMjK5fHkJP3SamfAgN" version="21.7.2" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2023-09-02T23:51:31.911Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36" etag="H5KjnMeLli9XjIK-7AVu" version="21.7.2" type="github" pages="2">
   <diagram id="u-hTeyGcg6nhuTRCd-0H" name="Current Search Architecture">
     <mxGraphModel dx="1026" dy="641" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -178,7 +178,7 @@
           <mxGeometry x="625" y="265.66" width="50" height="49.67" as="geometry" />
         </mxCell>
         <mxCell id="STCWvVoYdhdJVvicM64R-49" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=#A62828;fillColor=#e1d5e7;strokeWidth=0;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
-          <mxGeometry x="380" y="5" width="30" height="30" as="geometry" />
+          <mxGeometry x="291" y="85" width="30" height="30" as="geometry" />
         </mxCell>
         <mxCell id="STCWvVoYdhdJVvicM64R-51" value="3" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=#A62828;fillColor=#e1d5e7;strokeWidth=0;" vertex="1" parent="0z7UrHsTXnvzhj-5PGaQ-1">
           <mxGeometry x="460" y="240" width="30" height="30" as="geometry" />
