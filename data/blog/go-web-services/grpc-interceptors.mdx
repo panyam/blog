@@ -13,11 +13,11 @@ layout: PostSimple
 
 Up until now in the [gRPC Series](/blog/go-web-services/index) we have built:
 
-- [Built a simple gRPC service](/blog/go-web-services/simple-grpc-service/)
-- Added a [REST/HTTP interface](/blog/go-web-services/rest-http-gateway/) to our gRPC service showcasing the grpc plugin universe
-- [Introduced Buf.build](/blog/go-web-services/using-buf-build/) to simply managing plugins
+- [A simple gRPC service](/blog/go-web-services/simple-grpc-service/)
+- Added a [REST/HTTP interface](/blog/go-web-services/rest-http-gateway/) exposing gRPC service RESTfully and showing a glimpse of the gRPC plugin universe
+- [Introduced Buf.build](/blog/go-web-services/using-buf-build/) to simplify plugin management
 
-We are far from productionalizing our service. A production ready service would need several things:
+We are far from productionalizing our service. A production ready service would (at the very least) need several things:
 
 - Authentication/Authorization
 - Request Logging
@@ -34,8 +34,6 @@ A common thread across all these aspects is that these apply in an (almost) unif
 - Authentication can look for common request headers (if HTTP) before allowing continuing onto the request handler.
 
 In this post we will describe interceptors - a power gRPC facility for (well) intercepting and modifying requests and responses (and streams) on a gRPC server.
-
-TL;DR - If you want to get to building - Skip to [right here]().
 
 ### Middleware
 
@@ -86,7 +84,7 @@ function rateLimitingMiddleware(originalHandler: HTTPHandler): HTTPHandler {
 }
 ```
 
-The advantage of Middleware is that they can be chained to apply seperate concerns without the knowledge of the main request handling the business logic.
+The advantage of Middleware is that they can be chained to apply separate concerns without the knowledge of the main request handling the business logic.
 A common pattern (say in a language like Python that supports decorators) thus would look like:
 
 ```python
@@ -122,14 +120,15 @@ func createHttpserver() {
 }
 ```
 
-There are fancier things one can do like apply middleware en-masse to an entire collection of routes.  Such framework specific aesthetics are outside the scope of this article.   If you are interested check out the amazing [Gin Web Framework](https://github.com/gin-gonic/gin)!
+There are fancier things one can do like apply middleware en-masse to an entire collection of routes.  Such framework specific aesthetics are outside the scope of this post. If you are interested to learn more check 
+ out the amazing [Gin Web Framework](https://github.com/gin-gonic/gin)!
 
 ## Interceptors
 
-Now that we have seen their HTTP equivalent, interceptors are very intuitive.  Interceptors come in two types:
+Now that we have seen their HTTP equivalent, interceptors (in gRPC) are very intuitive.  Interceptors are also a way to decorate requests and responses in gRPC.   However they come in two standardized specialized flavors:
 
-* Unary interceptors are "oneshot" interceptors in that they either intercet a request or a response
-* Stream interceptors are "continuous" - they intercept every message in a streaming request (client -> server) or a streaming response (server -> client).
+* Unary interceptors:  These are "oneshot" interceptors.  They either intercept a request or a response - *once* in the request/response's lifecycle.
+* Stream interceptors: These are "continuous".   ie They intercept every message in a streaming request (client -> server) or a streaming response (server -> client).
 
 Since interceptors can apply to both the client and server, we have four total favors:
 
@@ -140,6 +139,10 @@ Since interceptors can apply to both the client and server, we have four total f
 3. Client Stream Interceptor - These - similar to their Unary counterpart - intercept and process/transform each message being streamed from the client to the server.   A great use case for this could be an interceptor/agent that may collect multiple messages and collect them in a window before forwarding to the server (eg logs or metrics).
 
 4. Server Stream Interceptor - Similar to their Unary counterpart - these intercept messages in a single connection when received at the server.
+
+The following drawing shows where each of these requestor types would be located in the life of an end to end request:
+
+
 
 Interceptors provide more benefits of plain HTTP middleware:
 
@@ -240,9 +243,9 @@ A client interceptor can be added as an additional DialOption!  That is it.   A 
 
 ```go showLineNumbers
 type UnaryClientInterceptor func(ctx context.Context,
-      method string,        // Method to be invoked on the service (eg GetAlbums)
-      req,                  // Request payload  (eg GetAlbumsRequest)
-      reply interface{},    // Response payload (eg GetAlbumsResponse)
+      method string,        // Method to be invoked on the service (eg GetTopics)
+      req,                  // Request payload  (eg GetTopicsRequest)
+      reply interface{},    // Response payload (eg GetTopicsResponse)
       cc *ClientConn,       // the underlying connection to the service
       invoker UnaryInvoker, // The next handler
       opts ...CallOption) error
@@ -254,9 +257,9 @@ Our client interceptor is simple.  It will call the invoker if username/password
 
 ```go showLineNumbers
 func EnsureAuthExists(ctx context.Context,
-	method string, // Method to be invoked on the service (eg GetAlbums)
-	req, // Request payload  (eg GetAlbumsRequest)
-	reply interface{}, // Response payload (eg GetAlbumsResponse)
+	method string, // Method to be invoked on the service (eg GetTopics)
+	req, // Request payload  (eg GetTopicsRequest)
+	reply interface{}, // Response payload (eg GetTopicsResponse)
 	cc *grpc.ClientConn, // the underlying connection to the service
 	invoker grpc.UnaryInvoker, // The next handler
 	opts ...grpc.CallOption) error {

@@ -25,7 +25,7 @@ A typical pattern when using a database in a service is:
 ```
 
 1. A grpc request is received by the service
-2. The service converts the model proto (eg Song) contained in the request (eg CreateSongRequest) into the ORM library.
+2. The service converts the model proto (eg Topic) contained in the request (eg CreateTopicRequest) into the ORM library.
 3. The ORM library generates the necessary SQL and executes it on the DB (and returns any results).
 
 ### Setting up Postgres

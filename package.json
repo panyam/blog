@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "watch": "next-remote-watch",
+    "watch": "next-remote-watch data",
     "devbuild": "rm -Rf build && NODE_OPTIONS=--enable-source-maps next build",
     "build": "rm -Rf build && next build",
     "start": "next start",
@@ -80,6 +80,7 @@
     "husky": "^8.0.3",
     "inquirer": "^9.1.5",
     "lint-staged": "^13.2.1",
+    "next-remote-watch": "^2.0.0",
     "prettier": "^2.8.7",
     "prettier-plugin-tailwindcss": "^0.2.7",
     "ts-node": "^10.9.1",

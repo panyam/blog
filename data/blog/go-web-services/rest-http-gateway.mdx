@@ -206,10 +206,6 @@ onehub
 
 Our updated Makefile is shown below:
 
-```
-EMBED Makefile from RESTHTTPGW branch
-```
-
 <CodeEmbed
   title="Makefile for http bindings"
   language="Makefile"
@@ -284,133 +280,162 @@ openapiv2:
 
 Like all other plugins, the openapiv2 plugin also generates one .swagger.json per .proto file. However this changes the semantics of swagger as each swagger is treated as its own "endpoint" where as in our case what we really want is a single endpoint that fronts all the services. In order to contain a single "merged" swagger file we pass the `allow_merge=true` parameter to the above command. In addition we also pass the name of the file to be generated (`merge_file_name=allservices`). This results in `gen/openapiv2/allservices.swagger.json` file that can be read, visualized and tested with [SwaggerUI](https://swagger.io/tools/swagger-ui/).
 
+
+ 
+Start this new server and you should see something like:
+
+```
+% onehub % go run cmd/server.go
+Starting grpc endpoint on :9000:
+Starting grpc gateway server on:  :8080
+```
+
+The additional http gateway is now running on port 8080 which we will query next.
+
 ## Testing it all out
+
+Now instead of making grpc_cli calls, we can issue http calls via the ubiquitous [curl](https://curl.se/) command (also make sure you install [jq](https://jqlang.github.io/jq/) for pretty printing your json output):
 
 #### Create a Topic
 
-`grpc_cli --json_input --json_output call localhost:9000 CreateTopic '{topic: {name: "First Topic", creator_id: "user1"}}'`
+```json showLineNumbers
+% curl -s -d '{"topic": {"name": "First Topic", "creator_id": "user1"}}' localhost:8080/v1/topics | jq
+```
 
 ```json showLineNumbers
 {
- "topic": {
-  "createdAt": "2023-07-28T07:30:54.633005Z",
-  "updatedAt": "2023-07-28T07:30:54.633006Z",
-  "id": "1",
-  "creatorId": "user1",
-  "name": "First Topic"
- }
+  "topic": {
+    "createdAt": "2023-07-07T20:53:31.629771Z",
+    "updatedAt": "2023-07-07T20:53:31.629771Z",
+    "id": "1",
+    "creatorId": "user1",
+    "name": "First Topic",
+    "users": []
+  }
 }
 ```
 
 and another
 
-`grpc_cli --json_input --json_output call localhost:9000 CreateTopic '{topic: {name: "Urgent topic", creator_id: "user2", users: ["user1", "user2", "user3"]}}'`
+```
+% curl -s localhost:8080/v1/topics -d '{"topic": {"name": "Urgent topic", "creator_id": "user2", "users": ["user1", "user2", "user3"]}}' |
+ jq
+```
 
 ```json showLineNumbers
 {
- "topic": {
-  "createdAt": "2023-07-28T07:32:04.821800Z",
-  "updatedAt": "2023-07-28T07:32:04.821801Z",
-  "id": "2",
-  "creatorId": "user2",
-  "name": "Urgent topic",
-  "users": [
-   "user1",
-   "user2",
-   "user3"
-  ]
- }
+  "topic": {
+    "createdAt": "2023-07-07T20:56:52.567691Z",
+    "updatedAt": "2023-07-07T20:56:52.567691Z",
+    "id": "2",
+    "creatorId": "user2",
+    "name": "Urgent topic",
+    "users": [
+      "user1",
+      "user2",
+      "user3"
+    ]
+  }
 }
 ```
 
 #### List all topics
 
-`grpc_cli --json_input --json_output call localhost:9000 ListTopics {}`
+```
+% curl -s localhost:8080/v1/topics | jq
+```
 
 ```json showLineNumbers
 {
- "topics": [
-  {
-   "createdAt": "2023-07-28T07:30:54.633005Z",
-   "updatedAt": "2023-07-28T07:30:54.633006Z",
-   "id": "1",
-   "creatorId": "user1",
-   "name": "First Topic"
-  },
-  {
-   "createdAt": "2023-07-28T07:32:04.821800Z",
-   "updatedAt": "2023-07-28T07:32:04.821801Z",
-   "id": "2",
-   "creatorId": "user2",
-   "name": "Urgent topic",
-   "users": [
-    "user1",
-    "user2",
-    "user3"
-   ]
-  }
- ]
+  "topics": [
+    {
+      "createdAt": "2023-07-07T20:53:31.629771Z",
+      "updatedAt": "2023-07-07T20:53:31.629771Z",
+      "id": "1",
+      "creatorId": "user1",
+      "name": "First Topic",
+      "users": []
+    },
+    {
+      "createdAt": "2023-07-07T20:56:52.567691Z",
+      "updatedAt": "2023-07-07T20:56:52.567691Z",
+      "id": "2",
+      "creatorId": "user2",
+      "name": "Urgent topic",
+      "users": [
+        "user1",
+        "user2",
+        "user3"
+      ]
+    }
+  ],
+  "nextPageKey": ""
 }
 ```
+
 
 #### Get Topics by IDs
 
-`grpc_cli --json_input --json_output call localhost:9000 GetTopics '{"ids": ["1", "2"]}'`
+Here "list" values (eg ids) are possibly by repeating them as query parameters:
+
+```
+% curl -s "localhost:8080/v1/topics?ids=1&ids=2" | jq
+```
 
 ```json showLineNumbers
 {
- "topics": {
-  "1": {
-   "createdAt": "2023-07-28T07:30:54.633005Z",
-   "updatedAt": "2023-07-28T07:30:54.633006Z",
-   "id": "1",
-   "creatorId": "user1",
-   "name": "First Topic"
-  },
-  "2": {
-   "createdAt": "2023-07-28T07:32:04.821800Z",
-   "updatedAt": "2023-07-28T07:32:04.821801Z",
-   "id": "2",
-   "creatorId": "user2",
-   "name": "Urgent topic",
-   "users": [
-    "user1",
-    "user2",
-    "user3"
-   ]
-  }
- }
+  "topics": [
+    {
+      "createdAt": "2023-07-07T20:53:31.629771Z",
+      "updatedAt": "2023-07-07T20:53:31.629771Z",
+      "id": "1",
+      "creatorId": "user1",
+      "name": "First Topic",
+      "users": []
+    },
+    {
+      "createdAt": "2023-07-07T20:56:52.567691Z",
+      "updatedAt": "2023-07-07T20:56:52.567691Z",
+      "id": "2",
+      "creatorId": "user2",
+      "name": "Urgent topic",
+      "users": [
+        "user1",
+        "user2",
+        "user3"
+      ]
+    }
+  ],
+  "nextPageKey": ""
 }
 ```
 
+
 #### Delete a topic followed by a Listing
 
-`grpc_cli --json_input --json_output call localhost:9000 DeleteTopic '{"id": "1"}'`
-
-```json showLineNumbers
-connecting to localhost:9000
+```
+% curl -sX DELETE "localhost:8080/v1/topics/1" | jq
 {}
-Rpc succeeded with OK status
 ```
 
-`grpc_cli --json_input --json_output call localhost:9000 ListTopics {}`
-
 ```json showLineNumbers
+% curl -s "localhost:8080/v1/topics" | jq
 {
- "topics": [
-  {
-   "createdAt": "2023-07-28T07:32:04.821800Z",
-   "updatedAt": "2023-07-28T07:32:04.821801Z",
-   "id": "2",
-   "creatorId": "user2",
-   "name": "Urgent topic",
-   "users": [
-    "user1",
-    "user2",
-    "user3"
-   ]
-  }
- ]
+  "topics": [
+    {
+      "createdAt": "2023-07-07T20:56:52.567691Z",
+      "updatedAt": "2023-07-07T20:56:52.567691Z",
+      "id": "2",
+      "creatorId": "user2",
+      "name": "Urgent topic",
+      "users": [
+        "user1",
+        "user2",
+        "user3"
+      ]
+    }
+  ],
+  "nextPageKey": ""
 }
 ```
 
@@ -449,7 +474,3 @@ In this article we have:
 - Learnt the best practices on enacting gateway services over your grpc services.
 
 In the [next article](/blog/go-web-services/using-buf-build/) we will look at an amazing tool for managing plugins and tooling so we would not have to depend on Makefiles (or manually copying third party annotations).
-
-## Additional Resources
-
-TBD
