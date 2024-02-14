@@ -1,50 +1,50 @@
-<mxfile host="app.diagrams.net" modified="2024-02-14T08:02:14.991Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="lHdJehuctRbX8Q1Z5hbL" version="23.1.4" type="github">
+<mxfile host="app.diagrams.net" modified="2024-02-14T08:03:59.600Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="J_7PxfHX9BH-itcZvErn" version="23.1.4" type="github">
   <diagram name="LifeOfAnInterceptor" id="-JPuS-_Eib0aC4rEOsTi">
     <mxGraphModel dx="1396" dy="1121" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="JEvyF92d7WFqqm_RvfZS-1" value="Client" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+        <mxCell id="JEvyF92d7WFqqm_RvfZS-1" value="Client" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="40" y="400" width="160" height="160" as="geometry" />
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-3" value="Client Interceptor&lt;br&gt;(Decorates Outgoing Request/Stream)" style="rounded=0;whiteSpace=wrap;html=1;rotation=0;" vertex="1" parent="1">
-          <mxGeometry x="200" y="400" width="150" height="50" as="geometry" />
+          <mxGeometry x="200" y="400" width="150" height="60" as="geometry" />
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-6" value="Client Interceptor&lt;br&gt;(Decorates Incoming Response/Stream)" style="rounded=0;whiteSpace=wrap;html=1;rotation=0;" vertex="1" parent="1">
-          <mxGeometry x="200" y="510" width="150" height="50" as="geometry" />
+          <mxGeometry x="200" y="500" width="150" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="JEvyF92d7WFqqm_RvfZS-7" value="Client" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+        <mxCell id="JEvyF92d7WFqqm_RvfZS-7" value="Server" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
           <mxGeometry x="640" y="400" width="160" height="160" as="geometry" />
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-8" value="Server Interceptor&lt;br&gt;(Intercepts Incoming Request/Stream)" style="rounded=0;whiteSpace=wrap;html=1;rotation=0;" vertex="1" parent="1">
-          <mxGeometry x="490" y="400" width="150" height="50" as="geometry" />
+          <mxGeometry x="490" y="400" width="150" height="60" as="geometry" />
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-9" value="Server Interceptor&lt;br&gt;(Decorates Outgoing Response/Stream)" style="rounded=0;whiteSpace=wrap;html=1;rotation=0;" vertex="1" parent="1">
-          <mxGeometry x="490" y="510" width="150" height="50" as="geometry" />
+          <mxGeometry x="490" y="500" width="150" height="60" as="geometry" />
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-10" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="360" y="424.5" as="sourcePoint" />
-            <mxPoint x="480" y="424.5" as="targetPoint" />
+            <mxPoint x="360" y="430" as="sourcePoint" />
+            <mxPoint x="480" y="430" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-11" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="480" y="535" as="sourcePoint" />
-            <mxPoint x="360" y="535" as="targetPoint" />
+            <mxPoint x="480" y="529.5" as="sourcePoint" />
+            <mxPoint x="360" y="529.5" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-12" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;1&lt;/font&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="270" y="370" width="30" height="30" as="geometry" />
+          <mxGeometry x="350" y="380" width="30" height="30" as="geometry" />
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-13" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;2&lt;/font&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="550" y="370" width="30" height="30" as="geometry" />
+          <mxGeometry x="460" y="380" width="30" height="30" as="geometry" />
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-14" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;3&lt;/font&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="550" y="560" width="30" height="30" as="geometry" />
+          <mxGeometry x="460" y="550" width="30" height="30" as="geometry" />
         </mxCell>
         <mxCell id="JEvyF92d7WFqqm_RvfZS-15" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;4&lt;/font&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="270" y="560" width="30" height="30" as="geometry" />
+          <mxGeometry x="350" y="550" width="30" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
