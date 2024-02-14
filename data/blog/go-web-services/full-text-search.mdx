@@ -1,0 +1,298 @@
+---
+title: 'Part 9 - Full Text Search'
+date: 2023-07-08T11:29:10Z
+lastmod: '2022-08-08'
+tags: ['full text search', 'elasticsearch', 'typesense']
+draft: true
+authors: ['Sri Panyam']
+layout: PostSimple
+summary: Let us add full text search capabilities to our chat service along with all the plumbing and knobs to control sync efficiency and consistency.
+---
+
+## Introduction
+
+In this post (Part 9) of our [series on building web services in Go](/blog/go-web-services/index), we will show how to enable search capabilities on our topics and messages.   [Full text search](https://en.wikipedia.org/wiki/Full-text_search) would allow users to search topics and messages by different facts (eg by titles, descriptions, message contents, users, and other tags).  
+
+## Current Architecture
+
+Postgres is a highly customizable database engine which rapidly onboards new indexing and querying capabilities via [extensions](https://www.postgresql.org/download/products/6-postgresql-extensions/).  It is no surprise that several such extensions exists (eg [tsvector](https://www.postgresql.org/docs/current/datatype-textsearch.html), [pgvector](https://github.com/pgvector/pgvector) for powering full text searches.  Our current architecture (without showing the frontend services) has Postgres powering both source-of-truth as well as querying capabilities:
+
+<center> <img src="/static/images/part9/current-search-architecture.svg" height={600} /> </center>
+
+Here our main entity related CRUD requests are handled (via services) by Postgres.   Our retrieval/search/listing queries are also handled by Postgres.   Currently our database has a small number of indexes (Topics sorted by timestamp, messages sorted by topicid+timestamp, messages by ID, topics by ID).   When an entity is created (or updated) a write is indexed for each index we instill.   The storage requirements also increase (in our main database) to accomodate each index.  The search queries are uptodate and consistent on each write.  But as the number (and/or complexity) of indexes grows (eg indexing by tags, vector indexes on title/description etc) writes will become slower - limiting scale.
+
+Another factor is horizontal scaling.   While databases can be sharded/partitioned horizontally (eg based on Entities' ID/Primary Keys) indexing introduces a few challenges.  Recall that indexes are "inverse" relationships.   While we can partition an entity based on its ID, the index entries that an entity maps to may fall on different shards (eg different physical hosts).   This means a write to a single record may need transactional writes to multiple index shards.   This may be very expensive as locking will be needed.   Even worse in such distributed systems node failures may mean writes can be very flaky and unreliable.
+
+**TOOD** - Link to [this](https://xata.io/blog/postgres-full-text-search-postgres-vs-elasticsearch) on how to do searches on PG itself when we are talking about small datasets or non distributed environments.
+
+## Proposed Architecture
+
+As we scale our system we may be ok to tolerate delays between an entity update and when it is visible in a search query.   This is known as [eventual consistency](https://en.wikipedia.org/wiki/Eventual_consistency).
+
+**Time for a small pause here**.   Sharding, Replication, Fault tolerance (and more) are key concepts in distributed systems - [Martin Klepmann's classic](https://dataintensive.net/) is a MUST READ book for any distributed systems enthusiast.   We will not go into details all at once and instead address these concepts as we encounter them in building our app.
+
+Before making tradeoffs we need to clarify our expected experience from the services.  This will influence our choice of design, architecture and technologies.
+
+1. Individual entity updates must be fast, durable and consistent (eg Topic creations, Topic updates, message sends/deletions/listings  must succeed quickly with no data loss).
+2. System with horizontal scalability so we can isolate based on different fault domains.
+3. Be easy to spin up horizontal tenants/cells
+4. Searching messages/topics (by different fields) must be scalable and fast but we want to vary how quickly an action in (1) is reflected in a respective search result.
+5. (Relatively) Easy to update/manage/configure search indexes and even rerun them with idempotency guarantees.
+6. (Optional) - Flexibility in swapping out query stores.
+
+
+Given this we can start with a proposed architecture that allows an index to build asynchronously:
+
+<center> <img src="/static/images/part9/proposed-search-architecture.svg" height={600} /> </center>
+
+The key parts of this flow are:
+
+1. Users create/update/delete entities 
+2. The respective services write entity updates the Source of Truth DB (postgres)
+4. The datastore - through its change data capture (CDC) interface - sends entity change events to the Sync service (`DBSync`).
+5. DBSync updates the index entries by writing changed records to another datastore that is optimized for querying.
+
+A few things to note:
+
+* We are seperating our source of truth DB from the search store so that we can use different systems optimized for different needs.  SoT for consistent CRUD operations, Search store for fast, flexible and scalable searches.
+* We are using a single "entrypoint" into indexing - DBSync - which ensures that an entity that is updated is reflected correctly in all future searches.
+* Note that (2) and (3) *both* are not needed.   These both should exist only if the sync operation on a change is idempotent - something the DBSync should guarantee.  We will see how this is ensured.
+* A change data capture (CDC) system may not be available universally in which case Step 2 above needs to be resilient to write errors.  But CDC is available in most modern databases and Postgres is [no exception](https://techcommunity.microsoft.com/t5/azure-database-for-postgresql/change-data-capture-in-postgres-how-to-use-logical-decoding-and/ba-p/1396421).
+* We will design the DBSync in such a way that manual syncs can also be done for entries adhoc when needed.  Though this should rarely be needed and is more of a test/debug mechanism.
+* The access to the search store is wrapped by Search service (on the read path) and by DBSync (on the update path).  This ensures that we can change the technologies we use without affecting the behaviour of our application.  Another advantage of this is that we can shard/horizontally scale the Search service and DBSync independantly of the underlying store.
+* Both the Search service and DBSync are application specific and do not leak details of the underlying search store.  Eg they will translate application specific queries of the form `getTopicsByTags(...)` into queries in the underlying store eg - `typesence.collections('topics').search(....)`
+
+There are several choices for the search store:
+
+* [Elasticsearch](elastic.co) - 
+* [Postgres](postgres.org)  - With full text search extensions like [tsvector](https://www.postgresql.org/docs/current/datatype-textsearch.html), [pgvector](https://github.com/pgvector/pgvector)
+* [Typesense](typesense.org)
+* and others.
+
+In our post we will use Typesense as our search store.   Why?  Why not?
+
+## Getting Started
+
+### Setup Typesense
+
+First let us add another dependency in our [docker-compose.yml](https://github.com/panyam/onehub/blob/PART9_SEARCH/docker-compose.yml) to include typesense:
+
+```yaml
+  typesense:
+    image: typesense/typesense:0.25.0
+    restart: on-failure
+    ports:
+      - 8108:8108
+    volumes:
+      - ./.data/typesensedata:/data
+    command: '--data-dir /data --api-key=xyz --enable-cors'
+```
+
+With this we have Typesense running on port 8108 (and exposed on the same port).   Typesense needs an API for validating its sclients so we have created a dummy one.  We can pass these as TYPESENSE_HOST and TYPESENSE_API_KEY environment variables for any other container that needs discover and access it.
+
+You can even try out some sample calls by using one of the many [available client libraries](https://typesense.org/docs/0.25.1/api/api-clients.html).
+
+Also install the python client library which will come in handy as we query Typesense locally:
+
+```
+pip install typesense
+```
+
+### Enable Postgres for Logical Replication
+
+#### Set wal_level
+
+Our postgres DB's data folder (`./.data/pgdata`) contains the postgres config file (postgresql.conf).  Ensure that the `wal_level` parameter is set to "logical".
+
+#### Create a publication
+
+Postgres offers [Publications](https://www.postgresql.org/docs/current/logical-replication-publication.html) as a way to allow selected tables to participate in change captures as a group (pun unintended).  In our case we want to capture all changes on the Topics, Messages and Users table so we can replicate this onto our search index:
+
+```
+CREATE PUBLICATION <PUBLICATION_NAME> FOR TABLE users, messages, topics ;
+```
+
+By default the name of the publication is `dbsync_mypub`.  This publication will be listened to by DBSync (next) to update the search index continuously.  This can also be configure with the `DBSYNC_PUBNAME` parameter in your .env file.
+
+### Sync service (DBSync)
+
+There are several tools one could use for CDC based index building.  One such tool is [Debezium](https://debezium.io/).   However we will NOT be using it.  For fun's sake and we built a replication mechanism based on the more powerful [DBLog](https://netflixtechblog.com/dblog-a-generic-change-data-capture-framework-69351fb9099b) (by Netflix).   This has also been enabled in our docker-compose file as the `dbsync` service.
+
+We will not go over this service in this post and instead go into a thorough deeper dive in a [future post](/blog/go-web-services/database-change-capture).  Briefly DBSync works as follows:
+
+1. Postgres has several [replication schemes](https://www.postgresql.org/docs/current/different-replication-solutions.html).  DBSync takes advantage of logical replication but can be made to work with any scheme (including streaming replication).
+2. The publication created in the previous step will be subscribed by DBSync.
+3. DBSync in turn translates the log events (entity created, updated, deleted) into respective Typesense api calls ([delete entity](https://github.com/panyam/onehub/blob/79738c5d40a9727601871053b6edf04fa5d046f8/cmd/dbsync/main.go#L95) and [upsert entity](https://github.com/panyam/onehub/blob/79738c5d40a9727601871053b6edf04fa5d046f8/cmd/dbsync/main.go#L52)).  These can be found in the [dbsync binary](https://github.com/panyam/onehub/blob/PART9_SEARCH/cmd/dbsync/main.go) that is started as a long running process in our docker environment.
+
+## Test the Index Store
+
+Typesense can be queried directly via REST api calls or other client libraries.  However it is not a safe or scalable practise to offer direct access to a search index store from our frontend.  You can still go ahead and try it locally in python.
+
+Assuming you have already brought up the dbsync service (with `docker compose up`), start python for the following:
+
+### Start python/ipython:
+
+```
+import typesense
+
+tsclient = ts.Client({"api_key": "xyz",   # From above
+                      "nodes": [{
+                          "host": "localhost",
+                          "port": 8108,
+                          "protocol": "http"
+                        }]
+                      })
+```
+
+### Query the collection schemas
+
+DBSync had created 3 Typesense collections for us - "public.topics", "public.users" and "public.messages".
+
+For example the "public.topics" collection's schema would look like:
+```python
+In [4]: tsclient.collections["public.topics"].retrieve()
+Out[4]:
+{
+  'created_at': 1695075731,
+  'default_sorting_field': '',
+  'enable_nested_fields': True,
+  'fields': [
+    {'facet': False, 'index': True, 'infix': False, 'locale': '', 'name': 'version', 'optional': False, 'sort': True, 'type': 'int64'},
+    {'facet': False, 'index': True, 'infix': False, 'locale': '', 'name': 'created_at', 'optional': False, 'sort': True, 'type': 'int64'},
+    {'facet': False, 'index': True, 'infix': False, 'locale': '', 'name': 'updated_at', 'optional': False, 'sort': True, 'type': 'int64'},
+    {'facet': False, 'index': True, 'infix': False, 'locale': '', 'name': 'users', 'optional': True, 'sort': False, 'type': 'string[]'}
+  ],
+ 'name': 'public.topics',
+ 'num_documents': 0,
+ 'symbols_to_index': [],
+ 'token_separators': []
+}
+```
+
+### Retrieve Entities
+
+With DBSync running we can fetch documentsfrom the different collections, eg:
+
+Get a user by ID:
+
+```python
+In [23]: client.collections["public.users"].documents["ltuser1"].retrieve()
+Out[23]:
+{
+  'created_at': 0,
+  'id': 'ltuser1',
+  'name': 'Forceful Coyote',
+  'updated_at': 1695009058,
+  'version': 0
+}
+
+```
+
+Create a topic:
+
+```python
+In [34]: client.collections["public.topics"].documents.create({"id": "testtopic", "name": "My Topic", "updated_at: ": int(time.time()), "created_at": int(time.time()), "version": 0})
+Out[34]:
+{
+  'created_at': 1695160379,
+  'id': 'testtopic',
+  'name': 'My Topic',
+  'updated_at': 1695160379,
+  'version': 0
+}
+```
+
+Delete a topic by ID:
+
+```python
+In [22]: tsclient.collections["public.topics"].documents["lt100"].delete()
+Out[22]:
+{
+  'id': 'lt100',
+  'created_at': 0,
+  'creator_id': 'ltuser81',
+  'name': 'What do you think of Serena Williams?',
+  'updated_at': 1695159795,
+  'version': 0
+}
+```
+
+Fetch 3 messages:
+
+```python
+In [7]: tsclient.collections["public.messages"].documents.search({"q": "*", "order_by": "id", "per_page": 3})
+Out[7]:
+{'found': 188378,
+ 'hits': [{
+    'document': {
+      'content_text': " That's really crazy. I saw that they had a carnival ride and a pink themed splashed party room.",
+      'content_type': 'text/plain',
+      'created_at': 1694449315,
+      'id': 'zanhcyvy',
+      'topic_id': 'lt35',
+      'updated_at': 1694449315,
+      'user_id': 'ltuser49',
+      'version': 0
+    },
+  },
+  {
+    'document': {
+      'content_text': " Time to time. I also watch some high school because my friend's son plays, it would be cool if Snoop Dogg made my friend's son a theme song for his football team",
+      'content_type': 'text/plain',
+      'created_at': 1694453558,
+      'id': 'jzngcqyn',
+      'topic_id': 'lt7',
+      'updated_at': 1694453558,
+      'user_id': 'ltuser40',
+      'version': 0
+    },
+  },
+  {
+    'document': {
+      'content_text': ' You know there was a time when Marvel offered the rights to their characters to Sony but they only bought the rights for Spiderman',
+      'content_type': 'text/plain',
+      'created_at': 1694451003,
+      'id': '3qecs1pf',
+      'topic_id': 'lt95',
+      'updated_at': 1694451003,
+      'user_id': 'ltuser22',
+      'version': 0
+    },
+   }
+  ],
+ 'out_of': 188378,
+ 'page': 1,
+ 'request_params': {'collection_name': 'public.messages', 'per_page': 5, 'q': '*'},
+ 'search_cutoff': False,
+ 'search_time_ms': 35
+}
+```
+
+## Search API
+
+Now let us focus our attention to the frontend again.   So far we have a search index being built as we CRUD topics, messages and users.  However we do not want our client to have direct access to Typesense.  This is not a safe or efficient practise:
+
+* Typesense is an implementation detail of our application and as such we do not want these internal details to be leaked to the end users.  Having a single API gives us the flexibility to change store backends (eg Elastic or Algolia etc) without leaking details to the end user.
+* Without an intercpeting layer, we impose dependencies on Typesense's security/auth models etc to restrict access to different users.
+* We may not want to support **every** query/filter/ordering type.  This helps be conscious about releasing what is a fit for features one at a time.  Eg to start off with, we may only be interested in searching topics and messages by titles or content text.
+
+Given this we will expose Search API also as part of our gRPC spec (with accompanying auto-generated grpc gateway changes).
+
+Let us consider the user interface needs now:
+
+1. Search for topics with particular titles tolerating a bit of fuzziness - Eg we might want to search for titles ignoring stop words.
+2. We want to filter all the messages in a topic matching certain text (again allowing for fuzziness)
+3. Find all topics where messages might contain certain phrases or text.
+4. Search for topics with tags (we will update our Topics API for this).
+
+This gives us a taste of what to expect from our search index store and we can add more features beyond just textual searches (eg top voted/liked topics/messages, active users etc) as we add more features.
+
+With this we can take a stab at our [Search service](https://github.com/panyam/onehub/blob/PART9_SEARCH/protos/onehub/v1/search.proto):
+
+<CodeEmbed
+  title="search.proto"
+  language="yaml"
+  url="https://raw.githubusercontent.com/panyam/onehub/PART9_SEARCH/protos/onehub/v1/search.proto"
+  height="300px"
+  style="height: 300px; overflow: scroll"
+/>
