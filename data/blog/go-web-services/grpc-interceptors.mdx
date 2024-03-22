@@ -140,28 +140,24 @@ Since interceptors can apply to both the client and server, we have four total f
 
 4. Server Stream Interceptor - Similar to their Unary counterpart - these intercept messages in a single connection when received at the server.
 
-The following drawing shows where each of these requestor types would be located in the life of an end to end request:
-
-
-
-Interceptors provide more benefits of plain HTTP middleware:
+Interceptors provide more benefits than plain HTTP middleware:
 
 1. HTTP middleware are very language/framework specific so each framework has their own conventions for creating/enforcing this.
-2. HTTP middleware has no standard ways to decorate streams (eg Websocket packets).   Since gRPC offers framing in streaming messages, stream interceptors can intercept individual messages in a stream.  In HTTP (or Websockets) lack of a "typed message" stream means applications would have to implement their own framing of messages and decorators to process these messages in arbirary ways.
+2. HTTP middleware has no standard ways to decorate streams (eg Websocket packets). Since gRPC offers framing in streaming messages, stream interceptors can intercept individual messages in a stream. In HTTP (or Websockets) lack of a "typed message" stream means applications would have to implement their own framing of messages and decorator "schemas" to process these messages in arbitrary ways.
 
 ## Implementing Interceptors
 
 Our example does not (yet) have any streaming rpcs.   So will add unary interceptors for now and add stream interceptors when we look at [Websockets and Streaming](/blog/go-web-services/grpc-request-and-response-streaming).  
 
-First we will add a Client Unary Interceptor to our service clients (invoked by the gRPC gateway) to ensure that only requests that contain the auth header (with username+password) are forwarded to the server.  Otherwise the call to the server is not even made.
+First we will add a Client Unary Interceptor to our service clients (invoked by the gRPC gateway) to ensure that only requests that contain the auth header (with username+password) are forwarded to the server. Otherwise the call to the server is not even made (and a 403 is returned).
 
-Then we will add a Server Unary Interceptor to our service to accept and validate these credentials.
+Then we will add a Server Unary Interceptor to our service to accept and validate these credentials (after all the server cannot just accept what ever the client sends at face value).
 
 1. Support [basic http auth](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) in the gRPC gateway so that caller of our API can pass in a username/password to authenticate a user.
-2. The gRPC gateway (http server) extracts the username/password (from http heads) and forwards it to the service (via gRPC metadata - see below).
-3. The Server Unary Interceptor validagtes this username/password - against a static list of users/passwords.
-3a. If the credentials are invalid then the interceptor returns an error to the gRPC gateway (without invoking the gRPC handler).
-3b. If the credentials are valid the underlying service's handler is invoked
+2. The gRPC gateway (http server) extracts the username/password (from http headers) and forwards it to the service (via gRPC metadata - see below).
+3. The Server Unary Interceptor validates this username/password - against a static list of users/passwords.
+   3a. If the credentials are invalid then the interceptor returns an error to the gRPC gateway (without invoking the gRPC handler).
+   3b. If the credentials are valid the underlying service's handler is invoked
 
 Clearly this auth scheme is very simplistic and we will look at more full-fledged and complex example in the article on [Authentication](/blog/go-web-services/grpc-authentication).
 
@@ -235,9 +231,9 @@ The aditions are pretty minimal:
 
 ### Step 2 - Ensure Auth Params in Client originating Metadata
 
-Here is our first Client Unary Interceptor that before even forwarding a request to the gRPC service will ensure that the OneHubUsername and OneHubPassword metadata pairs are set.  Why even send an unauthenticated request to the service to begin with.
+Here is our first Client Unary Interceptor that before even forwarding a request to the gRPC service will ensure that the OneHubUsername and OneHubPassword metadata pairs are set.  Why even send an unauthenticated request to the service to begin with!
 
-Going back to our startGatewayServer method - once we are past the ServeMux, it is time to configure our DialOptions.  [gprc.DialOption](https://pkg.go.dev/google.golang.org/grpc#DialOption) simply configure how a connection is to be made to the service.  In our example so far we just specified that we would like to configure our connection over an Insecure transport.
+Going back to our startGatewayServer method - once we are past the ServeMux, it is time to configure our DialOptions.  [gprc.DialOption](https://pkg.go.dev/google.golang.org/grpc#DialOption) simply configures how a connection is to be made to the service.  In our example so far we just specified that we would like to configure our connection over an Insecure transport (in a secure environment the clients would also be issued certificates etc for authentication).
 
 A client interceptor can be added as an additional DialOption!  That is it.   A [unary client interceptor](https://pkg.go.dev/google.golang.org/grpc#UnaryClientInterceptor) is just a function with the following signature:
 
@@ -281,9 +277,8 @@ func EnsureAuthExists(ctx context.Context,
 }
 ```
 
-Note that metadata entries are really key/value-list pairs (much like headers or query-params in http).  Hence getting the list of username/passwords.
 
-Now all that is left is to add this to our DialOptions in the client:
+Note that metadata entries are really key/value-list pairs (much like headers or query-params in http).  Now all that is left is to add our Interceptor to our DialOptions in the client:
 
 ```
 func startGatewayServer(grpc_addr string, gw_addr string) {
@@ -321,7 +316,7 @@ $ curl localhost:8080/v1/topics -u login:password
 {"topics":[], "nextPageKey":""}
 ```
 
-And out went our request from the client to be handled by the (unauthenticating) server.
+And lo behond - our request from the client was served by the server - though the request was not authenticated by the server.
 
 One thing to observe in the above examples is how the Metadata object is created.  
 
@@ -331,7 +326,7 @@ One thing to observe in the above examples is how the Metadata object is created
 
 ### Step 3 - Add server side authentication
 
-While it is commendable that the client ensured the presence of BasicAuth credentials, it is upto the server to validte them.
+While it is commendable that the client ensured the presence of BasicAuth credentials, it is upto the server to validate them.
 
 To do this we will add (as you guessed) a [UnaryServerInterceptor](https://pkg.go.dev/google.golang.org/grpc#UnaryServerInterceptor) which is a function with the signature:
 
@@ -462,14 +457,16 @@ yielding:
 }
 ```
 
-That's it.  That's all there is to interceptors.   Stream interceptors are very similar but not covered here.  Wait for it though!
+That's it.  That's all there is to interceptors.   Stream interceptors are very similar but we wont cover them here just yet.  Wait for it though!
 
 ## Conclusion
 
-By using interceptors a service can be confered a lot of common/cross-cutting capabilities in a way tansparent to the underlying service (and method handlers).   This clean allows seperation of concerns as well the ability to plug/play/replace these common behaviours.   Some of the interesting things that can be done with interceptors is to enable logging, request tracing, authentication, rate-limiting, load balancing and much more.
+By using interceptors a service can be wrapped/decorated a lot of common/cross-cutting capabilities in a way transparent to the underlying service (and method handlers). This clean allows separation of concerns as well the ability to plug/play/replace these common behaviors with other providers in the future. Some of the interesting things that can be done with interceptors is to enable logging, request tracing, authentication, rate-limiting, load balancing and much more.
 
-In this article:
+To summarize, In this article:
 
 * We contrasted HTTP middleware and gRPC interceptors
 * Touched upon the versatility of interceptors in providing a wide variety of functionality
-* Implemented Unary interceptors to intercept requests both on the client as well as the server side.
+* Implemented Unary interceptors to decorate requests both on the client as well as the server side to provide a simple authentication mechanism.
+
+In the next post we will finally start persisting our data in a real database.   We will also containerize our whole setup for easy development, portability and startup.  This will also pave the way for keeping development/startup simple as we add more services for different extensions on our canonical Chat service!
