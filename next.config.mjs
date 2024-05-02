@@ -147,7 +147,7 @@ const withMDX = nextMDX({
 const finalConfig = withMDX(
   withBundleAnalyzer({
     experimental: {
-      appDir: true,
+      appDir: false,
     },
     basePath: '',
     reactStrictMode: true,
