@@ -1,33 +1,8 @@
-runtime: nodejs20
-# api_version: 1
-# threadsafe: true
-
+runtime: go122
 handlers:
-- url: /_next/data/([^/]*)/(.*)\.json
-  static_files: server/pages/\2.json
-  upload: server/pages/(.*)
-
 - url: /static
   static_dir: public/static
 
-- url: /_next/static
-  static_dir: static
-
-- url: /
-  static_files: server/pages/index.html
-  upload: server/pages/index.html
-
-- url: /(.*)/
-  static_files: server/pages/\1.html
-  upload: server/pages/(.*)
-
-- url: /(.*)
-  static_files: server/pages/\1.html
-  upload: server/pages/(.*)
-
-# Uncomment this above if you want script handling anything instead
-# of going to nextjs
-# - url: /.*
-#  secure: always
-#  redirect_http_response_code: 301
-#  script: auto
+- url: /.*
+  script: auto
+    # upload: web/templates/.*
