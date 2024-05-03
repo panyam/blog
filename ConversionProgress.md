@@ -66,4 +66,6 @@ Then we have `_app.tsx` for client side rendering.  Frankly we dont need both an
 
 But we are rushing ahead - let us serve a basic page to serve the "listing" page
 
-1. take our `_document` and convert to templates/index.html
+1. take our `_document` and convert to templates/HomePage.html
+2. Remove all old nextjs components - we just want to show basic stuff
+3. Next migrate the LayoutWrapper - and add as is into the HomePage.html so we have the shim

@@ -64,7 +64,7 @@ func (web *BlogWeb) setupRouter() {
 }
 
 func (web *BlogWeb) setupStaticRoutes() {
-	web.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	web.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("public/static"))))
 }
 
 func withLogger(handler http.Handler) http.Handler {

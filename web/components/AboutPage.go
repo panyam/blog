@@ -1,6 +1,6 @@
 package components
 
-type AboutPage struct {
+type HomePage struct {
 	BaseView
 	BodyView       View
 	HeaderView     Header
@@ -9,13 +9,13 @@ type AboutPage struct {
 	HeaderNavLinks []HeaderNavLink
 }
 
-func (v *AboutPage) InitContext(c *Context, pv View) {
+func (v *HomePage) InitContext(c *Context, pv View) {
 	v.BaseView.AddChildViews(&v.HeaderView, v.BodyView, &v.FooterView)
 	v.HeaderView.HeaderNavLinks = v.HeaderNavLinks
 	v.HeaderView.SiteMetadata = v.SiteMetadata
 	v.BaseView.InitContext(c, pv)
 }
 
-func (h *AboutPage) RenderResponse() error {
-	return h.Ctx.Template.ExecuteTemplate(h.Ctx.Writer, "AboutPage.html", h)
+func (h *HomePage) RenderResponse() error {
+	return h.Ctx.Template.ExecuteTemplate(h.Ctx.Writer, "HomePage.html", h)
 }
