@@ -6,5 +6,10 @@ type HeaderNavLink struct {
 }
 
 type SiteMetadata struct {
-	HeaderTitle string
+	HeaderTitle  string
+	Title        string
+	Author       string
+	Description  string
+	SocialBanner string
+	SiteUrl      string
 }

@@ -1,11 +1,11 @@
 {{ define "Header" }}
   <header class="flex items-center justify-between py-10">
     <div>
-      <a href="/" aria-label={{.SiteMetadata.HeaderTitle}}>
+      <a href="/" aria-label={{.Ctx.SiteMetadata.HeaderTitle}}>
         <div class="flex items-center justify-between">
           <div class="mr-3"> <img src="/static/images/logo.svg" /></div>
           <div class="hidden h-6 text-2xl font-semibold sm:block">
-            {{.SiteMetadata.HeaderTitle}}
+            {{.Ctx.SiteMetadata.HeaderTitle}}
           </div>
         </div>
       </a>

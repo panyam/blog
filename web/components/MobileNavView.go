@@ -7,5 +7,5 @@ type MobileNav struct {
 }
 
 func (h *MobileNav) RenderResponse() error {
-	return h.Ctx.Template.ExecuteTemplate(h.Ctx.Writer, "MobileNav", h)
+	return h.Ctx.Render(h, "MobileNav")
 }

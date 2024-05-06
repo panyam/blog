@@ -1,0 +1,28 @@
+{{ define "Footer" }}
+    <footer>
+      <div class="mt-16 flex flex-col items-center">
+        <div class="mb-3 flex space-x-4">
+            {{ template "SocialIcon" dict "Kind" "mail"  "Size" 6
+                    "ImgHref" "/static/socialicons/mail.svg"
+                    "Href" "mailto:sri.panyam@gmail.com"  }}
+            {{ template "SocialIcon" dict "Kind" "github" "Size" 6
+                    "ImgHref" "/static/socialicons/github.svg"
+                    "Href" "https://github.com/panyam"  }}
+            {{ template "SocialIcon" dict "Kind" "linkedin"  "Size" 6
+                    "Href" "https://linkedin.com/in/srirampanyam"
+                    "ImgHref" "/static/socialicons/linkedin.svg" }}
+        </div>
+        <div class="mb-2 flex space-x-2 text-sm text-gray-500 dark:text-gray-400">
+          <div>{{.Ctx.SiteMetadata.Author}}</div>
+          <div> • </div>
+          <div>© {{ Now }}</div>
+          <div> • </div>
+          <a href="/">{{.Ctx.SiteMetadata.Title}}</a>
+        </div>
+        <div class="mb-8 text-sm text-gray-500 dark:text-gray-400">
+          <a href="https://github.com/panyam/">Sri Panyam </a>
+        </div>
+      </div>
+    </footer>
+{{ end }}
+

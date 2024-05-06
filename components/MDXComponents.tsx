@@ -17,43 +17,6 @@ export const MDXComponents: any = {
   BlogNewsletterForm,
 }
 
-/*
-
-interface MDXLayout {
-  layout: string
-  content: any
-  [key: string]: unknown
-}
-
-interface Wrapper {
-  layout: string
-  [key: string]: unknown
-}
-
-export const MDXLayoutRenderer = ({ layout, content, ...rest }: MDXLayout) => {
-  const MDXLayout = useMDXComponent(content.body.code)
-  const mainContent = content // coreContent(content);
-
-  return <MDXLayout layout={layout} content={mainContent} components={MDXComponents} {...rest} />
-}
-*/
-
-// Using the MDXProvider version - with @next/mdx
-/*
-import { MDXProvider } from '@mdx-js/react'
-export function OurMDXProvider({ layout, content, ...rest }) {
-  console.log('Content: ', content)
-  console.log('Layout: ', layout)
-  return (
-    <MDXProvider components={MDXComponents}>
-      <Wrapper layout={layout} content={content}>
-        {rest}
-      </Wrapper>
-    </MDXProvider>
-  )
-}
-*/
-
 // Using the mdx-next-remote plugin
 import { MDXRemote } from 'next-mdx-remote'
 export function OurMDXRemote({ source, layout, content, ...rest }) {
