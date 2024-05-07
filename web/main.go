@@ -56,15 +56,8 @@ func (web *BlogWeb) setupRouter() {
 
 	web.setupLocalDev(web.router)
 
-	// Enable the endpoint for API
-	web.setupStaticRoutes()
-
 	//setup basic pages
 	web.setupPages(web.router)
-}
-
-func (web *BlogWeb) setupStaticRoutes() {
-	web.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("public/static"))))
 }
 
 func withLogger(handler http.Handler) http.Handler {

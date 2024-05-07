@@ -14,9 +14,7 @@
         </div>
         <div class="mb-2 flex space-x-2 text-sm text-gray-500 dark:text-gray-400">
           <div>{{.Ctx.SiteMetadata.Author}}</div>
-          <div> • </div>
-          <div>© {{ Now }}</div>
-          <div> • </div>
+          <div> • © {{ Now.UTC.Year }} • </div>
           <a href="/">{{.Ctx.SiteMetadata.Title}}</a>
         </div>
         <div class="mb-8 text-sm text-gray-500 dark:text-gray-400">

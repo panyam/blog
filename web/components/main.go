@@ -23,11 +23,6 @@ func (c *Context) Render(v View, templateName string) error {
 		return c.Template.ExecuteTemplate(c.Writer, templateName, v)
 	}
 	return v.RenderResponse()
-
-	/*
-		_, err := c.Writer.Write([]byte("TemplateName not provided"))
-		return err
-	*/
 }
 
 type View interface {

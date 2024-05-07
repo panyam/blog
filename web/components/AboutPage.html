@@ -8,11 +8,11 @@
     <div class="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">
        <!-- Layout wrapper -->
       <div class="flex h-screen flex-col justify-between">
-        {{ .HeaderView | renderView }}
+        {{ .HeaderView | RenderView }}
         <main class="mb-auto">
-          {{ .BodyView | renderView }}
+          {{ .BodyView | RenderView }}
         </main>
-        {{ .FooterView | renderView }}
+        {{ .FooterView | RenderView }}
     </div>
   </body>
 </html>
