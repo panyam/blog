@@ -1,0 +1,47 @@
+---
+title: S3Gen - A simple static site generator
+date: 2016-11-05T15:32:08Z
+tags: ['SaaS', 'Control Planes', 'Multi tenancy']
+draft: true
+summary: 'Let us look at how to build SaaS platforms and how control planes power them'
+images: []
+authors: ['Sri Panyam']
+layout: PostSimple
+---
+
+# https://www.youtube.com/watch?v=-7wDs1x2K_4
+# https://www.youtube.com/watch?v=KWwIE7lwBS8
+# https://www.youtube.com/watch?v=ynXHivImevI&t=25s
+
+# Airtable example - https://www.youtube.com/watch?v=KgzwybMkqVc
+
+Until now this site has been powered by NextJS.   Rewinding back a little more, for the last 10 years, I have been on the search for the perfect blog hosting solution.   
+
+1. Wordpress - one of my first trials was to put content on wordpress.  It had its benefits (pros and cons)
+2. Simple wordpress like hosting on a personal domain - again pros and cons
+3. Just host a bunch of static html pages on app engine
+4. Use a static site generator like hugo and finally settled on NextJS.
+
+I had taken a temporary break from blogging about a year ago.   Then I tried to put something out there recently only to find that the NextJS eco-system *really* sucks.
+May be also talk about notations.us - and how i moved that out of Next -> go/htmx
+
+But I did not want to *just* go to back to Hugo.  Oh by the way - if you just want a static site - definitely check out Hugo - it is phenomenal.
+
+But if you want to build a webapp - but *also* serve a content-ful static site *along* with it where you want to use your own conventions and not depending others - then read on.   We will build a static site generator where you get to mix and match YOUR conventions for YOUR site.  It really is not as hard as I have discovered.
+
+The proof is in the pudding.  Every post you see after this one is powered by the new site.  here are old pics and the new ones:
+
+SIDE BY SIDE pics of the site.
+
+V1 - easiest s3 - no gen - just do everything in html
+V2 - Walk through all html files in contnet root and render them to their output_dir equivalent
+V3 - Create MD/MDX files instead of html and remove "common" elements
+
+Issues:
+1. URL Mappings
+2. Languages/Locales
+3. Themes and Layouts 
+4. Global assets
+5. Data files?
+6. Template inheritance and Composition - here is where our "View" objects come in?
+7. 

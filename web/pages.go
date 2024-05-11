@@ -13,10 +13,10 @@ import (
 
 var site = s3core.Site{
 	ContentRoot: "./data",
-	OutputDir:   "./published",
+	OutputDir:   "/Users/sri/personal/golang/blog/published",
 	PathPrefix:  "/a/b",
-	StaticFolders: map[string]string{
-		"/static/": "public/static",
+	StaticFolders: []string{
+		"/static/", "public/static",
 	},
 }
 
@@ -46,6 +46,7 @@ func CustomFuncMap() template.FuncMap {
 // This should be mirroring how we are setting up our app.yaml
 func (web *BlogWeb) setupPages(router *mux.Router) {
 	// site.Load()
+	site.Init().StartWatching()
 
 	// Here we want to point just to the root of our blog and let it get served
 	// For now we will serve via a router but then take the same router to

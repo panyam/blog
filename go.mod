@@ -11,7 +11,10 @@ require (
 	github.com/panyam/s3gen v0.0.1
 )
 
-require github.com/panyam/goutils v0.0.97 // indirect
+require (
+	github.com/panyam/goutils v0.0.97 // indirect
+	github.com/radovskyb/watcher v1.0.7 // indirect
+)
 
 replace github.com/panyam/goutils v0.0.97 => ../goutils/
 
