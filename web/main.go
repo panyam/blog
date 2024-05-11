@@ -9,6 +9,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
+	gohttp "github.com/panyam/goutils/http"
 )
 
 func DefaultGatewayAddress() string {
@@ -54,7 +55,8 @@ func (web *BlogWeb) Start() {
 func (web *BlogWeb) setupRouter() {
 	web.router = mux.NewRouter()
 
-	web.setupLocalDev(web.router)
+	// Setup local dev by allowing CORS
+	web.router.Use(gohttp.CORS)
 
 	//setup basic pages
 	web.setupPages(web.router)
