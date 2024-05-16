@@ -82,6 +82,9 @@ Compilation not needed.
 And serve static files
 introduce s3gen
 introduze "watch" and "load" in s3gen
+Also why we are *not* useing templ - an amazing tool.
+Templ is great for html - but md etc it was hard to get working.
+Golang template execution is fantasitic - parsing sucks
 
 GOHTMX_STEP4 - Render templates
 

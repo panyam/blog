@@ -16,6 +16,9 @@ var site = s3core.Site{
 	OutputDir:   "/Users/sri/personal/golang/blog/published",
 	PathPrefix:  "",
 	LazyLoad:    true,
+	HtmlTemplates: []string{
+		"templates/*.html",
+	},
 	StaticFolders: []string{
 		"/static/", "public/static",
 	},
@@ -36,6 +39,7 @@ var headerNavLinks = []components.HeaderNavLink{
 
 // This should be mirroring how we are setting up our app.yaml
 func (web *BlogWeb) setupPages(router *mux.Router) {
+	site.SiteMetadata = siteMetadata
 	site.Init().Load().StartWatching()
 
 	// Here we want to point just to the root of our blog and let it get served
