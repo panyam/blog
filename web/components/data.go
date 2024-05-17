@@ -12,4 +12,5 @@ type SiteMetadata struct {
 	Description  string
 	SocialBanner string
 	SiteUrl      string
+	Twitter      string
 }

@@ -1,6 +1,6 @@
 <html lang="en" class="scroll-smooth">
   <head>
-    {{ .PageSEO }}
+    {{ RenderView .PageSEO }}
     {{ template "CommonPageHeader" }}
     <title>{{.Title}}</title>
   </head>
@@ -9,11 +9,11 @@
     <div class="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">
        <!-- Layout wrapper -->
       <div class="flex h-screen flex-col justify-between">
-        {{ .Header }}
+        {{ RenderView .HeaderView }}
         <main class="mb-auto">
-          {{ .Body }}
+          {{ .BodyView  | RenderView}}
         </main>
-        {{ .Footer }}
+        {{ .FooterView | RenderView }}
     </div>
   </body>
 </html>

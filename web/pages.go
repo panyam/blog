@@ -3,7 +3,6 @@ package web
 import (
 	"html/template"
 	"log"
-	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,7 +13,7 @@ import (
 var site = s3core.Site{
 	ContentRoot: "./data",
 	OutputDir:   "/Users/sri/personal/golang/blog/published",
-	PathPrefix:  "",
+	PathPrefix:  "/published",
 	LazyLoad:    true,
 	HtmlTemplates: []string{
 		"templates/*.html",
@@ -30,12 +29,6 @@ var siteMetadata = &components.SiteMetadata{
 	Description: "My personal blog highlighting adventures in building random things on the side",
 	Author:      "Sriram Panyam",
 }
-var headerNavLinks = []components.HeaderNavLink{
-	{Href: "/blog", Title: "Blog"},
-	{Href: "/tags", Title: "Tags"},
-	{Href: "/projects", Title: "Projects"},
-	{Href: "/about", Title: "About"},
-}
 
 // This should be mirroring how we are setting up our app.yaml
 func (web *BlogWeb) setupPages(router *mux.Router) {
@@ -46,8 +39,38 @@ func (web *BlogWeb) setupPages(router *mux.Router) {
 	// For now we will serve via a router but then take the same router to
 	// publish them for static serving too
 	router.PathPrefix(site.PathPrefix).Handler(http.StripPrefix(site.PathPrefix, &site))
+
+	/*
+		site.HandlePage("/:slug", func(w http.ResponseWriter, r *http.Request) {
+			// need a function to go slug -> View
+			view := components.BasePage{
+				HeaderNavLinks: headerNavLinks,
+				BodyView:       &components.HomePage{},
+			}
+		})
+
+		router.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
+			aboutpage := &components.BasePage{
+				HeaderNavLinks: headerNavLinks,
+				BodyView:       &components.AboutPage{},
+			}
+			web.RenderView(aboutpage, w, r, "AboutPage")
+		}).Methods("GET")
+
+		// router.SetFuncMap(funcmap)
+		// router.LoadHTMLGlob("./web/templates/*.*")
+		router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			homepage := &components.BasePage{
+				BaseView:       components.BaseView{},
+				HeaderNavLinks: headerNavLinks,
+				BodyView:       &components.HomePage{},
+			}
+			web.RenderView(homepage, w, r, "")
+		}).Methods("GET")
+	*/
 }
 
+/*
 func (web *BlogWeb) RenderView(v components.View, w http.ResponseWriter, r *http.Request, templateName string) {
 	ctx := &components.Context{
 		Writer:       w,
@@ -66,6 +89,7 @@ func (web *BlogWeb) RenderView(v components.View, w http.ResponseWriter, r *http
 		// c.Abort()
 	}
 }
+*/
 
 func CustomFuncMap() template.FuncMap {
 	return template.FuncMap{

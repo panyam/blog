@@ -1,25 +1,25 @@
 {{ define "Header" }}
   <header class="flex items-center justify-between py-10">
     <div>
-      <a href="/" aria-label={{.SiteMetadata.HeaderTitle}}>
+      <a href="/" aria-label={{.Site.SiteMetadata.HeaderTitle}}>
         <div class="flex items-center justify-between">
-          <div class="mr-3"> <img src="/static/images/logo.svg" /></div>
+          <div class="mr-3"> <img src="{{.Site.PathPrefix}}/static/images/logo.svg" /></div>
           <div class="hidden h-6 text-2xl font-semibold sm:block">
-            {{.SiteMetadata.HeaderTitle}}
+            {{.Site.SiteMetadata.HeaderTitle}}
           </div>
         </div>
       </a>
     </div>
     <div class="flex items-center text-base leading-5">
       <div class="hidden sm:block">
-        {{ range .HeaderNavLinks }}
+        {{ range (json "HeaderNavLinks.json" "") }}
             <a href={{.Href}} class="p-1 font-medium text-gray-900 dark:text-gray-100 sm:p-4">
               {{.Title}}
             </a>
         {{ end }}
       </div>
-      {{ .ThemeSwitchView }}
-      {{ .MobileNavView }}
+      {{ RenderView .ThemeSwitchView }}
+      {{ RenderView .MobileNavView }}
     </div>
   </header>
 {{ end }}

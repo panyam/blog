@@ -1,17 +1,17 @@
-{{ define "CommonSEO" }}
+{{ define "SEO" }}
     <title>{{.Title}}</title>
     <meta name="robots" content="follow, index" />
     <meta name="description" content={{.Description}} />
-    <meta property="og:url" content={{.Ctx.SiteMetadata.SiteUrl}} />
+    <meta property="og:url" content={{.Site.SiteMetadata.SiteUrl}} />
     <meta property="og:type" content={{.OgType}} />
-    <meta property="og:site_name" content={{.Ctx.SiteMetadata.title}} />
+    <meta property="og:site_name" content={{.Site.SiteMetadata.Title}} />
     <meta property="og:description" content={{.Description}} />
     <meta property="og:title" content={{.Title}} />
     {{ range .OgImages }}
       <meta property="og:image" content={{.}} key={{.}} />
     {{ end }}
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content={{.Ctx.SiteMetadata.twitter}} />
+    <meta name="twitter:site" content={{.Site.SiteMetadata.Twitter}} />
     <meta name="twitter:title" content={{.Title}} />
     <meta name="twitter:description" content={{.Description}} />
     <meta name="twitter:image" content={{.TwImage}} />
@@ -23,10 +23,7 @@
     {{ else }}
       <link
         rel="canonical"
-        href={{.Ctx.SiteMetadata.siteUrl}}
+        href={{.Site.SiteMetadata.SiteUrl}}
       />
     {{ end }}
 {{ end }}
-
-{{ define "PageSEO" }} {{ template "CommonSEO" }} {{ end }}
-{{ define "BlogSEO" }} {{ template "CommonSEO" }} {{ end }}
