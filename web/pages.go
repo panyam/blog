@@ -1,9 +1,7 @@
 package web
 
 import (
-	"log"
 	"net/http"
-	"reflect"
 
 	"github.com/gorilla/mux"
 	"github.com/panyam/blog/web/components"
@@ -30,16 +28,6 @@ var siteMetadata = &components.SiteMetadata{
 	Author:      "Sriram Panyam",
 }
 
-func (web *BlogWeb) NewPageView(name string) (out s3.PageView) {
-	if name == "BasePage" || name == "" {
-		out = &BasePage{BaseView: s3.BaseView{Template: "BasePage.html"}}
-	}
-	if name == "PostPage" || name == "" {
-		out = &PostPage{}
-	}
-	return
-}
-
 // This should be mirroring how we are setting up our app.yaml
 func (web *BlogWeb) setupPages(router *mux.Router) {
 	site.NewPageViewFunc = web.NewPageView
@@ -50,91 +38,32 @@ func (web *BlogWeb) setupPages(router *mux.Router) {
 	// For now we will serve via a router but then take the same router to
 	// publish them for static serving too
 	router.PathPrefix(site.PathPrefix).Handler(http.StripPrefix(site.PathPrefix, &site))
-
-	/*
-		site.HandlePage("/:slug", func(w http.ResponseWriter, r *http.Request) {
-			// need a function to go slug -> s3.View
-			view := components.BasePage{
-				HeaderNavLinks: headerNavLinks,
-				BodyView:       &components.HomePage{},
-			}
-		})
-
-		router.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
-			aboutpage := &components.BasePage{
-				HeaderNavLinks: headerNavLinks,
-				BodyView:       &components.AboutPage{},
-			}
-			web.RenderView(aboutpage, w, r, "AboutPage")
-		}).Methods("GET")
-
-		// router.SetFuncMap(funcmap)
-		// router.LoadHTMLGlob("./web/templates/*.*")
-		router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			homepage := &components.BasePage{
-				s3.BaseView:       components.BaseView{},
-				HeaderNavLinks: headerNavLinks,
-				BodyView:       &components.HomePage{},
-			}
-			web.RenderView(homepage, w, r, "")
-		}).Methods("GET")
-	*/
 }
 
-/*
-func (web *BlogWeb) RenderView(v components.View, w http.ResponseWriter, r *http.Request, templateName string) {
-	ctx := &components.Context{
-		Writer:       w,
-		Template:     web.Template,
-		SiteMetadata: siteMetadata,
+func (web *BlogWeb) NewPageView(name string) (out s3.PageView) {
+	if name == "BasePage" || name == "" {
+		out = &BasePage{BasePageView: s3.BasePageView{BaseView: s3.BaseView{Template: "BasePage.html"}}}
 	}
-	// w.WriteHeader(http.StatusOK)
-	v.InitContext(ctx, nil)
-	err := v.ValidateRequest(w, r)
-	if err == nil {
-		err = ctx.Render(v, templateName)
+	if name == "PostPage" || name == "" {
+		out = &PostPage{}
 	}
-	if err != nil {
-		slog.Error("Render Error: ", "err", err)
-		http.Error(w, err.Error(), 500)
-		// c.Abort()
-	}
+	return
 }
-
-func CustomFuncMap() template.FuncMap {
-	return template.FuncMap{
-		"RenderView": func(v components.View) template.URL {
-			log.Println("V: ", v)
-			v.RenderResponse()
-			return template.URL(" ")
-		},
-	}
-}
-*/
 
 type BasePage struct {
-	s3.BaseView
-	Page       *s3.Page
+	s3.BasePageView
 	PageSEO    SEO
 	HeaderView Header
 	BodyView   s3.View
 	FooterView Footer
 }
 
-func (v *BasePage) InitContext(s *s3.Site, parentView s3.View) {
+func (v *BasePage) InitView(s *s3.Site, parentView s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
-	v.BaseView.AddChildViews(&v.PageSEO, &v.HeaderView, v.BodyView, &v.FooterView)
-	v.BaseView.InitContext(s, parentView)
-}
-
-func (v *BasePage) GetPage() *s3.Page {
-	return v.Page
-}
-
-func (v *BasePage) SetPage(p *s3.Page) {
-	v.Page = p
+	v.BasePageView.AddChildViews(&v.PageSEO, &v.HeaderView, v.BodyView, &v.FooterView)
+	v.BasePageView.InitView(s, parentView)
 }
 
 type PostPage struct {
@@ -142,7 +71,7 @@ type PostPage struct {
 	BodyView PostSimple
 }
 
-func (v *PostPage) InitContext(s *s3.Site, parentView s3.View) {
+func (v *PostPage) InitView(s *s3.Site, parentView s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
@@ -150,8 +79,7 @@ func (v *PostPage) InitContext(s *s3.Site, parentView s3.View) {
 		v.Template = "BasePage.html"
 	}
 	v.BasePage.AddChildViews(&v.BodyView)
-	v.BasePage.InitContext(s, parentView)
-	log.Println("PP After: ", reflect.TypeOf(v), reflect.TypeOf(v.BodyView.Parent))
+	v.BasePage.InitView(s, parentView)
 }
 
 type Header struct {
@@ -160,12 +88,12 @@ type Header struct {
 	MobileNavView   MobileNav
 }
 
-func (v *Header) InitContext(s *s3.Site, pv s3.View) {
+func (v *Header) InitView(s *s3.Site, pv s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
 	v.BaseView.AddChildViews(&v.ThemeSwitchView, &v.MobileNavView)
-	v.BaseView.InitContext(s, pv)
+	v.BaseView.InitView(s, pv)
 }
 
 type MobileNav struct {
@@ -173,11 +101,11 @@ type MobileNav struct {
 	ShowNav bool
 }
 
-func (v *MobileNav) InitContext(s *s3.Site, pv s3.View) {
+func (v *MobileNav) InitView(s *s3.Site, pv s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
-	v.BaseView.InitContext(s, pv)
+	v.BaseView.InitView(s, pv)
 }
 
 type ThemeSwitch struct {
@@ -186,11 +114,11 @@ type ThemeSwitch struct {
 	IsDarkTheme bool
 }
 
-func (v *ThemeSwitch) InitContext(s *s3.Site, pv s3.View) {
+func (v *ThemeSwitch) InitView(s *s3.Site, pv s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
-	v.BaseView.InitContext(s, pv)
+	v.BaseView.InitView(s, pv)
 }
 
 type Footer struct {
@@ -199,11 +127,11 @@ type Footer struct {
 	IsDarkTheme bool
 }
 
-func (v *Footer) InitContext(s *s3.Site, pv s3.View) {
+func (v *Footer) InitView(s *s3.Site, pv s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
-	v.BaseView.InitContext(s, pv)
+	v.BaseView.InitView(s, pv)
 }
 
 type SEO struct {
@@ -213,15 +141,15 @@ type SEO struct {
 	TwImage  string
 }
 
-func (v *SEO) InitContext(s *s3.Site, pv s3.View) {
+func (v *SEO) InitView(s *s3.Site, pv s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
-	v.BaseView.InitContext(s, pv)
+	v.BaseView.InitView(s, pv)
 }
 
 /*
-func (v *s3.PageSEO) InitContext(s *s3.Site, pv s3.View) {
+func (v *s3.PageSEO) InitView(s *s3.Site, pv s3.View) {
 	smd := v.Site.SiteMetadata
 	SiteUrl := GetProp(v.Site.SiteMetadata, "SiteUrl").(string)
 	SocialBanner:= GetProp(v.Site.SiteMetadata, "SocialBanner").(string)
@@ -229,7 +157,7 @@ func (v *s3.PageSEO) InitContext(s *s3.Site, pv s3.View) {
 		SiteUrl + SocialBanner,
 	}
 	v.CommonSEO.TwImage = SiteUrl + SocialBanner
-	v.CommonSEO.InitContext(s, pv)
+	v.CommonSEO.InitView(s, pv)
 }
 */
 
@@ -241,10 +169,10 @@ type PostSimple struct {
 	NextPost    *s3.Page
 }
 
-func (v *PostSimple) InitContext(s *s3.Site, parentView s3.View) {
+func (v *PostSimple) InitView(s *s3.Site, parentView s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
 	v.BaseView.AddChildViews(v.ContentView)
-	v.BaseView.InitContext(s, parentView)
+	v.BaseView.InitView(s, parentView)
 }
