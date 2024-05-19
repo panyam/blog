@@ -1,8 +1,8 @@
 <html lang="en" class="scroll-smooth">
   <head>
-    {{ RenderView .PageSEO }}
+    {{/* RenderView .PageSEO */}}
     {{ template "CommonPageHeader" }}
-    <title>{{.Title}}</title>
+    <title>{{.Page.Title}}</title>
   </head>
   <body class="bg-white text-black antialiased dark:bg-gray-900 dark:text-white">
     <!-- Section Container -->
@@ -10,10 +10,8 @@
        <!-- Layout wrapper -->
       <div class="flex h-screen flex-col justify-between">
         {{ RenderView .HeaderView }}
-        <main class="mb-auto">
-          {{ .BodyView  | RenderView}}
-        </main>
-        {{ .FooterView | RenderView }}
+        <main class="mb-auto"> {{ RenderView .BodyView }} </main>
+        {{ RenderView .FooterView }}
     </div>
   </body>
 </html>

@@ -1,7 +1,7 @@
 
 {{ define "ScrollTopAndComment" }}
     <script>
-      function handleScrollTop() { window.scrollTo({ top: 0 }) }
+      function handleScrollToTop() { window.scrollTo({ top: 0 }) }
       function handleScrollToComment() {
         const elem = document.getElementById('comment')
         if (elem != null) elem.scrollIntoView()

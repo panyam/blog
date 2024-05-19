@@ -3,14 +3,14 @@
       <div class="mt-16 flex flex-col items-center">
         <div class="mb-3 flex space-x-4">
             {{ template "SocialIcon" dict "Kind" "mail"  "Size" 6
-                    "ImgHref" "/static/socialicons/mail.svg"
+                    "ImgHref" (Join "/" .Site.PathPrefix "/static/socialicons/mail.svg" )
                     "Href" "mailto:sri.panyam@gmail.com"  }}
             {{ template "SocialIcon" dict "Kind" "github" "Size" 6
-                    "ImgHref" "/static/socialicons/github.svg"
+                    "ImgHref" (Join "/" .Site.PathPrefix "/static/socialicons/github.svg" )
                     "Href" "https://github.com/panyam"  }}
             {{ template "SocialIcon" dict "Kind" "linkedin"  "Size" 6
-                    "Href" "https://linkedin.com/in/srirampanyam"
-                    "ImgHref" "/static/socialicons/linkedin.svg" }}
+                    "ImgHref" (Join "/" .Site.PathPrefix "/static/socialicons/linkedin.svg" )
+                    "Href" "https://linkedin.com/in/srirampanyam" }}
         </div>
         <div class="mb-2 flex space-x-2 text-sm text-gray-500 dark:text-gray-400">
           <div>{{.Site.SiteMetadata.Author}}</div>

@@ -21,7 +21,7 @@ This is an index to the problems from THE book being solved in haskell (and coun
 ## Chapter 6 – Strings and Arrays
 
 {{ range .AllPosts }}
-  {{ if .Title | HasPrefix 'EPI 6.' }}
+  {{ if .Title | HasPrefix "EPI 6." }}
     [{{.Title}}]({{.Link}})
   {{ end }}
 {{ end }}

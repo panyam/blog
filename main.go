@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/morrisxyang/xreflect"
 	"github.com/panyam/blog/web"
 )
 
@@ -25,7 +26,39 @@ func main() {
 			log.Fatal(err)
 		}
 		ohweb.Start()
+	} else {
+		playaround2()
 	}
+}
+
+func playaround2() {
+	// You can edit this code!
+	// Click here and start typing.
+
+	type Base struct {
+		A float32
+		B int
+		C string
+	}
+
+	type child struct {
+		Base
+		A string
+	}
+
+	type Child2 struct {
+		Base
+	}
+
+	c := &child{A: "hello"}
+	d := &Child2{Base: Base{A: 10}}
+	log.Println("C: ", c)
+	log.Println("d: ", d, d.A)
+
+	log.Println(xreflect.SetEmbedField(c, "A", "adsfasdf"))
+	log.Println(xreflect.SetEmbedField(d, "A", 55))
+	log.Println("C: ", c)
+	log.Println("d: ", d, d.A)
 }
 
 func playaround() {

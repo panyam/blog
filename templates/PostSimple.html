@@ -1,19 +1,12 @@
-{{ define "PostSimple" }}
-  {{ $Child := RenderHtml "PostSimpleContents" ( dict
-      "Content" .Content
-      "SiteMetadata" .SiteMetadata
-     )
-  }}
+{{ define "PostSimple2" }}
+  {{ $Child := RenderHtml "PostSimpleContents" . }}
   {{ template "SectionContainer" dict "Children" $Child }}
 {{ end }}
 
-{{ define "PostSimpleContents" }}
-  {{ .Post }}
-  {{/*
-    {{ $SiteUrl := Join "/" .SiteMetadata.SiteUrl "blog" .Post.Slug }}
-    {{ template "BlogSEO" dict "Url" $SiteUrl "Content" .Content }}
+{{ define "PostSimple" }}
+    {{/* $SiteUrl := Join "/" .Site.SiteMetadata.SiteUrl "blog" .Post.Slug */}}
+
     {{ template "ScrollTopAndComment" }}
-    */}}
     <article>
       <div>
         <header>
@@ -22,22 +15,21 @@
               <div>
                 <dt class="sr-only">Published on</dt>
                 <dd class="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                  <time dateTime={{.CreatedAt}}>{{.CreatedAt.UTC.Year }}</time>
+                  {{ . }}
                 </dd>
               </div>
             </dl>
             <div>
-              {{ template "PageTitle" dict "Title" .Title }}
+              {{/* template "PageTitle" dict "Title" .Title */}}
             </div>
           </div>
         </header>
         <div
           class="divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0 "
-          style="gridTemplateRows: 'auto 1fr'"
-        >
+          style="gridTemplateRows: 'auto 1fr'">
           <div class="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
             <div class="prose max-w-none pb-8 pt-10 dark:prose-dark">
-              {{.Content | HTML }}
+              {{ RenderView .ContentView  }}
             </div>
           </div>
           {{/*{{ template "Comments" dict "frontMatter" .Content }}*/}}
