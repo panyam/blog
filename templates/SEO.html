@@ -1,19 +1,20 @@
 {{ define "SEO" }}
-    <title>{{.Title}}</title>
+    {{ $siteMetadata := (json "SiteMetadata.json" "") }}
+    <title>{{.Page.Title}}</title>
     <meta name="robots" content="follow, index" />
-    <meta name="description" content={{.Description}} />
-    <meta property="og:url" content={{.Site.SiteMetadata.SiteUrl}} />
+    <meta name="description" content={{.Page.Description}} />
+    <meta property="og:url" content={{$siteMetadata.SiteUrl}} />
     <meta property="og:type" content={{.OgType}} />
-    <meta property="og:site_name" content={{.Site.SiteMetadata.Title}} />
-    <meta property="og:description" content={{.Description}} />
-    <meta property="og:title" content={{.Title}} />
+    <meta property="og:site_name" content={{$siteMetadata.Title}} />
+    <meta property="og:description" content={{.Page.Description}} />
+    <meta property="og:title" content={{.Page.Title}} />
     {{ range .OgImages }}
       <meta property="og:image" content={{.}} key={{.}} />
     {{ end }}
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content={{.Site.SiteMetadata.Twitter}} />
-    <meta name="twitter:title" content={{.Title}} />
-    <meta name="twitter:description" content={{.Description}} />
+    <meta name="twitter:site" content={{$siteMetadata.Twitter}} />
+    <meta name="twitter:title" content={{.Page.Title}} />
+    <meta name="twitter:description" content={{.Page.Description}} />
     <meta name="twitter:image" content={{.TwImage}} />
     {{ if .CanonicalUrl }}
       <link
@@ -23,7 +24,7 @@
     {{ else }}
       <link
         rel="canonical"
-        href={{.Site.SiteMetadata.SiteUrl}}
+        href={{$siteMetadata.SiteUrl}}
       />
     {{ end }}
 {{ end }}

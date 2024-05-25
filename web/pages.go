@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/panyam/blog/web/components"
 	s3 "github.com/panyam/s3gen/core"
 )
 
@@ -21,17 +20,9 @@ var site = s3.Site{
 	},
 }
 
-var siteMetadata = &components.SiteMetadata{
-	HeaderTitle: "Buildmage",
-	Title:       "Buildmage",
-	Description: "My personal blog highlighting adventures in building random things on the side",
-	Author:      "Sriram Panyam",
-}
-
 // This should be mirroring how we are setting up our app.yaml
 func (web *BlogWeb) setupPages(router *mux.Router) {
-	site.NewPageViewFunc = web.NewPageView
-	site.SiteMetadata = siteMetadata
+	site.NewViewFunc = web.NewView
 	site.Init().Load().StartWatching()
 
 	// Here we want to point just to the root of our blog and let it get served
@@ -40,9 +31,9 @@ func (web *BlogWeb) setupPages(router *mux.Router) {
 	router.PathPrefix(site.PathPrefix).Handler(http.StripPrefix(site.PathPrefix, &site))
 }
 
-func (web *BlogWeb) NewPageView(name string) (out s3.PageView) {
+func (web *BlogWeb) NewView(name string) (out s3.View) {
 	if name == "BasePage" || name == "" {
-		out = &BasePage{BasePageView: s3.BasePageView{BaseView: s3.BaseView{Template: "BasePage.html"}}}
+		out = &BasePage{BaseView: s3.BaseView{Template: "BasePage.html"}}
 	}
 	if name == "PostPage" || name == "" {
 		out = &PostPage{}
@@ -51,7 +42,7 @@ func (web *BlogWeb) NewPageView(name string) (out s3.PageView) {
 }
 
 type BasePage struct {
-	s3.BasePageView
+	s3.BaseView
 	PageSEO    SEO
 	HeaderView Header
 	BodyView   s3.View
@@ -62,8 +53,8 @@ func (v *BasePage) InitView(s *s3.Site, parentView s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
-	v.BasePageView.AddChildViews(&v.PageSEO, &v.HeaderView, v.BodyView, &v.FooterView)
-	v.BasePageView.InitView(s, parentView)
+	v.BaseView.AddChildViews(&v.PageSEO, &v.HeaderView, v.BodyView, &v.FooterView)
+	v.BaseView.InitView(s, parentView)
 }
 
 type PostPage struct {
@@ -164,9 +155,6 @@ func (v *s3.PageSEO) InitView(s *s3.Site, pv s3.View) {
 type PostSimple struct {
 	s3.BaseView
 	ContentView s3.View
-	Post        *s3.Page
-	PrevPost    *s3.Page
-	NextPost    *s3.Page
 }
 
 func (v *PostSimple) InitView(s *s3.Site, parentView s3.View) {

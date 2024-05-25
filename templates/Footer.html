@@ -1,4 +1,5 @@
 {{ define "Footer" }}
+    {{ $siteMetadata := (json "SiteMetadata.json" "") }}
     <footer>
       <div class="mt-16 flex flex-col items-center">
         <div class="mb-3 flex space-x-4">
@@ -13,9 +14,9 @@
                     "Href" "https://linkedin.com/in/srirampanyam" }}
         </div>
         <div class="mb-2 flex space-x-2 text-sm text-gray-500 dark:text-gray-400">
-          <div>{{.Site.SiteMetadata.Author}}</div>
+          <div>{{$siteMetadata.Author}}</div>
           <div> • © {{ Now.UTC.Year }} • </div>
-          <a href="/">{{.Site.SiteMetadata.Title}}</a>
+          <a href="/">{{$siteMetadata.Title}}</a>
         </div>
         <div class="mb-8 text-sm text-gray-500 dark:text-gray-400">
           <a href="https://github.com/panyam/">Sri Panyam </a>

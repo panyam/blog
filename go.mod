@@ -9,7 +9,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/gorilla/mux v1.8.1
 	github.com/morrisxyang/xreflect v0.0.0-20231001053442-6df0df9858ba
-	github.com/panyam/goutils v0.0.97
+	github.com/panyam/goutils v0.1.1
 	github.com/panyam/s3gen v0.0.1
 )
 
@@ -22,10 +22,10 @@ require (
 	github.com/yuin/goldmark v1.7.1 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/grpc v1.59.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 
-replace github.com/panyam/goutils v0.0.97 => ../goutils/
+replace github.com/panyam/goutils v0.1.1 => ../goutils/
 
 replace github.com/panyam/s3gen v0.0.1 => ../s3gen/

@@ -1,11 +1,8 @@
-{{ define "PostSimple2" }}
-  {{ $Child := RenderHtml "PostSimpleContents" . }}
-  {{ template "SectionContainer" dict "Children" $Child }}
-{{ end }}
 
 {{ define "PostSimple" }}
     {{/* $SiteUrl := Join "/" .Site.SiteMetadata.SiteUrl "blog" .Post.Slug */}}
 
+    {{/* BlogSEO url={`${siteMetadata.siteUrl}/blog/${slug}`} */}}
     {{ template "ScrollTopAndComment" }}
     <article>
       <div>
@@ -15,12 +12,12 @@
               <div>
                 <dt class="sr-only">Published on</dt>
                 <dd class="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                  {{ . }}
+                  {{ .GetPage.CreatedAt.Format "Mon Jan 2, 2006" }}
                 </dd>
               </div>
             </dl>
             <div>
-              {{/* template "PageTitle" dict "Title" .Title */}}
+              {{ template "PageTitle" dict "Title" .GetPage.Title }}
             </div>
           </div>
         </header>
@@ -35,7 +32,7 @@
           {{/*{{ template "Comments" dict "frontMatter" .Content }}*/}}
           <footer>
             <div class="flex flex-col text-sm font-medium sm:flex-row sm:justify-between sm:text-base">
-              {{ if .PrevPost }}
+              {{ if and .Page .Page.PrevPage }}
                 <div class="pt-4 xl:pt-8">
                   <a
                       href="/blog/{{.PrevPost.Slug}}"
@@ -45,7 +42,7 @@
                   </a>
                 </div>
               {{ end }}
-              {{ if .NextPost }}
+              {{ if and .Page .Page.NextPage }}
                 <div class="pt-4 xl:pt-8">
                   <a
                       href="/blog/{{.NextPost.Slug}}"
