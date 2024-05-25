@@ -8,7 +8,8 @@
           "mode": "debug",
           "program": "main.go",
           "cwd": "${workspaceFolder}",
-          "dlvFlags": ["--check-go-version=false"]
+          "dlvFlags": ["--check-go-version=false"],
+          "justMyCode":false
       }
         ,
        {

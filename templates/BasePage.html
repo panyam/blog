@@ -1,11 +1,12 @@
 <html lang="en" class="scroll-smooth">
   <head>
     {{/* RenderView .PageSEO */}}
-    {{ template "CommonPageHeader" }}
+    {{ template "CommonPageHeader" dict "Site" .Site }}
     <title>{{.Page.Title}}</title>
   </head>
   <body class="bg-white text-black antialiased dark:bg-gray-900 dark:text-white">
     <!-- Section Container -->
+    <script>!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('theme');if('system'===e||(!e&&true)){var t='(prefers-color-scheme: dark)',m=window.matchMedia(t);if(m.media!==t||m.matches){d.style.colorScheme = 'dark';c.add('dark')}else{d.style.colorScheme = 'light';c.add('light')}}else if(e){c.add(e|| '')}if(e==='light'||e==='dark')d.style.colorScheme=e}catch(e){}}()</script>
     <div class="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">
        <!-- Layout wrapper -->
       <div class="flex h-screen flex-col justify-between">
