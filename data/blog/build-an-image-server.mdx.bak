@@ -6,7 +6,8 @@ draft: true
 summary: 'Let us a build a content server from first steps that is flexible, secure and scalable.'
 images: []
 authors: ['Sri Panyam']
-layout: PostSimple
+page: PostPage
+location: "BodyView.ContentView"
 ---
 
 # https://www.youtube.com/watch?v=mVmIJ4hvTss

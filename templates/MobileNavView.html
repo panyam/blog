@@ -58,9 +58,11 @@
           onClick={onToggleNav}
         ></button>
         <nav class="fixed mt-8 h-full">
+          {{ $site := .Site }}
           {{ range (json "HeaderNavLinks.json" "") }}
               <div class="px-12 py-4">
-                <a href={{.Href}} class="text-2xl font-bold tracking-widest text-gray-900 dark:text-gray-100">
+                {{ $headerUrl := (Join "/" $site.PathPrefix .Href ) }}
+                <a href={{$headerUrl}} class="text-2xl font-bold tracking-widest text-gray-900 dark:text-gray-100">
                   {{.Title}}
                 </a>
               </div>

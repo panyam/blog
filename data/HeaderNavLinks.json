@@ -1,6 +1,6 @@
 [
-	{"Href": "/blog", "Title": "Blog"},
-	{"Href": "/tags", "Title": "Tags"},
-	{"Href": "/projects", "Title": "Projects"},
-	{"Href": "/about", "Title": "About"}
+	{"Href": "blog", "Title": "Blog"},
+	{"Href": "tags", "Title": "Tags"},
+	{"Href": "projects", "Title": "Projects"},
+	{"Href": "about", "Title": "About"}
 ]
