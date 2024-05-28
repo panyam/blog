@@ -158,7 +158,7 @@ export default class ContentService {
     if (blogs.length == 0) return []
     return blogs.filter((post) => {
       if (post.draft) return false
-      const postTags = post.tags.map((t) => this.getSlug(t))
+      const postTags = (post.tags || []).map((t) => this.getSlug(t))
       for (const tag of tags) {
         if (postTags.includes(tag)) {
           if (!matchAllTags) return true
