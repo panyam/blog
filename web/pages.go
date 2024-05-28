@@ -44,7 +44,7 @@ func (web *BlogWeb) setupPages(router *mux.Router) {
 			sort.Slice(pages, func(idx1, idx2 int) bool {
 				page1 := pages[idx1]
 				page2 := pages[idx2]
-				return page1.CreatedAt.Sub(page2.CreatedAt) < 0
+				return page1.CreatedAt.Sub(page2.CreatedAt) > 0
 			})
 			return pages
 		},
@@ -68,6 +68,9 @@ func (web *BlogWeb) NewView(name string) (out s3.View) {
 	if name == "HomePage" || name == "" {
 		out = &HomePage{}
 	}
+	if name == "BlogsPage" || name == "" {
+		out = &BlogsPage{}
+	}
 	return
 }
 
@@ -87,8 +90,26 @@ func (v *BasePage) InitView(s *s3.Site, parentView s3.View) {
 	v.BaseView.InitView(s, parentView)
 }
 
+type HomePageBodyView struct {
+	s3.BaseView
+	ContentView       s3.View
+	MaxPostsToDisplay int
+}
+
+func (v *HomePageBodyView) InitView(s *s3.Site, parentView s3.View) {
+	if v.Self == nil {
+		v.Self = v
+	}
+	if v.MaxPostsToDisplay == 0 {
+		v.MaxPostsToDisplay = 20
+	}
+	v.BaseView.AddChildViews(v.ContentView)
+	v.BaseView.InitView(s, parentView)
+}
+
 type HomePage struct {
 	BasePage
+	BodyView HomePageBodyView
 }
 
 func (v *HomePage) InitView(s *s3.Site, parentView s3.View) {
@@ -98,7 +119,12 @@ func (v *HomePage) InitView(s *s3.Site, parentView s3.View) {
 	if v.Template == "" {
 		v.Template = "BasePage.html"
 	}
+	v.BasePage.AddChildViews(&v.BodyView)
 	v.BasePage.InitView(s, parentView)
+}
+
+type PostListView struct {
+	s3.BaseView
 }
 
 type PostPage struct {
@@ -207,4 +233,8 @@ func (v *PostSimple) InitView(s *s3.Site, parentView s3.View) {
 	}
 	v.BaseView.AddChildViews(v.ContentView)
 	v.BaseView.InitView(s, parentView)
+}
+
+type BlogsPage struct {
+	BasePage
 }

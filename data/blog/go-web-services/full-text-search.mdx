@@ -18,7 +18,7 @@ In this post (Part 9) of our [series on building web services in Go](/blog/go-we
 
 Postgres is a highly customizable database engine which rapidly onboards new indexing and querying capabilities via [extensions](https://www.postgresql.org/download/products/6-postgresql-extensions/).  It is no surprise that several such extensions exists (eg [tsvector](https://www.postgresql.org/docs/current/datatype-textsearch.html), [pgvector](https://github.com/pgvector/pgvector) for powering full text searches.  Our current architecture (without showing the frontend services) has Postgres powering both source-of-truth as well as querying capabilities:
 
-<center> <img src="/static/images/part9/current-search-architecture.svg" height={600} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/part9/current-search-architecture.svg" height={600} /> </center>
 
 Here our main entity related CRUD requests are handled (via services) by Postgres.   Our retrieval/search/listing queries are also handled by Postgres.   Currently our database has a small number of indexes (Topics sorted by timestamp, messages sorted by topicid+timestamp, messages by ID, topics by ID).   When an entity is created (or updated) a write is indexed for each index we instill.   The storage requirements also increase (in our main database) to accomodate each index.  The search queries are uptodate and consistent on each write.  But as the number (and/or complexity) of indexes grows (eg indexing by tags, vector indexes on title/description etc) writes will become slower - limiting scale.
 
@@ -44,7 +44,7 @@ Before making tradeoffs we need to clarify our expected experience from the serv
 
 Given this we can start with a proposed architecture that allows an index to build asynchronously:
 
-<center> <img src="/static/images/part9/proposed-search-architecture.svg" height={600} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/part9/proposed-search-architecture.svg" height={600} /> </center>
 
 The key parts of this flow are:
 
