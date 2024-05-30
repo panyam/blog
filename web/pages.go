@@ -12,7 +12,7 @@ import (
 
 var site = s3.Site{
 	ContentRoot: "./data",
-	OutputDir:   "/Users/sri/personal/golang/blog/published",
+	OutputDir:   "/Users/sri/personal/golang/blog/build",
 	PathPrefix:  "/published",
 	LazyLoad:    true,
 	HtmlTemplates: []string{
