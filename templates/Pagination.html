@@ -1,0 +1,39 @@
+{{ define "Pagination" }}
+    {{ $hasPrevPage := gt .PageNum 1 }}
+    {{ $hasNextPage := le .PageNum .NumPages }}
+
+    {{/*
+    const prevPage = currentPage - 1 > 0
+    const nextPage = currentPage + 1 <= totalPages
+    */}}
+
+    <div class="space-y-2 pb-8 pt-6 md:space-y-5">
+      <nav class="flex justify-between">
+        {{ if $hasPrevPage }}
+          {{ if eq .PageNum 1 }}
+            <a href="{{.Site.PathPrefix}}/blog/"><button>Previous</button></a>
+          {{ else }}
+            <a href="{{.Site.PathPrefix}}/blog/page/{{AddInts .PageNum -1 }}">
+              <button>Previous</button>
+            </a>
+          {{ end }}
+        {{ else }}
+          <button class="cursor-auto disabled:opacity-50" disabled={{ not $hasPrevPage}}>
+            Previous
+          </button>
+        {{ end }}
+        <span>
+          {{.PageNum}} of {{.NumPages}}
+        </span>
+        {{ if $hasNextPage }}
+          <a href="{{.Site.PathPrefix}}/blog/page/{{AddInts .PageNum 1}}">
+            <button>Next</button>
+          </a>
+        {{ else }}
+          <button class="cursor-auto disabled:opacity-50" disabled={{not $hasNextPage}}>
+            Next
+          </button>
+        {{ end }}
+      </nav>
+    </div>
+{{ end }}

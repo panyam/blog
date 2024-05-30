@@ -63,7 +63,7 @@ maxPosts: 20
 {{ if gt (len $posts) .Res.FrontMatter.Data.maxPosts }}
 <div class="flex justify-end text-base font-medium leading-6">
   <a
-    href="/blog"
+      href="{{.Site.PathPrefix}}/blog"
     class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
     aria-label="all posts"
   >

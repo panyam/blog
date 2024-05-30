@@ -1,0 +1,22 @@
+---
+title: BuildMage - All Posts
+date: 2014-03-26T00:00:00AM
+draft: false
+images: []
+authors: ['Sri Panyam']
+hideInIndex: true
+page: BasePage
+location: "BodyView"
+pageSize: 20
+---
+
+{{ $pageSize := .Res.FrontMatter.Data.pageSize }}
+{{ $allPosts := PagesByDate true 0 -1 }}
+{{ $filteredPosts := (Slice $allPosts 0 $pageSize ) }}
+{{ $numPages := Ceil (Div ( len $allPosts ) $pageSize) }}
+{{ template "PostList" dict
+      "Title" "AllPosts"
+      "PageNum" 1
+      "PageSize" $pageSize
+      "NumPages" $numPages
+      "FilteredPosts" $filteredPosts }}
