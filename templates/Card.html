@@ -1,0 +1,37 @@
+{{ define "Card" }}
+  <div class="md p-4 md:w-1/2" style="maxWidth: '544px'">
+    {{ $imgStyle :=  "" }}
+    {{ if .Card.imgSrc }} {{ $imgStyle := "h-full" }} {{ end }}
+    <div
+        class="{{$imgStyle}} overflow-hidden rounded-md border-2 border-gray-200 border-opacity-60 dark:border-gray-700"
+    >
+      {{ if and .Card.imgSrc .Card.href }} 
+      <a href={{.Card.href}} aria-label="Link to {{.Card.title}}">
+          <img alt={{.Card.title}}
+               src="{{.Site.PathPrefix}}/{{.Card.imgSrc}}"
+               class="object-cover object-center md:h-36 lg:h-48"
+               width=544 height=306 /></a>
+      {{ else }}
+          <img alt={{.Card.title}}
+               src="{{.Site.PathPrefix}}/{{.Card.imgSrc}}"
+               class="object-cover object-center md:h-36 lg:h-48"
+               width=544 height=306 /></a>
+      {{ end }}
+      <div class="p-6">
+        <h2 class="mb-3 text-2xl font-bold leading-8 tracking-tight">
+          {{ if .Card.href }}
+            <a href={{.Card.href}} aria-label="Link to {{.Card.title}}">{{.Card.title}}</a>
+          {{ else }}
+            {{ .Card.title }}
+          {{ end }}
+        </h2>
+        <p class="prose mb-3 max-w-none text-gray-500 dark:text-gray-400">{{.Card.description}}</p>
+          {{ if .Card.href }}
+            <a href={{.Card.href}}
+              class="text-base font-medium leading-6 text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+              aria-label="Link to to {{.Card.title}}">Learn more &rarr;</a>
+          {{ end }}
+      </div>
+    </div>
+  </div>
+{{ end }}

@@ -118,6 +118,9 @@ func (web *BlogWeb) NewView(name string) (out s3.View) {
 	if name == "HomePage" || name == "" {
 		out = &HomePage{}
 	}
+	if name == "AuthorPage" || name == "" {
+		out = &AuthorPage{}
+	}
 	return
 }
 
@@ -169,6 +172,35 @@ func (v *HomePage) InitView(s *s3.Site, parentView s3.View) {
 
 type PostListView struct {
 	s3.BaseView
+}
+
+type AuthorPage struct {
+	BasePage
+	BodyView AuthorLayout
+}
+
+type AuthorLayout struct {
+	s3.BaseView
+	ContentView s3.View
+}
+
+func (v *AuthorLayout) InitView(s *s3.Site, parentView s3.View) {
+	if v.Self == nil {
+		v.Self = v
+	}
+	v.BaseView.AddChildViews(v.ContentView)
+	v.BaseView.InitView(s, parentView)
+}
+
+func (v *AuthorPage) InitView(s *s3.Site, parentView s3.View) {
+	if v.Self == nil {
+		v.Self = v
+	}
+	if v.Template == "" {
+		v.Template = "BasePage.html"
+	}
+	v.BasePage.AddChildViews(&v.BodyView)
+	v.BasePage.InitView(s, parentView)
 }
 
 type PostPage struct {
