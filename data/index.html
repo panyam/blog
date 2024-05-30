@@ -1,0 +1,76 @@
+---
+title: BuildMage Blog
+date: 2024-03-26T00:00:00AM
+draft: false
+images: []
+authors: ['Sri Panyam']
+location: "BodyView"
+maxPosts: 20
+---
+
+{{ $siteMetadata := (json "SiteMetadata.json" "") }}
+{{ template "ScrollTopAndComment" }}
+<div class="divide-y divide-gray-200 dark:divide-gray-700">
+<div class="space-y-2 pb-8 pt-6 md:space-y-5">
+  <h1 class="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
+    Latest
+  </h1>
+  <p class="text-lg leading-7 text-gray-500 dark:text-gray-400">{{$siteMetadata.Description}}</p>
+</div>
+<ul class="divide-y divide-gray-200 dark:divide-gray-700">
+  {{ $maxPosts := .Res.FrontMatter.Data.maxPosts }}
+  {{ $posts := (PagesByDate true 0 $maxPosts) }}
+  {{ if not $posts }}No posts found.{{ end }}
+
+  {{ range $index, $post := $posts }}
+    {{ if not (eq $post.RelPath "/index.html")  }}
+      <li class="py-12">
+        <article>
+          <div class="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
+            <dl>
+             <dt class="sr-only">Published on</dt>
+             <dd class="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
+               <time dateTime={{$post.DestPage.CreatedAt}}>{{ $post.DestPage.CreatedAt.Format "Mon Jan 2, 2006" }}</time>
+             </dd>
+           </dl>
+           <div class="space-y-5 xl:col-span-3">
+             <div class="space-y-6">
+               <div>
+                 <h2 class="text-2xl font-bold leading-8 tracking-tight">
+                   <a href="{{$post.DestPage.Link}}"
+                     class="text-gray-900 dark:text-gray-100">{{$post.DestPage.Title}}</a>
+                  </h2>
+                  <div class="flex flex-wrap">
+                    {{ range $post.DestPage.Tags }}{{ template "Tag" dict "text" . }}{{ end }}
+                  </div>
+                </div>
+                <div class="prose max-w-none text-gray-500 dark:text-gray-400">{{$post.DestPage.Summary}}</div>
+              </div>
+              <div class="text-base font-medium leading-6">
+                <a href="{{$post.DestPage.Link}}"
+                  class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                  aria-label="Read {{$post.DestPage.Title}}">Read more &rarr;</a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </li>
+    {{ end }}
+  {{ end }}
+</ul>
+</div>
+
+{{ if gt (len $posts) .Res.FrontMatter.Data.maxPosts }}
+<div class="flex justify-end text-base font-medium leading-6">
+  <a
+    href="/blog"
+    class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+    aria-label="all posts"
+  >
+    All Posts &rarr;
+  </a>
+</div>
+{{ end }}
+{{ if $siteMetadata.newsletter.provider }}
+<div class="flex items-center justify-center pt-4"> <NewsletterForm /> </div>
+{{ end }}

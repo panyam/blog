@@ -10,9 +10,7 @@ module.exports = {
     optimizeUniversalDefaults: true,
   },
   content: [
-    './pages/**/*.tsx',
-    './components/**/*.tsx',
-    './layouts/**/*.tsx',
+    './templates/**/*.html',
     './lib/**/*.ts',
     './data/**/*.mdx',
   ],

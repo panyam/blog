@@ -1,13 +1,13 @@
-
 ---
 title: A flexible, safe and scalable content server.
-date: 2016-11-05T15:32:08Z
+date: 2016-11-05T03:32:08PM
 tags: ['content server']
 draft: true
 summary: 'Let us a build a content server from first steps that is flexible, secure and scalable.'
 images: []
 authors: ['Sri Panyam']
-layout: PostSimple
+page: PostPage
+location: "BodyView.ContentView"
 ---
 
 # https://www.youtube.com/watch?v=mVmIJ4hvTss

@@ -1,0 +1,62 @@
+
+{{ define "PostSimple" }}
+    {{/* $SiteUrl := Join "/" .Site.SiteMetadata.SiteUrl "blog" .Post.Slug */}}
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">
+
+    {{/* BlogSEO url={`${siteMetadata.siteUrl}/blog/${slug}`} */}}
+    {{ template "ScrollTopAndComment" }}
+    <article>
+      <div>
+        <header>
+          <div class="space-y-1 border-b border-gray-200 pb-10 text-center dark:border-gray-700">
+            <dl>
+              <div>
+                <dt class="sr-only">Published on</dt>
+                <dd class="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
+                  {{ .GetPage.CreatedAt.Format "Mon Jan 2, 2006" }}
+                </dd>
+              </div>
+            </dl>
+            <div>
+              {{ template "PageTitle" dict "Title" .GetPage.Title }}
+            </div>
+          </div>
+        </header>
+        <div
+          class="divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0 "
+          style="gridTemplateRows: 'auto 1fr'">
+          <div class="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
+            <div class="prose max-w-none pb-8 pt-10 dark:prose-dark">
+              {{ RenderView .ContentView  }}
+            </div>
+          </div>
+          {{/*{{ template "Comments" dict "frontMatter" .Content }}*/}}
+          <footer>
+            <div class="flex flex-col text-sm font-medium sm:flex-row sm:justify-between sm:text-base">
+              {{ if and .Page .Page.PrevPage }}
+                <div class="pt-4 xl:pt-8">
+                  <a
+                      href="/blog/{{.PrevPost.Slug}}"
+                    class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                  >
+                  &larr; {{.Prev.Title}}
+                  </a>
+                </div>
+              {{ end }}
+              {{ if and .Page .Page.NextPage }}
+                <div class="pt-4 xl:pt-8">
+                  <a
+                      href="/blog/{{.NextPost.Slug}}"
+                    class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                  >
+                  {{.Next.Title}} &rarr;
+                  </a>
+                </div>
+              {{ end }}
+            </div>
+          </footer>
+        </div>
+      </div>
+    </article>
+    </div>
+{{ end }}

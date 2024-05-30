@@ -1,12 +1,13 @@
 ---
 title: 'Part 4 - gRPC Interceptors'
-date: 2023-05-30T15:32:14Z
+date: 2023-05-30T03:32:14PM
 lastmod: '2023-07-30'
 tags: ['grpc', 'interceptors', 'unary', 'streaming', 'middleware']
 draft: false
 summary: 'gRPC interceptors provide powerful middleware facilities in a standardized manner to grpc clients and services in both unary and streaming mode.'
 authors: ['Sri Panyam']
-layout: PostSimple
+page: PostPage
+location: "BodyView.ContentView"
 ---
 
 ## Introduction
@@ -280,7 +281,7 @@ func EnsureAuthExists(ctx context.Context,
 
 Note that metadata entries are really key/value-list pairs (much like headers or query-params in http).  Now all that is left is to add our Interceptor to our DialOptions in the client:
 
-```
+```go showLineNumbers
 func startGatewayServer(grpc_addr string, gw_addr string) {
     mux := ....
 
@@ -300,7 +301,7 @@ func startGatewayServer(grpc_addr string, gw_addr string) {
 Now start the server again (`go cmd/server.go`) let us test calls to our chat service and see how this works.
 
 First let us try an unauthenticated call:
-```
+```bash
 $ curl localhost:8080/v1/topics
 
 {"code":5,"message":"BasicAuth params not found","details":[]}
@@ -310,7 +311,7 @@ As expected the call without Basic Auth headers was intercepted and rejected.
 
 Now let us try with a username/password:
 
-```
+```bash
 $ curl localhost:8080/v1/topics -u login:password
 
 {"topics":[], "nextPageKey":""}
@@ -346,7 +347,7 @@ This looks very similar to a UnaryClientInterceptor.   The important parameters 
 
 For our server side auth - we shall add a basic interceptor:
 
-```
+```go showLineNumbers 
 func EnsureAuthIsValid(ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
@@ -390,7 +391,7 @@ func startGRPCServer(addr string) {
 
 Let us test it again now.  Passing the last `login:password` combo while valid from the client should now get rejected by the server (note the different error messages):
 
-```
+```bash
 $ curl localhost:8080/v1/topics -u login:password
 
 {"code":5, "message":"Invalid username/password", "details":[]}
@@ -398,7 +399,7 @@ $ curl localhost:8080/v1/topics -u login:password
 
 Passing the right password fixes this:
 
-```
+```bash
 $ curl localhost:8080/v1/topics -u login:login123
 
 {"topics":[], "nextPageKey":""}
@@ -411,7 +412,7 @@ Up until now our service methods have been shielded so that they wont even be ca
 
 This is quite simple.  Let us take the `CreateTopic` method:
 
-```go
+```go showLineNumbers 
 func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicRequest) (resp *protos.CreateTopicResponse, err error) {
 	resp = &protos.CreateTopicResponse{}
 	resp.Topic = s.EntityStore.Create(req.Topic)
@@ -421,7 +422,7 @@ func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicR
 
 It can now use the auth info passed in via the interceptors:
 
-```go
+```go showLineNumbers 
 func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicRequest) (resp *protos.CreateTopicResponse, err error) {
 	resp = &protos.CreateTopicResponse{}
   req.Topic.CreatorId = GetAuthedUser(ctx)
@@ -435,7 +436,7 @@ func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicR
 
 If we try to create a topic any custom will be overwritten by the ID of the logged in user:
 
-```bash
+```bash showLineNumbers 
 curl -X POST localhost:8080/v1/topics  \
      -u auser:auser123       \
      -H 'Content-Type: application/json' \
@@ -444,7 +445,7 @@ curl -X POST localhost:8080/v1/topics  \
 
 yielding:
 
-```json
+```json showLineNumbers
 {
    "topic" : {
       "createdAt" : "2023-08-04T08:52:52.861406Z",

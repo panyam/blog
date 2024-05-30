@@ -1,0 +1,49 @@
+{ "Title": "Build Mage Blog",
+  "Author": "Sri Panyam",
+  "HeaderTitle": "BuildMage",
+  "Description": "My personal blog highlighting adventures in building random things on the side",
+  "Language": "en-us",
+  "Theme": "system",
+  "SiteUrl": "https://buildmage.com",
+  "SiteRepo": "https://github.com/panyam/",
+  "SiteLogo": "/static/images/logo.png",
+  "Image": "/static/images/avatar.png",
+  "SocialBanner": "/static/images/twitter-card.png",
+  "Email": "sri.panyam@gmail.com",
+  "Github": "https://github.com/panyam",
+  "Twitter": "https://twitter.com/panyam",
+  "Facebook": "",
+  "Youtube": "",
+  "Linkedin": "https://www.linkedin.com/in/srirampanyam",
+  "Locale": "en-US",
+  "Analytics": {
+    "PlausibleDataDomain": "",
+    "SimpleAnalytics": false,
+    "UmamiWebsiteId": "",
+    "GoogleAnalyticsId": ""
+  },
+  "Newsletter": { "provider": "buttondown" },
+  "Comment": {
+    "Provider": "giscus",
+    "GiscusConfig": {
+      "Repo": "https://github.com/panyam/blogcomments",
+      "RepositoryId": "R_kgDOJTt14A",
+      "Category": "Announcements",
+      "CategoryId": "DIC_kwDOJTt14M4CVmZc",
+      "Mapping": "pathname",
+      "Reactions": "1",
+      "Metadata": "0",
+      "Theme": "light",
+      "DarkTheme": "transparent_dark",
+      "ThemeURL": ""
+    },
+    "UtterancesConfig": {
+      "Repo": "https://github.com/panyam/blogcomments",
+      "IssueTerm": "",
+      "Label": "",
+      "Theme": "",
+      "DarkTheme": ""
+    },
+    "DisqusConfig": { "Shortname": "" }
+  }
+}
