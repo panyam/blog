@@ -3,6 +3,7 @@
   "HeaderTitle": "BuildMage",
   "Description": "My personal blog highlighting adventures in building random things on the side",
   "Language": "en-us",
+  "MaxPostsPerPage": 20,
   "Theme": "system",
   "SiteUrl": "https://buildmage.com",
   "SiteRepo": "https://github.com/panyam/",

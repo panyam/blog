@@ -5,7 +5,6 @@ draft: false
 images: []
 authors: ['Sri Panyam']
 location: "BodyView"
-maxPosts: 20
 ---
 
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
@@ -18,7 +17,7 @@ maxPosts: 20
   <p class="text-lg leading-7 text-gray-500 dark:text-gray-400">{{$siteMetadata.Description}}</p>
 </div>
 <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-  {{ $maxPosts := .Res.FrontMatter.Data.maxPosts }}
+  {{ $maxPosts := Int $siteMetadata.MaxPostsPerPage }}
   {{ $posts := (PagesByDate true 0 $maxPosts) }}
   {{ if not $posts }}No posts found.{{ end }}
 
@@ -60,7 +59,7 @@ maxPosts: 20
 </ul>
 </div>
 
-{{ if gt (len $posts) .Res.FrontMatter.Data.maxPosts }}
+{{ if gt (len $posts) $maxPosts }}
 <div class="flex justify-end text-base font-medium leading-6">
   <a
       href="{{.Site.PathPrefix}}/blog"
