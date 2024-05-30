@@ -32,6 +32,8 @@
       {{ if not .FilteredPosts }}No post found{{ end }}
 
       {{ range $index, $post := .FilteredPosts }}
+        {{ if or (eq $post.RelPath "/index.html") (eq $post.RelPath "/projects.html")  (eq $post.RelPath "/tags.html") }}
+        {{ else }}
         {{ if lt $index $.PageSize }}
           <li class="py-4">
             <article class="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
@@ -58,6 +60,7 @@
             </article>
           </li>
         {{ end }}
+      {{ end }}
       {{ end }}
     </ul>
   </div>
