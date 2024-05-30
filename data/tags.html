@@ -1,0 +1,33 @@
+---
+title: Tags
+summary: Things I blog about
+date: 2024-03-26T00:00:00AM
+draft: false
+images: []
+authors: ['Sri Panyam']
+location: "BodyView"
+---
+
+{{ $siteMetadata := (json "SiteMetadata.json" "") }}
+  {{ $posts := (PagesByDate true 0 -1) }}
+  {{ $tagmap := AllTags $posts }}
+
+  <div class="flex flex-col items-start justify-start divide-y divide-gray-200 dark:divide-gray-700 md:mt-24 md:flex-row md:items-center md:justify-center md:space-x-6 md:divide-y-0">
+    <div class="space-x-2 pb-8 pt-6 md:space-y-5">
+      <h1 class="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:border-r-2 md:px-6 md:text-6xl md:leading-14">
+        Tags
+      </h1>
+    </div>
+    <div class="flex max-w-lg flex-wrap">
+      {{ if not $tagmap }}No Tags found.{{ end }}
+      {{ $sortedTags := KeysForTagMap $tagmap "-count" }}
+      {{ range $index, $tag := $sortedTags }}
+          <div class="mb-2 mr-5 mt-2">
+            {{ template "Tag" dict "text" $tag }}
+            <a href="{{$.Site.PathPrefix}}/tags/{{$tag}}"
+              class="-ml-2 text-sm font-semibold uppercase text-gray-600 dark:text-gray-300"
+            >({{ index $tagmap $tag }})</a>
+          </div>
+      {{ end }}
+    </div>
+  </div>
