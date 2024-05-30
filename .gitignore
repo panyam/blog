@@ -2,6 +2,7 @@
 
 # dependencies
 *.db
+published
 /node_modules
 *.swp
 /.pnp
