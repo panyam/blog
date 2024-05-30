@@ -5,8 +5,11 @@ draft: false
 images: []
 authors: ['Sri Panyam']
 hideInIndex: true
-page: BlogsPage
-location: "BodyView.ContentView"
+page: BasePage
+location: "BodyView"
 ---
 
-.
+{{/*
+{{ $filteredPosts := ListPages nil SortByCreatedDesc 0 20 }}
+{{ template "PostList" dict "Posts" $filteredPosts }}
+*/}}

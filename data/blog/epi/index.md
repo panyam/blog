@@ -12,9 +12,11 @@ location: "BodyView.ContentView"
 This is an index to the problems from THE book being solved in haskell (and counting). Some of the trivial ones will only be attempted on demand!
 
 ## Chapter 5 – Primitive Types
+  
+{{ $posts := ( PagesByDate false 0 -1 ) }}
 
-{{ range AllPages }}{{ if HasPrefix .Title  "EPI 5." }}<p><a href="{{.Link}}"><span>{{.Title}}</span></a></p>{{ end }}{{ end }}
+{{ range $posts }}{{ if HasPrefix .DestPage.Title  "EPI 5." }}<p><a href="{{.DestPage.Link}}"><span>{{.DestPage.Title}}</span></a></p>{{ end }}{{ end }}
 
 ## Chapter 6 – Strings and Arrays
 
-{{ range AllPages }}{{ if HasPrefix .Title  "EPI 6." }}<p><a href="{{.Link}}"><span>{{.Title}}</span></a></p>{{ end }}{{ end }}
+{{ range $posts }}{{ if HasPrefix .DestPage.Title  "EPI 6." }}<p><a href="{{.DestPage.Link}}"><span>{{.DestPage.Title}}</span></a></p>{{ end }}{{ end }}

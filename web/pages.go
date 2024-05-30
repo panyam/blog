@@ -2,12 +2,11 @@ package web
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"sort"
-	"strings"
 
 	"github.com/gorilla/mux"
-	gfn "github.com/panyam/goutils/fn"
 	s3 "github.com/panyam/s3gen/core"
 )
 
@@ -28,25 +27,43 @@ var site = s3.Site{
 func (web *BlogWeb) setupPages(router *mux.Router) {
 	site.NewViewFunc = web.NewView
 	site.CommonFuncMap = template.FuncMap{
-		"AllPages": func() []*s3.Page {
+		"PagesByDate": func(desc bool, offset, count int) (out []*s3.Resource) {
+			out = site.ListResources(
+				func(res *s3.Resource) bool {
+					return !res.IsParametric && (res.NeedsIndex || res.IsIndex)
+					// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
+				},
+				func(res1, res2 *s3.Resource) bool {
+					d1 := res1.DestPage
+					d2 := res2.DestPage
+					if d1 == nil || d2 == nil {
+						log.Println("D1: ", res1.FullPath)
+						log.Println("D2: ", res2.FullPath)
+						return false
+					}
+					sub := res1.DestPage.CreatedAt.Sub(res2.DestPage.CreatedAt)
+					if desc {
+						return sub > 0
+					} else {
+						return sub < 0
+					}
+				}, offset, count+1)
+			return
+		},
+		"AllRes": func() []*s3.Resource {
 			resources := site.ListResources(
 				func(res *s3.Resource) bool {
-					return strings.HasSuffix(res.FullPath, ".md") ||
-						strings.HasSuffix(res.FullPath, ".mdx")
+					return !res.IsParametric
 				},
 				// sort by reverse date order
 				/*sort=*/
 				nil, -1, -1)
-			pages := gfn.Map(resources, func(r *s3.Resource) *s3.Page {
-				p, _ := site.GetPage(r)
-				return p
+			sort.Slice(resources, func(idx1, idx2 int) bool {
+				res1 := resources[idx1]
+				res2 := resources[idx2]
+				return res1.CreatedAt.Sub(res2.CreatedAt) > 0
 			})
-			sort.Slice(pages, func(idx1, idx2 int) bool {
-				page1 := pages[idx1]
-				page2 := pages[idx2]
-				return page1.CreatedAt.Sub(page2.CreatedAt) > 0
-			})
-			return pages
+			return resources
 		},
 	}
 
@@ -67,9 +84,6 @@ func (web *BlogWeb) NewView(name string) (out s3.View) {
 	}
 	if name == "HomePage" || name == "" {
 		out = &HomePage{}
-	}
-	if name == "BlogsPage" || name == "" {
-		out = &BlogsPage{}
 	}
 	return
 }
@@ -99,9 +113,6 @@ type HomePageBodyView struct {
 func (v *HomePageBodyView) InitView(s *s3.Site, parentView s3.View) {
 	if v.Self == nil {
 		v.Self = v
-	}
-	if v.MaxPostsToDisplay == 0 {
-		v.MaxPostsToDisplay = 20
 	}
 	v.BaseView.AddChildViews(v.ContentView)
 	v.BaseView.InitView(s, parentView)
@@ -233,8 +244,4 @@ func (v *PostSimple) InitView(s *s3.Site, parentView s3.View) {
 	}
 	v.BaseView.AddChildViews(v.ContentView)
 	v.BaseView.InitView(s, parentView)
-}
-
-type BlogsPage struct {
-	BasePage
 }
