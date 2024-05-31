@@ -12,6 +12,8 @@ module.exports = {
   content: [
     './templates/**/*.html',
     './lib/**/*.ts',
+    './data/**/*.html',
+    './data/**/*.md',
     './data/**/*.mdx',
   ],
   darkMode: 'class',

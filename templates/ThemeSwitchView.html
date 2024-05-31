@@ -1,28 +1,67 @@
 {{ define "ThemeSwitch" }}
     <script>
-      function onToggleTheme() { }
+      function onToggleTheme() { 
+        const isDarkMode = localStorage.getItem('dark-mode') === 'true';
+        if (isDarkMode) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('dark-mode', false);
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('dark-mode', true);
+        }
+      }
     </script>
+
+    {{ if false }}
+    <div class="flex flex-col justify-center ml-3">
+          <input type="checkbox" name="light-switch" class="light-switch sr-only" />
+          <label class="relative cursor-pointer p-2" for="light-switch">
+            <svg class="dark:hidden" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <path class="fill-slate-300" d="M7 0h2v2H7zM12.88 1.637l1.414 1.415-1.415 1.413-1.413-1.414zM14 7h2v2h-2zM12.95 14.433l-1.414-1.413 1.413-1.415 1.415 1.414zM7 14h2v2H7zM2.98 14.364l-1.413-1.415 1.414-1.414 1.414 1.415zM0 7h2v2H0zM3.05 1.706 4.463 3.12 3.05 4.535 1.636 3.12z" />
+                <path class="fill-slate-400" d="M8 4C5.8 4 4 5.8 4 8s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4Z" />
+            </svg>
+            <svg class="hidden dark:block" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <path class="fill-slate-400" d="M6.2 1C3.2 1.8 1 4.6 1 7.9 1 11.8 4.2 15 8.1 15c3.3 0 6-2.2 6.9-5.2C9.7 11.2 4.8 6.3 6.2 1Z" />
+                <path class="fill-slate-500" d="M12.5 5a.625.625 0 0 1-.625-.625 1.252 1.252 0 0 0-1.25-1.25.625.625 0 1 1 0-1.25 1.252 1.252 0 0 0 1.25-1.25.625.625 0 1 1 1.25 0c.001.69.56 1.249 1.25 1.25a.625.625 0 1 1 0 1.25c-.69.001-1.249.56-1.25 1.25A.625.625 0 0 1 12.5 5Z" />
+            </svg>
+            <span class="sr-only">Switch to light / dark version</span>
+        </label>
+    </div>
+    {{ else }}
     <button
       aria-label="Toggle Dark Mode"
       type="button"
       class="ml-1 mr-1 h-8 w-8 rounded p-1 sm:ml-4"
-      onClick="onToggleTheme(); return false"
+        onclick="onToggleTheme()"
       >
+        <svg class="dark:hidden" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+            <path class="fill-slate-300" d="M7 0h2v2H7zM12.88 1.637l1.414 1.415-1.415 1.413-1.413-1.414zM14 7h2v2h-2zM12.95 14.433l-1.414-1.413 1.413-1.415 1.415 1.414zM7 14h2v2H7zM2.98 14.364l-1.413-1.415 1.414-1.414 1.414 1.415zM0 7h2v2H0zM3.05 1.706 4.463 3.12 3.05 4.535 1.636 3.12z" />
+            <path class="fill-slate-400" d="M8 4C5.8 4 4 5.8 4 8s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4Z" />
+        </svg>
+        <svg class="hidden dark:block" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+            <path class="fill-slate-400" d="M6.2 1C3.2 1.8 1 4.6 1 7.9 1 11.8 4.2 15 8.1 15c3.3 0 6-2.2 6.9-5.2C9.7 11.2 4.8 6.3 6.2 1Z" />
+            <path class="fill-slate-500" d="M12.5 5a.625.625 0 0 1-.625-.625 1.252 1.252 0 0 0-1.25-1.25.625.625 0 1 1 0-1.25 1.252 1.252 0 0 0 1.25-1.25.625.625 0 1 1 1.25 0c.001.69.56 1.249 1.25 1.25a.625.625 0 1 1 0 1.25c-.69.001-1.249.56-1.25 1.25A.625.625 0 0 1 12.5 5Z" />
+        </svg>
+        {{/*
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 20 20"
         fill="currentColor"
         class="text-gray-900 dark:text-gray-100"
       >
-        {{ if .IsDarkTheme }}
           <path
+            style="display: block"
+            class = "lightThemePath"
             fillRule="evenodd"
             d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
             clipRule="evenodd"
           />
-        {{ else }}
-          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-        {{ end }}
+          <path 
+            style="display: none"
+            class = "darkThemePath"
+            d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
       </svg>
+        */}}
     </button>
+    {{ end }}
 {{ end }}
