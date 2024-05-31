@@ -10,6 +10,7 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
 	gohttp "github.com/panyam/goutils/http"
+	s3 "github.com/panyam/s3gen/core"
 )
 
 func DefaultGatewayAddress() string {
@@ -59,7 +60,7 @@ func (web *BlogWeb) setupRouter() {
 	web.router.Use(gohttp.CORS)
 
 	//setup basic pages
-	web.setupPages(web.router)
+	web.setupSite(web.router)
 }
 
 func withLogger(handler http.Handler) http.Handler {
@@ -70,4 +71,30 @@ func withLogger(handler http.Handler) http.Handler {
 		// printing exracted data
 		log.Printf("http[%d]-- %s -- %s\n", m.Code, m.Duration, request.URL.Path)
 	})
+}
+
+var site = s3.Site{
+	ContentRoot: "./data",
+	OutputDir:   "/Users/sri/personal/golang/blog/build",
+	PathPrefix:  "/published",
+	LazyLoad:    true,
+	HtmlTemplates: []string{
+		"templates/*.html",
+	},
+	StaticFolders: []string{
+		"/static/", "public/static",
+	},
+}
+
+// This should be mirroring how we are setting up our app.yaml
+func (web *BlogWeb) setupSite(router *mux.Router) {
+	site.NewViewFunc = web.NewView
+	site.CommonFuncMap = web.TemplateFunctions()
+
+	site.Init().Load().StartWatching()
+
+	// Here we want to point just to the root of our blog and let it get served
+	// For now we will serve via a router but then take the same router to
+	// publish them for static serving too
+	router.PathPrefix(site.PathPrefix).Handler(http.StripPrefix(site.PathPrefix, &site))
 }
