@@ -1,7 +1,7 @@
 
 {{ define "PostSimple" }}
-    {{/* $SiteUrl := Join "/" .Site.SiteMetadata.SiteUrl "blog" .Post.Slug */}}
-    <div class="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">
+  {{/* $SiteUrl := Join "/" .Site.SiteMetadata.SiteUrl "blog" .Post.Slug */}}
+  <div class="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">
 
     {{/* BlogSEO url={`${siteMetadata.siteUrl}/blog/${slug}`} */}}
     {{ template "ScrollTopAndComment" }}
@@ -26,7 +26,7 @@
           class="divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0 "
           style="gridTemplateRows: 'auto 1fr'">
           <div class="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
-            <div class="prose max-w-none pb-8 pt-10 dark:prose-dark">
+            <div class="prose max-w-none pb-8 pt-10 dark:prose-invert prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-h4:text-xl prose-h5:text-lg">
               {{ RenderView .ContentView  }}
             </div>
           </div>
@@ -58,5 +58,5 @@
         </div>
       </div>
     </article>
-    </div>
+  </div>
 {{ end }}
