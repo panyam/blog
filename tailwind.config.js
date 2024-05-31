@@ -10,7 +10,10 @@ module.exports = {
     optimizeUniversalDefaults: true,
   },
   content: [
-    './build/**/*.html',
+    './templates/**/*.html',
+    './data/**/*.html',
+    './data/**/*.md',
+    './data/**/*.mdx',
   ],
   darkMode: 'class',
   theme: {

@@ -22,11 +22,9 @@
             </div>
           </div>
         </header>
-        <div
-          class="divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0 "
-          style="gridTemplateRows: 'auto 1fr'">
+        <div class="divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0 " style="gridTemplateRows: 'auto 1fr'">
           <div class="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
-            <div class="prose max-w-none pb-8 pt-10 dark:prose-invert prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-h4:text-xl prose-h5:text-lg">
+            <div class="max-w-none pb-8 pt-10 prose prose-dark">
               {{ RenderView .ContentView  }}
             </div>
           </div>
@@ -45,11 +43,9 @@
               {{ end }}
               {{ if and .Page .Page.NextPage }}
                 <div class="pt-4 xl:pt-8">
-                  <a
-                      href="/blog/{{.NextPost.Slug}}"
-                    class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                  >
-                  {{.Next.Title}} &rarr;
+                  <a class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                     href="/blog/{{.NextPost.Slug}}">
+                    {{.Next.Title}} &rarr;
                   </a>
                 </div>
               {{ end }}
