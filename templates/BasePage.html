@@ -8,17 +8,13 @@
     <!-- Section Container -->
     <div id="__next">
     <script>
-      {{ if true }}
-        if (localStorage.getItem('dark-mode') === 'true' || (!('dark-mode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      if (localStorage.getItem('dark-mode') === 'true' || (!('dark-mode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.querySelector('html').classList.add('dark');
           document.querySelector('html').style.setProperty("color-scheme", "dark")
-        } else {
+      } else {
           document.querySelector('html').classList.remove('dark');
           document.querySelector('html').style.setProperty("color-scheme", "light")
-        }
-      {{ else }}
-        !function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('theme');if('system'===e||(!e&&true)){var t='(prefers-color-scheme: dark)',m=window.matchMedia(t);if(m.media!==t||m.matches){d.style.colorScheme = 'dark';c.add('dark')}else{d.style.colorScheme = 'light';c.add('light')}}else if(e){c.add(e|| '')}if(e==='light'||e==='dark')d.style.colorScheme=e}catch(e){}}()
-      {{ end }}
+      }
     </script>
     <div class="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">
        <!-- Layout wrapper -->
@@ -31,32 +27,5 @@
       </div>
     </div>
     </div>
-    {{/*
-    <script>
-      const lightSwitches = document.querySelectorAll('.light-switch');
-      if (lightSwitches.length > 0) {
-        lightSwitches.forEach((lightSwitch, i) => {
-          if (localStorage.getItem('dark-mode') === 'true') {
-            lightSwitch.checked = true;
-          }
-          lightSwitch.addEventListener('change', () => {
-            const { checked } = lightSwitch;
-            lightSwitches.forEach((el, n) => {
-              if (n !== i) {
-                el.checked = checked;
-              }
-            });
-            if (lightSwitch.checked) {
-              document.documentElement.classList.add('dark');
-              localStorage.setItem('dark-mode', true);
-            } else {
-              document.documentElement.classList.remove('dark');
-              localStorage.setItem('dark-mode', false);
-            }
-          });
-        });
-      }
-    </script>
-    */}}
   </body>
 </html>
