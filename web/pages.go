@@ -11,7 +11,6 @@ func (web *BlogWeb) NewView(name string) (out s3.View) {
 	if name == "PostPage" || name == "" {
 		out = &PostPage{}
 	}
-	// if name == "HomePage" || name == "" { out = &HomePage{} }
 	if name == "AuthorPage" || name == "" {
 		out = &AuthorPage{}
 	}
@@ -20,7 +19,7 @@ func (web *BlogWeb) NewView(name string) (out s3.View) {
 
 type BasePage struct {
 	s3.BaseView
-	PageSEO    SEO
+	// PageSEO    SEO
 	HeaderView Header
 	BodyView   s3.View
 	FooterView Footer
@@ -30,42 +29,8 @@ func (v *BasePage) InitView(s *s3.Site, parentView s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
-	v.BaseView.AddChildViews(&v.PageSEO, &v.HeaderView, v.BodyView, &v.FooterView)
+	v.BaseView.AddChildViews( /*&v.PageSEO, */ &v.HeaderView, v.BodyView, &v.FooterView)
 	v.BaseView.InitView(s, parentView)
-}
-
-type HomePageBodyView struct {
-	s3.BaseView
-	ContentView       s3.View
-	MaxPostsToDisplay int
-}
-
-func (v *HomePageBodyView) InitView(s *s3.Site, parentView s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
-	v.BaseView.AddChildViews(v.ContentView)
-	v.BaseView.InitView(s, parentView)
-}
-
-type HomePage struct {
-	BasePage
-	BodyView HomePageBodyView
-}
-
-func (v *HomePage) InitView(s *s3.Site, parentView s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
-	if v.Template == "" {
-		v.Template = "BasePage.html"
-	}
-	v.BasePage.AddChildViews(&v.BodyView)
-	v.BasePage.InitView(s, parentView)
-}
-
-type PostListView struct {
-	s3.BaseView
 }
 
 type AuthorPage struct {
@@ -87,22 +52,6 @@ func (v *AuthorLayout) InitView(s *s3.Site, parentView s3.View) {
 }
 
 func (v *AuthorPage) InitView(s *s3.Site, parentView s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
-	if v.Template == "" {
-		v.Template = "BasePage.html"
-	}
-	v.BasePage.AddChildViews(&v.BodyView)
-	v.BasePage.InitView(s, parentView)
-}
-
-type PostPage struct {
-	BasePage
-	BodyView PostSimple
-}
-
-func (v *PostPage) InitView(s *s3.Site, parentView s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
@@ -165,6 +114,7 @@ func (v *Footer) InitView(s *s3.Site, pv s3.View) {
 	v.BaseView.InitView(s, pv)
 }
 
+/*
 type SEO struct {
 	s3.BaseView
 	OgType   string
@@ -179,7 +129,6 @@ func (v *SEO) InitView(s *s3.Site, pv s3.View) {
 	v.BaseView.InitView(s, pv)
 }
 
-/*
 func (v *s3.PageSEO) InitView(s *s3.Site, pv s3.View) {
 	smd := v.Site.SiteMetadata
 	SiteUrl := GetProp(v.Site.SiteMetadata, "SiteUrl").(string)
@@ -191,6 +140,22 @@ func (v *s3.PageSEO) InitView(s *s3.Site, pv s3.View) {
 	v.CommonSEO.InitView(s, pv)
 }
 */
+
+type PostPage struct {
+	BasePage
+	BodyView PostSimple
+}
+
+func (v *PostPage) InitView(s *s3.Site, parentView s3.View) {
+	if v.Self == nil {
+		v.Self = v
+	}
+	if v.Template == "" {
+		v.Template = "BasePage.html"
+	}
+	v.BasePage.AddChildViews(&v.BodyView)
+	v.BasePage.InitView(s, parentView)
+}
 
 type PostSimple struct {
 	s3.BaseView
