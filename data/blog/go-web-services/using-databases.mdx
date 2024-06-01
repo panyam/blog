@@ -272,7 +272,7 @@ func (tdb *OneHubDB) NextId(cls string) string {
 ```
 
 1. The method `randid` generates a maxlen sized string of random characters.  This is as simple as `(2^63) mod maxid` where `maxid = 36 ^ maxlen`.
-2. The NextId method is used by the different entity create methods (below) to repeatedly generate random IDs if collissions exist.  In case you are worried about excessive collissions or interested understanding their probabilities - you can learn about them [here](https://preshing.com/20110504/hash-collision-probabilities/).
+2. The NextId method is used by the different entity create methods (below) to repeatedly generate random IDs if collissions exist.  In case you are worried about or interested in learning about excessive collissions checkout out [hash collission probabilities](https://preshing.com/20110504/hash-collision-probabilities/).
 
 ### Judicious use of indexes
 

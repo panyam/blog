@@ -39,8 +39,14 @@
     <script src="https://cdn.tailwindcss.com"> </script>
     <script> tailwind.config = { darkMode: 'class', } </script> 
     -->
-    <link rel="stylesheet" href="{{.Site.PathPrefix}}/static/css/tailwind.css" />
-    <style> .dark-mode { background-color: yellow; color: white; } </style>
+
+    {{ if true }} {{/* load locally */}}
+      <link rel="stylesheet" href="{{.Site.PathPrefix}}/static/css/tailwind.css" />
+      <style> .dark-mode { background-color: yellow; color: white; } </style>
+    {{ else }}
+      <script src="https://cdn.tailwindcss.com"> </script>
+      <script> tailwind.config = { darkMode: 'class', } </script> 
+    {{ end }}
 
     <!-- Font Awesome -->
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js" integrity="sha256-KzZiKy0DWYsnwMF+X1DvQngQ2/FxF7MF3Ff72XcpuPs=" crossorigin="anonymous"></script>-->
