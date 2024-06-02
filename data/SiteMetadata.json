@@ -2,6 +2,7 @@
   "Author": "Sri Panyam",
   "HeaderTitle": "BuildMage",
   "Description": "My personal blog highlighting adventures in building random things on the side",
+  "ShowDrafts": true,
   "Language": "en-us",
   "MaxPostsPerPage": 20,
   "Theme": "system",

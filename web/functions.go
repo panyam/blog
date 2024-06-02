@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"sort"
+	"strings"
 
 	gfn "github.com/panyam/goutils/fn"
 	s3 "github.com/panyam/s3gen/core"
@@ -11,6 +12,7 @@ import (
 
 func (web *BlogWeb) TemplateFunctions() template.FuncMap {
 	return template.FuncMap{
+		"LeafPages":     web.LeafPages,
 		"PagesByDate":   web.GetPagesByDate,
 		"AllTags":       web.GetAllTags,
 		"KeysForTagMap": web.KeysForTagMap,
@@ -32,7 +34,55 @@ func (web *BlogWeb) TemplateFunctions() template.FuncMap {
 	}
 }
 
-func (web *BlogWeb) GetPagesByDate(desc bool, offset, count int) (out []*s3.Resource) {
+func (web *BlogWeb) LeafPages(hideDrafts bool, orderby string, offset, count any) (out []*s3.Resource) {
+	var sortFunc s3.ResourceSortFunc = nil
+	if orderby != "" {
+		desc := orderby[0] == '-'
+		if desc {
+			orderby = orderby[1:]
+		}
+		sortFunc = func(res1, res2 *s3.Resource) bool {
+			d1 := res1.DestPage
+			d2 := res2.DestPage
+			if d1 == nil || d2 == nil {
+				log.Println("D1: ", res1.FullPath)
+				log.Println("D2: ", res2.FullPath)
+				return false
+			}
+			sub := 0
+			if orderby == "date" {
+				sub = int(res1.DestPage.CreatedAt.Sub(res2.DestPage.CreatedAt))
+			} else if orderby == "title" {
+				sub = strings.Compare(d1.Title, d2.Title)
+			}
+			if desc {
+				return sub > 0
+			} else {
+				return sub < 0
+			}
+		}
+	}
+	return site.ListResources(
+		func(res *s3.Resource) bool {
+			// Leaf pages only - not indexes
+			if !res.IsParametric && res.NeedsIndex && !res.IsIndex {
+				return false
+			}
+
+			if hideDrafts {
+				draft := res.FrontMatter().Data["draft"]
+				if draft == true {
+					return false
+				}
+			}
+			return true
+			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
+		},
+		sortFunc,
+		s3.ToInt(offset), s3.ToInt(count))
+}
+
+func (web *BlogWeb) GetPagesByDate(desc bool, offset, count any) (out []*s3.Resource) {
 	return site.ListResources(
 		func(res *s3.Resource) bool {
 			return !res.IsParametric && (res.NeedsIndex || res.IsIndex)
@@ -52,7 +102,8 @@ func (web *BlogWeb) GetPagesByDate(desc bool, offset, count int) (out []*s3.Reso
 			} else {
 				return sub < 0
 			}
-		}, offset, count+1)
+		},
+		s3.ToInt(offset), s3.ToInt(count))
 }
 
 func (web *BlogWeb) KeysForTagMap(tagmap map[string]int, orderby string) []string {

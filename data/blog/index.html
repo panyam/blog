@@ -16,6 +16,7 @@ location: "BodyView"
 {{ $numPages := Ceil (Div ( len $allPosts ) $pageSize) }}
 {{ template "PostList" dict
       "Title" "AllPosts"
+      "Site" .Site
       "PageNum" 1
       "PageSize" $pageSize
       "NumPages" $numPages
