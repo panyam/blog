@@ -65,7 +65,7 @@ func (web *BlogWeb) LeafPages(hideDrafts bool, orderby string, offset, count any
 	return site.ListResources(
 		func(res *s3.Resource) bool {
 			// Leaf pages only - not indexes
-			if !res.IsParametric && res.NeedsIndex && !res.IsIndex {
+			if res.IsParametric || !res.NeedsIndex || res.IsIndex {
 				return false
 			}
 

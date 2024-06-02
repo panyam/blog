@@ -1,11 +1,6 @@
 {{ define "Pagination" }}
     {{ $hasPrevPage := gt .PageNum 1 }}
-    {{ $hasNextPage := le .PageNum .NumPages }}
-
-    {{/*
-    const prevPage = currentPage - 1 > 0
-    const nextPage = currentPage + 1 <= totalPages
-    */}}
+    {{ $hasNextPage := lt .PageNum .NumPages }}
 
     <div class="space-y-2 pb-8 pt-6 md:space-y-5">
       <nav class="flex justify-between">
