@@ -5,7 +5,7 @@
     <div class="space-y-2 pb-8 pt-6 md:space-y-5">
       <nav class="flex justify-between">
         {{ if $hasPrevPage }}
-          {{ if eq .PageNum 1 }}
+          {{ if eq .PageNum 2 }}
             <a href="{{.Site.PathPrefix}}/blog/"><button>Previous</button></a>
           {{ else }}
             <a href="{{.Site.PathPrefix}}/blog/page/{{AddInts .PageNum -1 }}">

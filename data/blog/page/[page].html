@@ -8,8 +8,6 @@ page: BasePage
 location: "BodyView"
 ---
 
-{{ . }}
-
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 {{ $pageSize := Int $siteMetadata.MaxPostsPerPage }}
 {{ $posts := LeafPages $siteMetadata.HideDrafts "-date" 0 -1 }}
@@ -26,8 +24,6 @@ location: "BodyView"
   {{ $currPage := Int .Res.CurrentParamName }}
   {{ $currPage0 := SubInt $currPage 1 }}
   {{ $offset := MultInts $pageSize $currPage0 }}
-  Current Page {{ $currPage }} {{ $currPage0 }} {{ len $posts }} {{$offset}}
-  {{ if true }}
   {{ $filteredPosts := (Slice $posts ($offset) $pageSize ) }}
   {{ template "PostList" dict
         "Title" "AllPosts"
@@ -36,6 +32,5 @@ location: "BodyView"
         "PageSize" $pageSize
         "NumPages" $numPages
         "FilteredPosts" $filteredPosts }}
-  {{ end }}
 {{ end }}
 
