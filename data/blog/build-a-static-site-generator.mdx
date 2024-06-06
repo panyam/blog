@@ -1,0 +1,29 @@
+---
+title: 'Build a static site generator'
+date: 2024-05-28T11:29:10AM
+tags: ['static site generator', 'go']
+draft: false
+authors: ['Sri Panyam']
+summary: Let us add full text search capabilities to our chat service along with all the plumbing and knobs to control sync efficiency and consistency.
+page: PostPage
+location: "BodyView.ContentView"
+---
+
+## History
+
+This site is *very* old.   It has taken a few interesting paths:
+
+* It first started as a set of handbuilt html+js files (with inlined css) about 25 years ago - hosted on Geocities!
+
+
+
+Outline:
+
+* History
+  Blog being very old, the tech choices we made, how our requirements changed,
+
+* Latest was NextJS.  Served well but nextjs dependenceis started breaking in other projects (including Notation) and personally felt more complicated + bloat (talk about costs if we can and google more Nextjs problems) and how we also want to goto htmx
+
+* NextJS was not a bad static site gen.   (point to tailwind starter).
+
+* Then talk about why not build our own static site gen - after all it is just a bunch of html + css + templates built once and rendered for ever.  Theme around - instead of building client side pages that can *also* be server side (react) why not pure server side pages and then only use js as needed?

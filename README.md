@@ -13,5 +13,5 @@ This was started by clonning the amazing [Tailwind starter blog](https://tailwin
 When changing css/tailwind.css or adding new tailwind components, do the following:
 
 ```
-npx tailwindcss-cli -i ./css/tailwind.css -o ./public/static/css/tailwind.css
+npx tailwindcss -i ./css/tailwind.css -o ./public/static/css/tailwind.css
 ```
