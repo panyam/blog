@@ -1,21 +1,18 @@
 
 {{ define "MobileNav" }}
-  {{/*
-  const [navShow, setShowNav] = useState(false)
-
-  const onToggleNav = () => {
-    setShowNav((status) => {
-      if (status) {
-        document.body.style.overflow = 'auto'
-      } else {
-        // Prevent scrolling
-        document.body.style.overflow = 'hidden'
+    <script>
+      const onToggleNav = (status) => {
+        /*
+          if (status) {
+            document.body.style.overflow = 'auto'
+          } else {
+            // Prevent scrolling
+            document.body.style.overflow = 'hidden'
+          }
+          return !status
+          */
       }
-      return !status
-    })
-  }
-  */}}
-
+    </script>
     <div class="sm:hidden">
       <button
         type="button"
@@ -45,7 +42,7 @@
       </button>
       <div
         class="fixed right-0 top-24 z-10 h-full w-full transform bg-gray-200 opacity-95 duration-300 ease-in-out dark:bg-gray-800 "
-        {{ if .ShowNav }}
+        {{ if false }}
           class="transalte-x-0"
         {{ else }}
           class="translate-x-full"
