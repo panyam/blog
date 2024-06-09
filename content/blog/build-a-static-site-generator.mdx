@@ -39,16 +39,22 @@ I had gotten a bit busy and stopped writing for a while (both here as well as wo
 
 TL;DR Here is the link to the git repo for [this blog](https://github.com/panyam/blog) the [simple static site generator](https://github.com/panyam/s3gen) library powering this blog.
 
-Now let us see how to actually build up to this step by step.   First our folder structure:
+Now let us see how to actually build up to this step by step.   Our folder structure is:
 
 ```
 |--- content/             <--- The global data and pages in .md will be here
-|--- templates/           <--- All our "base" templates will be here
-|--- main.go              <--- The code for the static site generator
+|--- templates/           <--- All our "base" templates will be here (more on this later)
 |--- static/              <--- Files to be served statically
+|--- build/               <--- Where all static pages are built and served from
+|--- cmd/sample.go        <--- The code samples built in this post
 ```
 
-Before diving into the details, let us see a very simple usage of this blog is now built and structured:
+We have three main folders (content, templates and static) as described above and one output folder (build) where all our build artifacts are stored so we can simply serve this as a static folder.   The code samples in this blog will be in the `cmd/sample.go` folder and can run with `go run cmd/sample.go`.
 
-* TODO - show a simple 1 file version of a .main file with the root page, show the folder structure with .md files, templates files, page types and how to run it
-* Run it and show the output
+We are building out a simple SSG library.   So let start with a "Site" type to represent some info about our Site, where files are stored and more:
+
+```go
+type Site struct {
+}
+```
+
