@@ -11,7 +11,7 @@ location: "BodyView.ContentView"
 
 ## Background
 
-This is the second part of our [static site generator series](../).  For our goals and requirements see [part 1](../requirements) We are building out a simple SSG library.   So let start with a "Site" type in (`cmd/site.go`) to represent some info about our Site, where files are stored and more:
+This is the second part of our [static site generator series](../).  For our goals and requirements see [part 1](../requirements) We are building out a simple SSG library.   So let start with a "Site" type in (`cmd/sample.go`) to represent some info about our Site, where files are stored and more:
 
 ```go
 type Site struct {
@@ -49,7 +49,7 @@ type Site struct {
 }
 ```
 
-With this we can now create a site (in `cmd/sample.go`):
+With this we can now create a site:
 
 ```go
 package main
@@ -65,7 +65,7 @@ type Site struct {
 }
 
 var site = Site{
-	ContentRoot: "./content",
+	ContentRoot: "../content",
 	OutputDir:   "/Users/sri/personal/golang/blog/build",
 	PathPrefix:  "/ourprefix",
 	HtmlTemplates: []string{
@@ -79,6 +79,12 @@ var site = Site{
 func main() {
 	router := mux.NewRouter()
 	router.PathPrefix(site.PathPrefix).Handler(http.StripPrefix(site.PathPrefix, &site))
+  
+	srv := &http.Server{
+		Handler: web.session.LoadAndSave(web.router),
+		Addr:    ":8888"
+	}
+	log.Fatal(srv.ListenAndServe())
 }
 
 ```
@@ -90,7 +96,7 @@ The code above does a few things:
 3. The site is not yet a valid [`http.HandlerFunc`](https://pkg.go.dev/net/http#HandlerFunc) implementation as it lacks the right methods for this interface.   We will now implement those.
 
 
-In `cmd/site.go`, let us add the method to implement the [`http.HandlerFunc`](https://pkg.go.dev/net/http#HandlerFunc) interface.  It needs a single function:
+Let us add the method to implement the [`http.HandlerFunc`](https://pkg.go.dev/net/http#HandlerFunc) interface.  It needs a single function:
 
 ```go
 func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request)
