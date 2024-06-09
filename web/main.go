@@ -74,7 +74,7 @@ func withLogger(handler http.Handler) http.Handler {
 }
 
 var site = s3.Site{
-	ContentRoot: "./data",
+	ContentRoot: "./content",
 	OutputDir:   "/Users/sri/personal/golang/blog/build",
 	PathPrefix:  "/published",
 	LazyLoad:    true,
