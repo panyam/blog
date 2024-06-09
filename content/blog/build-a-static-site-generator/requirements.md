@@ -1,15 +1,17 @@
 ---
-title: 'Build a static site generator (SSG)'
-date: 2024-05-28T11:29:10AM
+title: 'Build a static site generator (SSG) - Requirements'
+date: 2024-05-25T11:29:10AM
 tags: ['static site generator', 'go']
 draft: false
 authors: ['Sri Panyam']
-summary: Let us add full text search capabilities to our chat service along with all the plumbing and knobs to control sync efficiency and consistency.
+summary: First part of the static site generator series detailing the requirement and current setup.
 page: PostPage
 location: "BodyView.ContentView"
 ---
 
 ## History
+
+This is the [building a static site genrator series](../) for hosting this blog!
 
 This site is *very* old.   It has taken a few interesting paths:
 
@@ -51,10 +53,4 @@ Now let us see how to actually build up to this step by step.   Our folder struc
 
 We have three main folders (content, templates and static) as described above and one output folder (build) where all our build artifacts are stored so we can simply serve this as a static folder.   The code samples in this blog will be in the `cmd/sample.go` folder and can run with `go run cmd/sample.go`.
 
-We are building out a simple SSG library.   So let start with a "Site" type to represent some info about our Site, where files are stored and more:
-
-```go
-type Site struct {
-}
-```
-
+We are building out a simple SSG library.   In this part we simply lay out the requirements and our site structure.  In the [next part](../getting-started) we will start building it out.
