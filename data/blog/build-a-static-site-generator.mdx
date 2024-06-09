@@ -39,6 +39,24 @@ I had gotten a bit busy and stopped writing for a while (both here as well as wo
 
 TL;DR Here is the link to the git repo for [this blog](https://github.com/panyam/blog) the [simple static site generator](https://github.com/panyam/s3gen) library powering this blog.
 
+Now let us see how to actually build up to this step by step.   First our folder structure:
+
+```
+|--- content/             <--- The global data and pages in .md will be here
+  |--- index.md           <--- will be served at mysite/
+  |--- page1.md           <--- will be served at mysite/page1
+  |--- page2.md           <--- will be served at mysite/page2
+  |--- section1
+  |--- section1/
+    |--- index.html       <---  Served at mysite/section1
+    |--- partA.md         <---  Served at mysite/part_a
+    |--- partB.md         <---  Served at mysite/part_b
+|--- templates/           <--- All our "base" templates will be here
+|--- main.go              <--- The code for the static site generator
+|--- css/                 <--- Any CSS we might need
+|--- static/              <--- Files to be served statically
+```
+
 Before diving into the details, let us see a very simple usage of this blog is now built and structured:
 
 * TODO - show a simple 1 file version of a .main file with the root page, show the folder structure with .md files, templates files, page types and how to run it

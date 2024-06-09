@@ -82,7 +82,7 @@ var site = s3.Site{
 		"templates/*.html",
 	},
 	StaticFolders: []string{
-		"/static/", "public/static",
+		"/static/", "static",
 	},
 }
 
