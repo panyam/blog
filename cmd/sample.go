@@ -1,16 +1,28 @@
 package main
 
 import (
+	"bytes"
+	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
-	"time"
 
+	"html/template"
+	htmpl "html/template"
+	ttmpl "text/template"
+
+	"github.com/adrg/frontmatter"
 	"github.com/gorilla/mux"
 	gut "github.com/panyam/goutils/utils" // just a simple utility library
+	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
+	"go.abhg.dev/goldmark/anchor"
 )
 
 type Site struct {
@@ -48,9 +60,6 @@ type Site struct {
 
 	// The router that serves the static resources and the built output files
 	filesRouter *mux.Router
-
-	// All resources encountered/used in our Site
-	resources map[string]*Resource
 }
 
 func (s *Site) Init() {
@@ -111,13 +120,7 @@ func (s *Site) GetRouter() *mux.Router {
 	return s.filesRouter
 }
 
-type ResourceFilterFunc func(res *Resource) bool
-type ResourceSortFunc func(a *Resource, b *Resource) bool
-
-func (s *Site) ListResources(filterFunc ResourceFilterFunc,
-	sortFunc ResourceSortFunc,
-	offset int, count int) []*Resource {
-	var foundResources []*Resource
+func (s *Site) ListFiles(offset int, count int) (foundFiles []string) {
 	// keep a map of files encountered and their statuses
 	filepath.WalkDir(s.ContentRoot, func(fullpath string, info os.DirEntry, err error) error {
 		if err != nil {
@@ -128,172 +131,201 @@ func (s *Site) ListResources(filterFunc ResourceFilterFunc,
 		}
 
 		if info.IsDir() {
+			// this is a directory so return a nil error to indicate
+			// this directory should be recursed into
 			return nil
 		}
 
-		// map fullpath to a resource here
-		res := s.GetResource(fullpath)
+		foundFiles = append(foundFiles, fullpath)
 
-		if filterFunc == nil || filterFunc(res) {
-			foundResources = append(foundResources, res)
-		}
-
-		return nil
+		return nil // no errors found
 	})
-	if sortFunc != nil {
-		sort.Slice(foundResources, func(idx1, idx2 int) bool {
-			ent1 := foundResources[idx1]
-			ent2 := foundResources[idx2]
-			return sortFunc(ent1, ent2)
-		})
-	}
 	if offset > 0 {
-		foundResources = foundResources[offset:]
+		foundFiles = foundFiles[offset:]
 	}
 	if count > 0 {
-		foundResources = foundResources[:count]
+		foundFiles = foundFiles[:count]
 	}
-	return foundResources
-}
-
-func (s *Site) GetResource(fullpath string) *Resource {
-	res, found := s.resources[fullpath]
-	if res == nil || !found {
-		res = &Resource{
-			Site:      s,
-			FullPath:  fullpath,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			State:     ResourceStatePending,
-		}
-		s.resources[fullpath] = res
-	}
-	// Try to load it too
-	res.Load()
-	if res.Info() == nil {
-		log.Println("Resource info is null: ", res.FullPath)
-	}
-
-	return res
-}
-
-const (
-	ResourceStatePending = iota
-	ResourceStateLoaded
-	ResourceStateDeleted
-	ResourceStateNotFound
-	ResourceStateFailed
-)
-
-/**
- * Each resource in our static site is identified by a unique path.
- * Note that resources can go through multiple transformations
- * resulting in more resources - to be converted into other resources.
- * Each resource is uniquely identified by its full path
- */
-type Resource struct {
-	Site     *Site  // Site this resource belongs to
-	FullPath string // Unique URI/Path
-
-	// Info about the resource
-	info os.FileInfo
-
-	// Created timestamp on disk
-	CreatedAt time.Time
-
-	// Updated time stamp on disk
-	UpdatedAt time.Time
-
-	// Loaded, Pending, NotFound, Failed
-	State int
-
-	// Any errors with this resource
-	Error error
-}
-
-func (r *Resource) Info() os.FileInfo {
-	if r.info == nil {
-		r.info, r.Error = os.Stat(r.FullPath)
-		if r.Error != nil {
-			r.State = ResourceStateFailed
-			log.Println("Error Getting Info: ", r.FullPath, r.Error)
-		}
-	}
-	return r.info
-}
-
-func (r *Resource) Load() *Resource {
-	// TODO - All the interesting content processing bits
-	return r
+	return foundFiles
 }
 
 func (s *Site) Load() *Site {
-	foundResources := s.ListResources(nil, nil, 0, 0)
-	for _, res := range foundResources {
+	foundFiles := s.ListFiles(0, 0)
+	for _, res := range foundFiles {
 		s.Rebuild(res)
 	}
 	return s
 }
 
-// The main method that builds a list of resources
-func (s *Site) Rebuild(res *Resource) {
-	// var errors []error
-	srcpath := res.FullPath
-	if strings.HasSuffix(srcpath, ".md") ||
-		strings.HasSuffix(srcpath, ".mdx") ||
-		strings.HasSuffix(srcpath, ".html") ||
-		strings.HasSuffix(srcpath, ".htm") {
-		destpath := res.DestPathFor()
-		outres := s.GetResource(destpath)
-		if outres != nil {
-			outres.EnsureDir()
-			outfile, err := os.Create(outres.FullPath)
-			if err != nil {
-				log.Println("Error writing to: ", outres.FullPath, err)
-				return
-			}
-			defer outfile.Close()
+// Rebuild a given src
+func (s *Site) Rebuild(srcpath string) {
+	destpath := s.EnsureDestDir(srcpath)
+	if destpath == "" {
+		return
+	}
 
-			// Copy the file over if it is a .md or a .html file
-		}
+	outfile, err := os.Create(destpath)
+	if err != nil {
+		log.Println("Error writing to: ", destpath, err)
+		return
+	}
+	defer outfile.Close()
+
+	if strings.HasSuffix(srcpath, ".md") || strings.HasSuffix(srcpath, ".mdx") {
+		// if we have a path of the form <ContentRoot>x/y/z.md,
+		// then render it into <OutputDir>/x/y/z/index.html
+		s.RenderMarkdown(srcpath, outfile)
+	} else if strings.HasSuffix(srcpath, ".html") || strings.HasSuffix(srcpath, ".htm") {
+		// if we have a path of the form <ContentRoot>x/y/z.html,
+		// then render it into <OutputDir>/x/y/z/index.html
+		s.RenderHtml(srcpath, outfile)
+	} else {
+		s.Copy(srcpath, outfile)
 	}
 }
 
-func (r *Resource) EnsureDir() {
-	dirname := filepath.Dir(r.FullPath)
-	if err := os.MkdirAll(dirname, 0755); err != nil {
-		log.Println("Error creating dir: ", dirname, err)
-	}
-}
+// The EnsureDestDir method takes a file <ContentRoot>/a/b/c.<ext> and returns its "final form"
+// in the <OutputDir>.   If the <ext> is .md or .mdx or .htm or .html, then this file is rendered
+// into <OutputDir>/a/b/c/index.html
+//
+// However if c.<ext> is already of the form index.<ext> then another folder is not created.
+// Eg if our srcpath was <ContentRoot>/a/b/c/index.<ext>, then it would be output into
+// <OutputDir>/a/b/c/index.html
+//
+// Additionally the parent folders of the target file are also created if they do not exist
+func (s *Site) EnsureDestDir(srcpath string) (destpath string) {
+	// is this already an "index.<ext>" file?
+	isIndex := strings.HasPrefix(srcpath, "index.") || strings.HasPrefix(srcpath, "_index.")
+	needsIndex := strings.HasSuffix(srcpath, ".md") || strings.HasSuffix(srcpath, ".mdx") || strings.HasSuffix(srcpath, ".html") || strings.HasSuffix(srcpath, ".htm")
 
-func (r *Resource) DestPathFor() (destpath string) {
-	s := r.Site
-	respath, found := strings.CutPrefix(r.FullPath, s.ContentRoot)
-	if !found {
-		log.Println("Respath not found: ", r.FullPath, s.ContentRoot)
-		return ""
+	respath, found := strings.CutPrefix(srcpath, s.ContentRoot)
+	if found {
+		return
 	}
-
-	if r.Info().IsDir() {
-		// Then this will be served with dest/index.html
-		destpath = filepath.Join(s.OutputDir, respath)
-	} else if r.IsIndex {
+	if isIndex {
 		destpath = filepath.Join(s.OutputDir, filepath.Dir(respath), "index.html")
-	} else if r.NeedsIndex {
-		// res is not a dir - eg it something like xyz.ext
-		// depending on ext - if the ext is for a page file
-		// then generate OutDir/xyz/index.html
-		// otherwise OutDir/xyz.ext
+	} else if needsIndex {
 		ext := filepath.Ext(respath)
-
 		rem := respath[:len(respath)-len(ext)]
-
-		// TODO - also see if there is a .<lang> prefix on rem after ext has been removed
-		// can use that for language sites
 		destpath = filepath.Join(s.OutputDir, rem, "index.html")
 	} else {
-		// basic static file - so copy as is
+		// we have a static file so copy as is
 		destpath = filepath.Join(s.OutputDir, respath)
 	}
+
+	if destpath != "" {
+		// make sure dir exists
+		dirname := filepath.Dir(destpath)
+		if err := os.MkdirAll(dirname, 0755); err != nil {
+			log.Println("Error creating dir: ", dirname, err)
+		}
+	}
 	return
+}
+
+// Loads a file given its path and returns a frontmatter (as a map) and the content byte array.
+func (s *Site) LoadFile(srcpath string) (fm map[string]any, content []byte, err error) {
+	f, err := os.Open(srcpath)
+	if err == nil {
+		fm = make(map[string]any)
+		content, err = frontmatter.Parse(f, fm)
+	}
+	return
+}
+
+func (s *Site) RenderMarkdown(srcpath string, writer io.Writer) {
+	fm, content, err := s.LoadFile(srcpath)
+	if err != nil {
+		log.Println("error loading file: ", err)
+		return
+	}
+
+	// TODO - error checking
+	tmplname := fm["template"].(string)
+	template := s.GetHtmlTemplate()
+	params := map[string]any{
+		"FrontMatter": fm,
+		"Content":     content,
+	}
+	template.ExecuteTemplate(writer, tmplname, params)
+}
+
+func (s *Site) RenderHtml(srcpath string, outfile io.Writer) {
+	// TODO
+}
+
+func (s *Site) Copy(srcpath string, outfile io.Writer) {
+	// TODO
+}
+
+func (s *Site) GetHtmlTemplate() (tmpl *htmpl.Template) {
+	tmpl = htmpl.New("SiteHtmlTemplate").Funcs(s.DefaultFuncMap())
+	for _, templatesDir := range s.HtmlTemplates {
+		slog.Info("Loaded HTML Template: ", "templatesDir", templatesDir)
+		t, err := tmpl.ParseGlob(templatesDir)
+		if err != nil {
+			slog.Error("Error parsing templates glob: ", "templatesDir", templatesDir, "error", err)
+		} else {
+			tmpl = t
+			slog.Info("Loaded HTML Template: ", "templatesDir", templatesDir)
+		}
+	}
+	return tmpl
+}
+
+func (s *Site) GetTextTemplate() (tmpl *ttmpl.Template) {
+	tmpl = ttmpl.New("SiteHtmlTemplate").Funcs(s.DefaultFuncMap())
+	for _, templatesDir := range s.TextTemplates {
+		slog.Info("Loaded Text Template: ", "templatesDir", templatesDir)
+		t, err := tmpl.ParseGlob(templatesDir)
+		if err != nil {
+			slog.Error("Error parsing templates glob: ", "templatesDir", templatesDir, "error", err)
+		} else {
+			tmpl = t
+			slog.Info("Loaded HTML Template: ", "templatesDir", templatesDir)
+		}
+	}
+	return tmpl
+}
+
+// Define all your custom functions here
+func (s *Site) DefaultFuncMap() htmpl.FuncMap {
+	return htmpl.FuncMap{
+		"RenderMarkdown": func(fm map[string]any, content []byte) (template.HTML, error) {
+			// TODO - handle errors
+			mdTemplate, _ := s.GetTextTemplate().Parse(string(content))
+			finalmd := bytes.NewBufferString("")
+			mdTemplate.Execute(finalmd, map[string]any{
+				"Site":        s,
+				"FrontMatter": fm,
+			})
+
+			md := goldmark.New(
+				goldmark.WithExtensions(
+					extension.GFM,
+					extension.Typographer,
+					highlighting.NewHighlighting(
+						highlighting.WithStyle("monokai"),
+					),
+					&anchor.Extender{},
+				),
+				goldmark.WithParserOptions(
+					parser.WithAutoHeadingID(),
+					parser.WithASTTransformers(),
+				),
+				goldmark.WithRendererOptions(
+					html.WithHardWraps(),
+					html.WithXHTML(),
+					html.WithUnsafe(),
+				),
+			)
+			var buf bytes.Buffer
+			if err := md.Convert(finalmd.Bytes(), &buf); err != nil {
+				slog.Error("error converting md: ", "error", err)
+				return template.HTML(""), err
+			}
+			return template.HTML(buf.Bytes()), nil
+		},
+		// And any other methods
+	}
 }
