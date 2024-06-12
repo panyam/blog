@@ -82,10 +82,20 @@ func (web *BlogWeb) LeafPages(hideDrafts bool, orderby string, offset, count any
 		s3.ToInt(offset), s3.ToInt(count))
 }
 
-func (web *BlogWeb) GetPagesByDate(desc bool, offset, count any) (out []*s3.Resource) {
+func (web *BlogWeb) GetPagesByDate(hideDrafts bool, desc bool, offset, count any) (out []*s3.Resource) {
 	return site.ListResources(
 		func(res *s3.Resource) bool {
-			return !res.IsParametric && (res.NeedsIndex || res.IsIndex)
+			if res.IsParametric || !(res.NeedsIndex || res.IsIndex) {
+				return false
+			}
+
+			if hideDrafts {
+				draft := res.FrontMatter().Data["draft"]
+				if draft == true {
+					return false
+				}
+			}
+			return true
 			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
 		},
 		func(res1, res2 *s3.Resource) bool {

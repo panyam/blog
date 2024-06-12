@@ -13,7 +13,7 @@ This is an index to the problems from THE book being solved in haskell (and coun
 
 ## Chapter 5 – Primitive Types
   
-{{ $posts := ( PagesByDate false 0 -1 ) }}
+{{ $posts := ( PagesByDate $siteMetadata.HideDrafts false 0 -1 ) }}
 
 {{ range $posts }}{{ if HasPrefix .DestPage.Title  "EPI 5." }}<p><a href="{{.DestPage.Link}}"><span>{{.DestPage.Title}}</span></a></p>{{ end }}{{ end }}
 

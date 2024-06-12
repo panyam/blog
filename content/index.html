@@ -18,7 +18,7 @@ location: "BodyView"
 </div>
 <ul class="divide-y divide-gray-200 dark:divide-gray-700">
   {{ $maxPosts := Int $siteMetadata.MaxPostsPerPage }}
-  {{ $posts := (PagesByDate true 0 $maxPosts) }}
+  {{ $posts := (PagesByDate $siteMetadata.HideDrafts true 0 $maxPosts) }}
   {{ if not $posts }}No posts found.{{ end }}
 
   {{ range $index, $post := $posts }}

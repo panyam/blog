@@ -11,7 +11,7 @@ location: "BodyView"
 
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 {{ $pageSize := Int $siteMetadata.MaxPostsPerPage }}
-{{ $allPosts := PagesByDate true 0 -1 }}
+{{ $allPosts := PagesByDate $siteMetadata.HideDrafts true 0 -1 }}
 {{ $filteredPosts := (Slice $allPosts 0 $pageSize ) }}
 {{ $numPages := Ceil (Div ( len $allPosts ) $pageSize) }}
 {{ template "PostList" dict

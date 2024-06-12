@@ -1,10 +1,10 @@
 ---
-title: 'Build a static site generator - Getting Started'
+title: 'Goodbye NextJS, Hello S3Gen'
 date: 2024-05-28T11:29:10AM
-tags: ['static site generator', 'go', 'ssg']
-draft: true
+tags: ['static site generator', 'go', 'ssg', 's3gen']
+draft: false
 authors: ['Sri Panyam']
-summary: Let us get started on implementing our static site genrator.
+summary: A brief journey on how I got off NextJS for hosting this blog and built a static site generator to host it instead.
 page: PostPage
 location: "BodyView.ContentView"
 ---
