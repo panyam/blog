@@ -47,7 +47,8 @@ Now let us see how to actually build up to this step by step.   Our folder struc
 |--- content/             <--- The global data and pages in .md will be here
 |--- templates/           <--- All our "base" templates will be here (more on this later)
 |--- static/              <--- Files to be served statically
-|--- build/               <--- Where all static pages are built and served from
+|--- output/              <--- Folder where all static pages are built and served from
+     |--- index.html      <--- A very basic test page (only for now which we will replace)
 |--- cmd/sample.go        <--- The code samples built in this post
 ```
 

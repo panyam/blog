@@ -2,6 +2,8 @@
 
 # dependencies
 published
+output
+cmd/main
 *.db
 /node_modules
 *.swp
