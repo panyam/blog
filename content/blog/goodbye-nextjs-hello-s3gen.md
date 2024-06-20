@@ -13,7 +13,7 @@ location: "BodyView.ContentView"
 
 This site is *very* old.   It has taken a few interesting paths:
 
-In the beginning of time it was a bunch of hand crafted (partly with love) html and js files - on Geocities!  This was a great time.   HTML/CSS/JS complexity was low.   Tables were a great choice for layouts (this humble back-end still thinks so at the risk of being laughed at).   You would edit a file, and upload the files (via ftp) or rsync to the hosted provider.   Then Geocities went bust and we were fending for ourselves.
+In the beginning of time (about 25 years ago) it was a bunch of hand crafted html and js files - on Geocities!  This was a great time.   HTML/CSS/JS complexity was low.   Tables were a great choice for layouts (this humble back-end dev still thinks so at the risk of being laughed at).   You would edit a file, and upload the files (via ftp) or rsync to the hosted provider.   Then Geocities went bust and we were fending for ourselves.
 
 Rise of Wordpress made it so much easy to create snazy themed blogs for oneself.  This site was no exception.  It moved to wordpress.com for a long time.  Infact on three different hosting providers (hosted wordpress, bluehost with a wordpress CMS server and one more that no longer resides in memory).  This was great for a long time.  Wysiwyg editor made it easy not to worry about layouts and formatting etc and choice of themes was pretty nice.
 
@@ -21,10 +21,11 @@ Wordpress had its problems.   The editing experience just felt clunky.   Also th
 
 Here I made the switch to building the site in NextJS.   The main advantages here were I could author all my pages as markdown - ie .md files.  Actually NextJS's plugin system allowed authoring in Extended Markdown (MDX) that ahd a larger and richer ecosystem of plugins and lot more options for plugability.   At the same time I had also moved my [Carnatic Music Notation](https://notations.us) website from server rendered pages on ExpressJS to also using NextJS and it was quite a liberating experience.  I could build as many custom components as I wanted (not that I had much of need for it beyond custom code embeding features - which we shall talk about soon).
 
-I had gotten a bit busy and stopped writing for a while (both here as well as working on Notations).  And when I tried to get back into it I was having a few common problems across all my Node/Next apps.   Dependency problems.  For some reason Id see wierd dependency breakages where some package would be deprecated or be broken.  For example it was a nightmare migrating NextJS to the next version as its dependency (React) at some point in time was not updated at the same time freezing NextJS.   There were several such dependencies across several libraries.   Plus the build phase itself was pretty slow (often taking 10-15s on an Mac M1).   And then there was the bloat.   Each of these "distributions" was around a Gig when uploaded.  At this point I also started learning about htmx and the idea of going back to Server side generation first and *then* adding JS when needed was very appealing (as opposed to the otherway around in the React/Angular ecosystems).   All these got me thinking why not move to a static site generator (SSG) like Hugo or Jekyll but .... it is JUST a static site.  Why do I need a new tool for it.   Are static sites just not "build" tools to convert your content into html pages?  Thus began this journey of just creating my own SSG instead of depending on conventions imposed by these tools.   Yes Id have my own conventions but they are mine!  Now you can have yours too and they would be yours!
-
+I had gotten a bit busy and stopped writing for a while (both here as well as working on [Notations](https://notations.us).  And when I tried to get back into it I was having a few common problems across all my Node/Next apps.   Dependency problems.  For some reason Id see wierd dependency breakages where some package would be deprecated or be broken.  For example it was a nightmare migrating NextJS to the next version (i think v13) as its dependency (React) at some point in time was not updated at the same time freezing NextJS.   There were several such dependencies across several libraries.   Plus the build phase itself was pretty slow (often taking 10-15s on an Mac M1).   And then there was the bloat.   Each of these "distributions" was around a Gig when uploaded.  At this point I also started learning about htmx and the idea of going back to Server side generation first and *then* adding JS when needed was very appealing (as opposed to the otherway around in the React/Angular ecosystems).   All these got me thinking why not move to a static site generator (SSG) like Hugo or Jekyll but .... it is JUST a static site.  Why do I need a new tool for it.   Are static sites just not "build" tools to convert your content into html pages?  Thus began this journey of just creating my own SSG instead of depending on conventions imposed by these tools.   Yes Id have my own conventions but they are mine!  Now you can have yours too and they would be yours!
 
 ## Requirements
+
+Now that Ive made a few trips around the block I settled into a few basic requirements:
 
 * We want to be able to write html (.html) or in markdown files (.md or .mdx).  Note that even though we support the .mdx extension for now we dont need Extended Markdown support as we shall see.
 * Our system will be in Go - so we can enjoy an amazing standard library as well as a very powerful text and html templating system and we will see why this is a great thing.
@@ -39,7 +40,7 @@ I had gotten a bit busy and stopped writing for a while (both here as well as wo
 
 TL;DR Here is the link to the git repo for [this blog](https://github.com/panyam/blog) the [simple static site generator](https://github.com/panyam/s3gen) library powering this blog.
 
-Now let us see how to actually build up to this step by step.   Our folder structure is:
+Let us use S3Gen to build and serve the site (and later we will dive into the internals of S3Gen).   Our folder structure is:
 
 ```
 |--- content/             <--- The global data and pages in .md will be here
