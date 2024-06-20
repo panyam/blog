@@ -58,7 +58,7 @@
           {{ $site := .Site }}
           {{ range (json "HeaderNavLinks.json" "") }}
               <div class="px-12 py-4">
-                {{ $headerUrl := (Join "/" $site.PathPrefix .Href ) }}
+                {{ $headerUrl := ($site.PathRelUrl .Href ) }}
                 <a href={{$headerUrl}} class="text-2xl font-bold tracking-widest text-gray-900 dark:text-gray-100">
                   {{.Title}}
                 </a>
