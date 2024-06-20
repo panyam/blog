@@ -13,7 +13,7 @@ location: "BodyView.ContentView"
 
 This site is *very* old.   It has taken a few interesting paths:
 
-In the beginning of time (about 25 years ago) it was a bunch of hand crafted html and js files - on Geocities!  This was a great time.   HTML/CSS/JS complexity was low.   Tables were a great choice for layouts (this humble back-end dev still thinks so at the risk of being laughed at).   You would edit a file, and upload the files (via ftp) or rsync to the hosted provider.   Then Geocities went bust and we were fending for ourselves.
+In the beginning (about 25 years ago) it was a bunch of hand crafted html and js files - on Geocities!  This was a great time.   HTML/CSS/JS complexity was low.   Tables were a great choice for layouts (this humble back-end dev still thinks so at the risk of being laughed at).   You would edit a file, and upload the files (via ftp) or rsync to the hosted provider.   Then Geocities went bust and we were fending for ourselves.
 
 Rise of Wordpress made it so much easy to create snazy themed blogs for oneself.  This site was no exception.  It moved to wordpress.com for a long time.  Infact on three different hosting providers (hosted wordpress, bluehost with a wordpress CMS server and one more that no longer resides in memory).  This was great for a long time.  Wysiwyg editor made it easy not to worry about layouts and formatting etc and choice of themes was pretty nice.
 
