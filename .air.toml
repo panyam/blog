@@ -9,7 +9,7 @@ tmp_dir = "/tmp"
   # bin = "/go/bin/dlv --listen=:9091 --headless=true --log=true --accept-multiclient --api-version=2 exec --continue ./tmp/main"
 
   delay = 1000
-  exclude_dir = ["assets", "testdata", "tmp", "cli", "vendors", "build", "node_modules", "web/node_modules", "published"]
+  exclude_dir = ["assets", "testdata", "tmp", "cli", "vendors", "output", "build", "node_modules", "web/node_modules", "published"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
