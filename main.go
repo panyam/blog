@@ -12,7 +12,7 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
 	gfn "github.com/panyam/goutils/fn"
-	s3 "github.com/panyam/s3gen/core"
+	s3 "github.com/panyam/s3gen"
 )
 
 var (
