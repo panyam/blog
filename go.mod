@@ -9,7 +9,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/gorilla/mux v1.8.1
 	github.com/panyam/goutils v0.1.1
-	github.com/panyam/s3gen v0.0.1
+	github.com/panyam/s3gen v0.0.2
 	github.com/yuin/goldmark v1.7.1
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	go.abhg.dev/goldmark/anchor v0.1.1
@@ -26,6 +26,5 @@ require (
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 
-replace github.com/panyam/goutils v0.1.1 => ../goutils/
-
-replace github.com/panyam/s3gen v0.0.1 => ../s3gen/
+// replace github.com/panyam/goutils v0.1.1 => ../goutils/
+// replace github.com/panyam/s3gen v0.0.2 => ../s3gen/

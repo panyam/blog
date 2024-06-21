@@ -1,9 +1,9 @@
 
 run: build
-	BLOG_WEB_ENV=dev BLOG_WEB_PORT=:8095 air
+	BLOG_WEB_ENV=dev BLOG_WEB_PORT=:8080 air
 
 deploy: build
-	gcloud app deploy --project maniacalbuilder --verbosity=info
+	gcloud app deploy --project buildmage --verbosity=info
 
 build:
-	cd web/lib ; npm run build
+	rm -Rf output/static

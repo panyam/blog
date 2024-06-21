@@ -18,6 +18,12 @@ cache
 
 # Node.js dependencies:
 node_modules/
+/templates/
+/content/
+/cmd/
+/css/
+/tmp/
+/docs/
 
 # Exclude compiled .js files
 *.ts

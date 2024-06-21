@@ -1,8 +1,18 @@
 runtime: go122
+env_variables:
+  APP_ENV: production
 handlers:
 - url: /static
-  static_dir: public/static
+  static_dir: static
 
-- url: /.*
-  script: auto
-    # upload: web/templates/.*
+- url: /(.*)/
+  static_files: output/\1/index.html
+  upload: output/(.*)/index.html
+
+- url: /([^\.]*)
+  static_files: output/\1/index.html
+  upload: output/(.*)/index.html
+
+- url: /([^\.]*\..*)
+  static_files: output/\1
+  upload: output/(.*)

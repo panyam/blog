@@ -126,6 +126,10 @@ npx tailwindcss -i ./css/tailwind.css -o ./static/css/tailwind.css
 
 This resultant css file is loaded from our base template - in `templates/CommonPageHeader.html`.
 
+## Deployment
+
+The `Load` method builds all artifacts onto the `OutputDir` folder.   Static folders are not copied by default.   Also (inspired by Hugo), the `OutputDir` is not first deleted.  This allows any manual addition of resources into the output directory.
+
 ## And more
 
 There is a lot more to S3Gen.  Head over to the [S3Gen documentation page](https://pkg.go.dev/github.com/panyam/s3gen) to learn more.
