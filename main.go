@@ -32,8 +32,6 @@ var site = s3.Site{
 
 func main() {
 	flag.Parse()
-	router := mux.NewRouter()
-
 	if os.Getenv("APP_ENV") != "production" {
 		site.CommonFuncMap = TemplateFunctions()
 		site.NewViewFunc = NewView
@@ -42,6 +40,7 @@ func main() {
 
 	// Attach our site to be at /`PathPrefix`
 	// The site will also take care of serving static files from /`PathPrefix`/static paths
+	router := mux.NewRouter()
 	router.PathPrefix(site.PathPrefix).Handler(http.StripPrefix(site.PathPrefix, &site))
 
 	srv := &http.Server{
