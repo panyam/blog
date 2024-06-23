@@ -23,7 +23,7 @@ Here I made the switch to building the site in NextJS.   The main advantages her
 
 I had gotten a bit busy and stopped writing for a while (both here as well as working on [Notations](https://notations.us).  And when I tried to get back into it I was having a few common problems across all my Node/Next apps.   Dependency problems.  For some reason Id see wierd dependency breakages where some package would be deprecated or be broken.  For example it was a nightmare migrating NextJS to the next version (i think v13) as its dependency (React) at some point in time was not updated at the same time freezing NextJS.   There were several such dependencies across several libraries.   Plus the build phase itself was pretty slow (often taking 10-15s on an Mac M1).   And then there was the bloat.   Each of these "distributions" was around a Gig when uploaded.  At this point I also started learning about htmx and the idea of going back to Server side generation first and *then* adding JS when needed was very appealing (as opposed to the otherway around in the React/Angular ecosystems).   All these got me thinking why not move to a static site generator (SSG) like Hugo or Jekyll but .... it is JUST a static site.  Why do I need a new tool for it.   Are static sites just not "build" tools to convert your content into html pages?  Thus began this journey of just creating my own SSG instead of depending on conventions imposed by these tools.   Yes Id have my own conventions but they are mine!  Now you can have yours too and they would be yours!
 
-## Requirements
+## Goals
 
 Now that Ive made a few trips around the block I settled into a few basic requirements:
 
@@ -35,6 +35,10 @@ Now that Ive made a few trips around the block I settled into a few basic requir
 * Again since we are leveraging Go htm/text templates, being able to provide custom "functions" available in templates is very desirable.   Some of these functions could be very specific to *your own site*.
 * Provision for custom static files to be packaged and bundled together.
 * It should be very easy to build our site into a target folder with all the html/js/css files and also serve in dev mode (including live reloading of content changes)
+
+## Non Goals
+
+S3Gen is in no way a replacement for mature, famous and battle hardened static site generators like Hugo or Jekyll or NextJS.   This is intended mainly for those interested in building one themselves and providing them with one particular of way of doing it.   There are several ways (would love to hear more from yall).   Another impetus for creating S3Gen was that I wanted a static site onto which I could incrementally add dynamic content - mainly because I have gotten hooked onto HTMX and a very very light weight page builder/provider is very useful and hugely fun!
 
 ## Getting Started
 
@@ -78,14 +82,18 @@ Now we can serve this site (we are using the gorilla mux router - but not needed
 ```go
 func main() {
   flag.Parse()
-  router := mux.NewRouter()
-  site.CommonFuncMap = TemplateFunctions()
-  site.NewViewFunc = NewView
-
-  site.Init().Load().StartWatching()
+  
+  // Only do build etc if this is in dev.
+  // In production directly serve statically from the output dir
+	if os.Getenv("APP_ENV") != "production" {
+		site.CommonFuncMap = TemplateFunctions()
+		site.NewViewFunc = NewView
+		site.Watch()
+	}
 
   // Attach our site to be at /`PathPrefix`
   // The Site will also take care of serving static files from /`PathPrefix`/static paths
+  router := mux.NewRouter()
   router.PathPrefix(site.PathPrefix).Handler(http.StripPrefix(site.PathPrefix, &site))
 
   srv := &http.Server{
@@ -102,13 +110,17 @@ func main() {
 
 For now ignore the NewViewFunc and CommonFuncMap attributes on the site.   These will be explained soon.
 
-The line:
+The lines:
 
 ```go
-site.Init().Load().StartWatching()
+	if os.Getenv("APP_ENV") != "production" {
+		site.CommonFuncMap = TemplateFunctions()
+		site.NewViewFunc = NewView
+		site.Watch()
+	}
 ```
 
-simply ensures that the site is initialized (by creating any internal structures needed), loaded (by building the entire site) and with live reloading enabled in case any of the content files change (via the `StartWatching` method).
+simply ensures that the site is setup for live reloading (which includes a one time full-build).   Note that this only runs in NON PRODUCTION mode because in production we are more interested in serving a statically built site instead of rebuilding etc.
 
 That is it.  The `Site` is already a valid [`http.HandlerFunc`](https://pkg.go.dev/net/http#HandlerFunc) implementation so it can be served - and we are doing just that.  The Site also ensures that its http.HandlerFunc implementation contains routes for all the pages and any static content/folders registered (eg `/static` above).
 
@@ -128,8 +140,39 @@ This resultant css file is loaded from our base template - in `templates/CommonP
 
 ## Deployment
 
-The `Load` method builds all artifacts onto the `OutputDir` folder.   Static folders are not copied by default.   Also (inspired by Hugo), the `OutputDir` is not first deleted.  This allows any manual addition of resources into the output directory.
+The `Watch` method builds all artifacts onto the `OutputDir` folder.   Static folders are not copied however (they could be?).   Also (inspired by Hugo), the `OutputDir` is not first deleted.  This allows any manual addition of resources into the output directory across builds.   We are using google app engine so our app.yaml file is pretty simple:
+
+```
+runtime: go122
+env_variables:
+  APP_ENV: production
+handlers:
+- url: /static
+  static_dir: static
+- url: /
+  static_files: output/index.html
+  upload: output/index.html
+- url: /(.*)/
+  static_files: output/\1/index.html
+  upload: output/(.*)
+- url: /(.*)
+  static_files: output/\1/index.html
+  upload: output/(.*)
+- url: .*
+  script: auto
+```
+
+Just serve the static files from the static folder and everything else via our main entry file (main.go).   Here the all the url patterns other than "/static" are served by `output/*` because each of your blog post of the form `ContentDir/X.{md,html}` is compiled to `OutputDir/X/index.html`.   If you use a different convention for your site simply update this app.yaml file.  Or if you use a cdn where you can upload files directly even better!
 
 ## And more
 
-There is a lot more to S3Gen.  Head over to the [S3Gen documentation page](https://pkg.go.dev/github.com/panyam/s3gen) to learn more.
+There is a lot more to S3Gen.  Head over to the [S3Gen documentation page](https://pkg.go.dev/github.com/panyam/s3gen) to learn more about S3Gen's capabilities and what else is planned for the future.
+
+
+
+
+
+
+
+
+
