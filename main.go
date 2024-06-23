@@ -154,6 +154,7 @@ func (v *MobileNav) InitView(s *s3.Site, pv s3.View) {
 	if v.Self == nil {
 		v.Self = v
 	}
+	v.ShowNav = true
 	v.BaseView.InitView(s, pv)
 }
 

@@ -1,58 +1,33 @@
 
 {{ define "MobileNav" }}
-    <script>
-      const onToggleNav = (status) => {
-        /*
-          if (status) {
-            document.body.style.overflow = 'auto'
-          } else {
-            // Prevent scrolling
-            document.body.style.overflow = 'hidden'
-          }
-          return !status
-          */
-      }
-    </script>
-    <div class="sm:hidden">
+    <div class="sm:hidden" id={{.ViewId}}>
       <button
         type="button"
         class="ml-1 mr-1 h-8 w-8 rounded py-1"
         aria-label="Toggle Menu"
+        onClick="onToggleNav('{{.ViewId}}'); return false"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          class="text-gray-900 dark:text-gray-100"
+          class="enablerButtonSvg text-gray-900 dark:text-gray-100"
         >
-          {{ if .ShowNav }}
             <path
-              fillRule="evenodd"
-              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-              clipRule="evenodd"
-            />
-          {{ else }}
-            <path
+              class = "pathForNavHidden"
               fillRule="evenodd"
               d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
               clipRule="evenodd"
             />
-          {{ end }}
         </svg>
       </button>
       <div
-        class="fixed right-0 top-24 z-10 h-full w-full transform bg-gray-200 opacity-95 duration-300 ease-in-out dark:bg-gray-800 "
-        {{ if false }}
-          class="transalte-x-0"
-        {{ else }}
-          class="translate-x-full"
-        {{ end }}
-      >
+        class="buttonsHolderDiv fixed right-0 top-24 z-10 h-full w-full transform bg-gray-200 opacity-95 duration-300 ease-in-out dark:bg-gray-800 translate-x-full" >
         <button
           type="button"
           aria-label="toggle modal"
           class="fixed h-full w-full cursor-auto focus:outline-none"
-          onClick={onToggleNav}
+          onClick="onToggleNav('{{.ViewId}}'); return false"
         ></button>
         <nav class="fixed mt-8 h-full">
           {{ $site := .Site }}
@@ -67,4 +42,44 @@
         </nav>
       </div>
     </div>
+    <script>
+      function onToggleNav(parentDivId) {
+        const parentDiv = document.getElementById(parentDivId)
+        const enablerSvg = parentDiv.querySelector(".enablerButtonSvg")
+        const pathForNavShown = parentDiv.querySelector(".pathForNavShown")
+        const pathForNavHidden = parentDiv.querySelector(".pathForNavHidden")
+        const buttonsHolderDiv = parentDiv.querySelector(".buttonsHolderDiv")
+        if (pathForNavShown) {
+          // then hide it
+          enablerSvg.innerHTML = `
+            <path
+              class = "pathForNavHidden"
+              fillRule="evenodd"
+              d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+              clipRule="evenodd"
+            />
+            `
+          buttonsHolderDiv.classList.remove("translate-x-0")
+          buttonsHolderDiv.classList.add("translate-x-full")
+        } else {
+          // then show it
+          enablerSvg.innerHTML = `
+            <path
+              class = "pathForNavShown"
+              fillRule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
+            `
+          buttonsHolderDiv.classList.remove("translate-x-full")
+          buttonsHolderDiv.classList.add("translate-x-0")
+        }
+        const show = false
+        if (show) {
+            document.body.style.overflow = 'auto'
+        } else {
+            document.body.style.overflow = 'hidden'
+        }
+      }
+    </script>
 {{ end }}
