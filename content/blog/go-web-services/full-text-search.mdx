@@ -1,7 +1,6 @@
 ---
 title: 'Part 9 - Full Text Search'
-date: 2023-07-08T11:29:10AM
-lastmod: '2022-08-08'
+date: 2024-06-24T11:29:10AM
 tags: ['full text search', 'elasticsearch', 'typesense']
 draft: true
 authors: ['Sri Panyam']
@@ -16,7 +15,7 @@ In this post (Part 9) of our [series on building web services in Go](/blog/go-we
 
 ## Current Architecture
 
-Postgres is a highly customizable database engine which rapidly onboards new indexing and querying capabilities via [extensions](https://www.postgresql.org/download/products/6-postgresql-extensions/).  It is no surprise that several such extensions exists (eg [tsvector](https://www.postgresql.org/docs/current/datatype-textsearch.html), [pgvector](https://github.com/pgvector/pgvector) for powering full text searches.  Our current architecture (without showing the frontend services) has Postgres powering both source-of-truth as well as querying capabilities:
+Postgres is a highly customizable database engine which rapidly onboards new indexing and querying capabilities via [extensions](https://www.postgresql.org/download/products/6-postgresql-extensions/).  It is no surprise that several such extensions exists (eg [tsvector](https://www.postgresql.org/docs/current/datatype-textsearch.html), [pgvector](https://github.com/pgvector/pgvector)) for powering full text searches.  Our current architecture (without showing the frontend services) has Postgres powering both source-of-truth as well as querying capabilities:
 
 <center> <img src="{{.Site.PathPrefix}}/static/images/part9/current-search-architecture.svg" height={600} /> </center>
 
@@ -24,7 +23,7 @@ Here our main entity related CRUD requests are handled (via services) by Postgre
 
 Another factor is horizontal scaling.   While databases can be sharded/partitioned horizontally (eg based on Entities' ID/Primary Keys) indexing introduces a few challenges.  Recall that indexes are "inverse" relationships.   While we can partition an entity based on its ID, the index entries that an entity maps to may fall on different shards (eg different physical hosts).   This means a write to a single record may need transactional writes to multiple index shards.   This may be very expensive as locking will be needed.   Even worse in such distributed systems node failures may mean writes can be very flaky and unreliable.
 
-**TOOD** - Link to [this](https://xata.io/blog/postgres-full-text-search-postgres-vs-elasticsearch) on how to do searches on PG itself when we are talking about small datasets or non distributed environments.
+**TODO** - Link to [this](https://xata.io/blog/postgres-full-text-search-postgres-vs-elasticsearch) on how to do searches on PG itself when we are talking about small datasets or non distributed environments.
 
 ## Proposed Architecture
 
@@ -35,12 +34,11 @@ As we scale our system we may be ok to tolerate delays between an entity update 
 Before making tradeoffs we need to clarify our expected experience from the services.  This will influence our choice of design, architecture and technologies.
 
 1. Individual entity updates must be fast, durable and consistent (eg Topic creations, Topic updates, message sends/deletions/listings  must succeed quickly with no data loss).
-2. System with horizontal scalability so we can isolate based on different fault domains.
+2. System must scale horizontally so we can grow based on different fault domains.
 3. Be easy to spin up horizontal tenants/cells
 4. Searching messages/topics (by different fields) must be scalable and fast but we want to vary how quickly an action in (1) is reflected in a respective search result.
 5. (Relatively) Easy to update/manage/configure search indexes and even rerun them with idempotency guarantees.
 6. (Optional) - Flexibility in swapping out query stores.
-
 
 Given this we can start with a proposed architecture that allows an index to build asynchronously:
 
@@ -49,7 +47,7 @@ Given this we can start with a proposed architecture that allows an index to bui
 The key parts of this flow are:
 
 1. Users create/update/delete entities 
-2. The respective services write entity updates the Source of Truth DB (postgres)
+2. The respective services write entities and update the Source of Truth DB (postgres)
 4. The datastore - through its change data capture (CDC) interface - sends entity change events to the Sync service (`DBSync`).
 5. DBSync updates the index entries by writing changed records to another datastore that is optimized for querying.
 
