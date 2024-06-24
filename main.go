@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	gfn "github.com/panyam/goutils/fn"
 	s3 "github.com/panyam/s3gen"
+	s3funcs "github.com/panyam/s3gen/funcs"
 )
 
 var (
@@ -310,7 +311,7 @@ func LeafPages(hideDrafts bool, orderby string, offset, count any) (out []*s3.Re
 			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
 		},
 		sortFunc,
-		s3.ToInt(offset), s3.ToInt(count))
+		s3funcs.ToInt(offset), s3funcs.ToInt(count))
 }
 
 func GetPagesByDate(hideDrafts bool, desc bool, offset, count any) (out []*s3.Resource) {
@@ -344,7 +345,7 @@ func GetPagesByDate(hideDrafts bool, desc bool, offset, count any) (out []*s3.Re
 				return sub < 0
 			}
 		},
-		s3.ToInt(offset), s3.ToInt(count))
+		s3funcs.ToInt(offset), s3funcs.ToInt(count))
 }
 
 func KeysForTagMap(tagmap map[string]int, orderby string) []string {
