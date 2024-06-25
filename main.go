@@ -96,9 +96,6 @@ type BasePage struct {
 }
 
 func (v *BasePage) InitView(s *s3.Site, parentView s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	v.BaseView.AddChildViews( /*&v.PageSEO, */ &v.HeaderView, v.BodyView, &v.FooterView)
 	v.BaseView.InitView(s, parentView)
 }
@@ -114,17 +111,11 @@ type AuthorLayout struct {
 }
 
 func (v *AuthorLayout) InitView(s *s3.Site, parentView s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	v.BaseView.AddChildViews(v.ContentView)
 	v.BaseView.InitView(s, parentView)
 }
 
 func (v *AuthorPage) InitView(s *s3.Site, parentView s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	if v.Template == "" {
 		v.Template = "BasePage.html"
 	}
@@ -139,9 +130,6 @@ type Header struct {
 }
 
 func (v *Header) InitView(s *s3.Site, pv s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	v.BaseView.AddChildViews(&v.ThemeSwitchView, &v.MobileNavView)
 	v.BaseView.InitView(s, pv)
 }
@@ -152,9 +140,6 @@ type MobileNav struct {
 }
 
 func (v *MobileNav) InitView(s *s3.Site, pv s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	v.ShowNav = true
 	v.BaseView.InitView(s, pv)
 }
@@ -166,9 +151,6 @@ type ThemeSwitch struct {
 }
 
 func (v *ThemeSwitch) InitView(s *s3.Site, pv s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	v.BaseView.InitView(s, pv)
 }
 
@@ -179,9 +161,6 @@ type Footer struct {
 }
 
 func (v *Footer) InitView(s *s3.Site, pv s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	v.BaseView.InitView(s, pv)
 }
 
@@ -194,9 +173,6 @@ type SEO struct {
 }
 
 func (v *SEO) InitView(s *s3.Site, pv s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	v.BaseView.InitView(s, pv)
 }
 
@@ -218,9 +194,6 @@ type PostPage struct {
 }
 
 func (v *PostPage) InitView(s *s3.Site, parentView s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	if v.Template == "" {
 		v.Template = "BasePage.html"
 	}
@@ -234,9 +207,6 @@ type PostSimple struct {
 }
 
 func (v *PostSimple) InitView(s *s3.Site, parentView s3.View) {
-	if v.Self == nil {
-		v.Self = v
-	}
 	v.BaseView.AddChildViews(v.ContentView)
 	v.BaseView.InitView(s, parentView)
 }
