@@ -1,0 +1,28 @@
+---
+title: 'Part 8.5 - OneHub Web - HTMX'
+date: 2024-06-06T11:29:10AM
+lastmod: '2022-06-08'
+tags: ['htmx', 'web', 'frontend', 'server side rendering']
+draft: true
+authors: ['Sri Panyam']
+page: PostPage
+location: "BodyView.ContentView"
+summary: A reimagining of the web frontend using HTMX and moving more of the rendering to the server side.
+---
+
+## Introduction
+
+In [Part 8](/blog/go-web-services/onehub-web/) we introduced a very basic web UI using NextJS.   It was over a year ago and sadly hasnt really aged well.  NextJS is pretty good and I had gotten deep into it but for somereason, coming back to it after a year it feels like the UI is rife with so many broken dependencies (and a general feeling of having forgotten it all with too much magic in the bundlers).   The same lack-of-familiarity does not seem to be an issue on the Go side.   So this part 2 of our UI deep-dive for Onehub is a reimagining of the WebUI in HTMX.  [HTMX](https://htmx.org) has a lot written about it so we wont reiterate it all.  But to give a very simple recap to serve as a motivation of this migration:
+
+1. There was (for me) something intuitive about creating a server side page with client JS "sprinkled on".  React/Next/Vue style of development felt backwards - ie you started with a full client side app and then make it work in a server side mode (with useState, useEffect bindings etc).
+2. There is no reason only data should be pushed/fetched from teh server.  Why not fragements of UI too and update the page as/when needed?
+3. Build artifacts from node projects seemed to come with a lot of bloat where as a single binary with the associated static files (even built) just felt light and snappy.
+
+This is no way a clear and deep comparison.  Also HTMX is not something you should *always* pick just for the sake of it.   Developer comfort, tooling, library support, eco system richness all should be evaluated.   For a full list of criteria see [this](https://semaphoreci.com/blog/htmx-react), [this](https://www.builder.io/blog/htmx-vs-react) and [this](https://strapi.io/blog/htmx-vs-react-comparing-both-libraries) and more.
+
+## Getting Started
+
+The Usual TL;DR - Code for this can be found this in the [PART8_WEBUI_HTMX branch](https://github.com/panyam/onehub/tree/PART8_WEBUI_HTMX).
+
+Just like in our Next based FE, we will create another service that will serve server-side rendered files for the various view related routes.   All the code for the HTMX FE will be in the `ohfe` subfolder in the onehub repo.  
+

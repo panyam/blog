@@ -73,10 +73,13 @@ func withLogger(handler http.Handler) http.Handler {
 	})
 }
 
+type SiteView = s3.View[*s3.Site]
+type BaseView = s3.BaseView[*s3.Site]
+
 // /////////// Page View related items
-func NewView(name string) (out s3.View) {
+func NewView(name string) (out SiteView) {
 	if name == "BasePage" || name == "" {
-		out = &BasePage{BaseView: s3.BaseView{Template: "BasePage.html"}}
+		out = &BasePage{BaseView: BaseView{Template: "BasePage.html"}}
 	}
 	if name == "PostPage" || name == "" {
 		out = &PostPage{}
@@ -88,14 +91,14 @@ func NewView(name string) (out s3.View) {
 }
 
 type BasePage struct {
-	s3.BaseView
+	BaseView
 	// PageSEO    SEO
 	HeaderView Header
-	BodyView   s3.View
+	BodyView   SiteView
 	FooterView Footer
 }
 
-func (v *BasePage) InitView(s *s3.Site, parentView s3.View) {
+func (v *BasePage) InitView(s *s3.Site, parentView SiteView) {
 	v.BaseView.AddChildViews( /*&v.PageSEO, */ &v.HeaderView, v.BodyView, &v.FooterView)
 	v.BaseView.InitView(s, parentView)
 }
@@ -106,16 +109,16 @@ type AuthorPage struct {
 }
 
 type AuthorLayout struct {
-	s3.BaseView
-	ContentView s3.View
+	BaseView
+	ContentView SiteView
 }
 
-func (v *AuthorLayout) InitView(s *s3.Site, parentView s3.View) {
+func (v *AuthorLayout) InitView(s *s3.Site, parentView SiteView) {
 	v.BaseView.AddChildViews(v.ContentView)
 	v.BaseView.InitView(s, parentView)
 }
 
-func (v *AuthorPage) InitView(s *s3.Site, parentView s3.View) {
+func (v *AuthorPage) InitView(s *s3.Site, parentView SiteView) {
 	if v.Template == "" {
 		v.Template = "BasePage.html"
 	}
@@ -124,59 +127,59 @@ func (v *AuthorPage) InitView(s *s3.Site, parentView s3.View) {
 }
 
 type Header struct {
-	s3.BaseView
+	BaseView
 	ThemeSwitchView ThemeSwitch
 	MobileNavView   MobileNav
 }
 
-func (v *Header) InitView(s *s3.Site, pv s3.View) {
+func (v *Header) InitView(s *s3.Site, pv SiteView) {
 	v.BaseView.AddChildViews(&v.ThemeSwitchView, &v.MobileNavView)
 	v.BaseView.InitView(s, pv)
 }
 
 type MobileNav struct {
-	s3.BaseView
+	BaseView
 	ShowNav bool
 }
 
-func (v *MobileNav) InitView(s *s3.Site, pv s3.View) {
+func (v *MobileNav) InitView(s *s3.Site, pv SiteView) {
 	v.ShowNav = true
 	v.BaseView.InitView(s, pv)
 }
 
 type ThemeSwitch struct {
-	s3.BaseView
+	BaseView
 	ThemeName   string
 	IsDarkTheme bool
 }
 
-func (v *ThemeSwitch) InitView(s *s3.Site, pv s3.View) {
+func (v *ThemeSwitch) InitView(s *s3.Site, pv SiteView) {
 	v.BaseView.InitView(s, pv)
 }
 
 type Footer struct {
-	s3.BaseView
+	BaseView
 	ThemeName   string
 	IsDarkTheme bool
 }
 
-func (v *Footer) InitView(s *s3.Site, pv s3.View) {
+func (v *Footer) InitView(s *s3.Site, pv SiteView) {
 	v.BaseView.InitView(s, pv)
 }
 
 /*
 type SEO struct {
-	s3.BaseView
+	BaseView
 	OgType   string
 	OgImages []string
 	TwImage  string
 }
 
-func (v *SEO) InitView(s *s3.Site, pv s3.View) {
+func (v *SEO) InitView(s *s3.Site, pv SiteView) {
 	v.BaseView.InitView(s, pv)
 }
 
-func (v *s3.PageSEO) InitView(s *s3.Site, pv s3.View) {
+func (v *s3.PageSEO) InitView(s *s3.Site, pv SiteView) {
 	smd := v.Site.SiteMetadata
 	SiteUrl := GetProp(v.Site.SiteMetadata, "SiteUrl").(string)
 	SocialBanner:= GetProp(v.Site.SiteMetadata, "SocialBanner").(string)
@@ -193,7 +196,7 @@ type PostPage struct {
 	BodyView PostSimple
 }
 
-func (v *PostPage) InitView(s *s3.Site, parentView s3.View) {
+func (v *PostPage) InitView(s *s3.Site, parentView SiteView) {
 	if v.Template == "" {
 		v.Template = "BasePage.html"
 	}
@@ -202,11 +205,11 @@ func (v *PostPage) InitView(s *s3.Site, parentView s3.View) {
 }
 
 type PostSimple struct {
-	s3.BaseView
-	ContentView s3.View
+	BaseView
+	ContentView SiteView
 }
 
-func (v *PostSimple) InitView(s *s3.Site, parentView s3.View) {
+func (v *PostSimple) InitView(s *s3.Site, parentView SiteView) {
 	v.BaseView.AddChildViews(v.ContentView)
 	v.BaseView.InitView(s, parentView)
 }
