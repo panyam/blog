@@ -23,7 +23,7 @@ location: "BodyView"
   <div class="container py-12">
     <div class="-m-4 flex flex-wrap">
       {{ range $projects }}
-        {{ template "Card" dict "Card" . "Site" $.Site }}
+        {{ template "Card" dict "Card" . "Site" $.Context }}
       {{ end }}
     </div>
   </div>

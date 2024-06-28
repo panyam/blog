@@ -27,7 +27,7 @@ location: "BodyView"
   {{ $filteredPosts := (Slice $posts ($offset) $pageSize ) }}
   {{ template "PostList" dict
         "Title" "AllPosts"
-        "Site" .Site
+        "Site" .Context
         "PageNum" $currPage
         "PageSize" $pageSize
         "NumPages" $numPages

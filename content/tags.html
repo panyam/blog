@@ -24,7 +24,7 @@ location: "BodyView"
       {{ range $index, $tag := $sortedTags }}
           <div class="mb-2 mr-5 mt-2">
             {{ template "Tag" dict "text" $tag }}
-            <a href="{{$.Site.PathPrefix}}/tags/{{$tag}}"
+            <a href="{{$.Context.PathPrefix}}/tags/{{$tag}}"
               class="-ml-2 text-sm font-semibold uppercase text-gray-600 dark:text-gray-300"
             >({{ index $tagmap $tag }})</a>
           </div>

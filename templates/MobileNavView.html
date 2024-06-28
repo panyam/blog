@@ -30,7 +30,7 @@
           onClick="onToggleNav('{{.ViewId}}'); return false"
         ></button>
         <nav class="fixed mt-8 h-full">
-          {{ $site := .Site }}
+          {{ $site := .Context }}
           {{ range (json "HeaderNavLinks.json" "") }}
               <div class="px-12 py-4">
                 {{ $headerUrl := ($site.PathRelUrl .Href ) }}

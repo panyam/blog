@@ -2,16 +2,16 @@
   {{ $siteMetadata := (json "SiteMetadata.json" "") }}
   <header class="flex items-center justify-between py-10">
     <div>
-      <a href="{{.Site.PathPrefix}}/" aria-label={{$siteMetadata.HeaderTitle}}>
+      <a href="{{.Context.PathPrefix}}/" aria-label={{$siteMetadata.HeaderTitle}}>
         <div class="flex items-center justify-between">
-          <div class="mr-3"> <img src="{{.Site.PathPrefix}}/static/images/logo.svg" /></div>
+          <div class="mr-3"> <img src="{{.Context.PathPrefix}}/static/images/logo.svg" /></div>
           <div class="hidden h-6 text-2xl font-semibold sm:block">{{$siteMetadata.HeaderTitle}}</div>
         </div>
       </a>
     </div>
     <div class="flex items-center text-base leading-5">
       <div class="hidden sm:block">
-        {{ $site := .Site }}
+        {{ $site := .Context }}
         {{ range (json "HeaderNavLinks.json" "") }}
           {{ $headerUrl := ($site.PathRelUrl .Href ) }}
           <a href={{ $headerUrl }} class="p-1 font-medium text-gray-900 dark:text-gray-100 sm:p-4">

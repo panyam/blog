@@ -31,7 +31,7 @@ We can have the best of both worlds by enacting a proxy in front our service tha
 
 A very high level image (courtesy of [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)) shows the final wrapper architecture around our service:
 
-<img src="{{.Site.PathPrefix}}/static/images/grpc_architecture_diagram.svg" width={800} height={400} />
+<img src="{{.Context.PathPrefix}}/static/images/grpc_architecture_diagram.svg" width={800} height={400} />
 
 This approach has several benefits:
 
@@ -55,7 +55,7 @@ protoc --go_out=$OUT_DIR --go_opt=paths=source_relative               \
 
 The magic of the protoc plugin is that it does not perform any generation on its own but orchestrates plugins by passing the a parsed Abstract Syntax Tree (AST) across plugins. This is illustrated below:
 
-<img src="{{.Site.PathPrefix}}/static/images/protoc_plugin_flow.png" width={800} height={400} />
+<img src="{{.Context.PathPrefix}}/static/images/protoc_plugin_flow.png" width={800} height={400} />
 
 - Step 0 - Input files (in the above case onehub/v1/\*.proto) are passed to the protoc plugin
 - Step 1 - The protoc tool first parses and validate all proto files.
