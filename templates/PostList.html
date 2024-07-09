@@ -4,6 +4,7 @@
       <h1 class="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
         {{.Title}}
       </h1>
+      {{ if .ShowSearchBar }}
       <div class="relative max-w-lg">
         <input
           aria-label="Search articles"
@@ -27,6 +28,7 @@
           />
         </svg>
       </div>
+      {{ end }}
     </div>
     <ul>
       {{ if not .FilteredPosts }}No post found{{ end }}

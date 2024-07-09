@@ -14,6 +14,7 @@ import (
 	gfn "github.com/panyam/goutils/fn"
 	s3 "github.com/panyam/s3gen"
 	s3funcs "github.com/panyam/s3gen/funcs"
+	s3views "github.com/panyam/s3gen/views"
 )
 
 var (
@@ -73,8 +74,8 @@ func withLogger(handler http.Handler) http.Handler {
 	})
 }
 
-type SiteView = s3.View[*s3.Site]
-type BaseView = s3.BaseView[*s3.Site]
+type SiteView = s3views.View[*s3.Site]
+type BaseView = s3views.BaseView[*s3.Site]
 
 // /////////// Page View related items
 func NewView(name string) (out SiteView) {
@@ -217,8 +218,10 @@ func (v *PostSimple) InitView(s *s3.Site, parentView SiteView) {
 // //////////// Functions for our site
 func TemplateFunctions() template.FuncMap {
 	return template.FuncMap{
+		"Replace":       strings.Replace,
 		"LeafPages":     LeafPages,
 		"PagesByDate":   GetPagesByDate,
+		"PagesByTag":    GetPagesByTag,
 		"AllTags":       GetAllTags,
 		"KeysForTagMap": KeysForTagMap,
 		"AllRes": func() []*s3.Resource {
@@ -284,6 +287,50 @@ func LeafPages(hideDrafts bool, orderby string, offset, count any) (out []*s3.Re
 			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
 		},
 		sortFunc,
+		s3funcs.ToInt(offset), s3funcs.ToInt(count))
+}
+
+func GetPagesByTag(tag string, hideDrafts bool, desc bool, offset, count any) (out []*s3.Resource) {
+	return site.ListResources(
+		func(res *s3.Resource) bool {
+			if res.IsParametric || !(res.NeedsIndex || res.IsIndex) {
+				return false
+			}
+
+			if hideDrafts {
+				draft := res.FrontMatter().Data["draft"]
+				if draft == true {
+					return false
+				}
+			}
+			tags := res.DestPage.Tags
+			for _, t := range tags {
+				if t == tag {
+					return true
+				}
+				if strings.Replace(t, " ", "-", -1) == tag {
+					return true
+				}
+			}
+
+			return false
+			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
+		},
+		func(res1, res2 *s3.Resource) bool {
+			d1 := res1.DestPage
+			d2 := res2.DestPage
+			if d1 == nil || d2 == nil {
+				log.Println("D1: ", res1.FullPath)
+				log.Println("D2: ", res2.FullPath)
+				return false
+			}
+			sub := res1.DestPage.CreatedAt.Sub(res2.DestPage.CreatedAt)
+			if desc {
+				return sub > 0
+			} else {
+				return sub < 0
+			}
+		},
 		s3funcs.ToInt(offset), s3funcs.ToInt(count))
 }
 

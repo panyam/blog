@@ -9,7 +9,9 @@ location: "BodyView"
 ---
 
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
+
   {{ $posts := (PagesByDate $siteMetadata.HideDrafts true 0 -1) }}
+
   {{ $tagmap := AllTags $posts }}
 
   <div class="flex flex-col items-start justify-start divide-y divide-gray-200 dark:divide-gray-700 md:mt-24 md:flex-row md:items-center md:justify-center md:space-x-6 md:divide-y-0">

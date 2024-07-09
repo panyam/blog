@@ -1,0 +1,32 @@
+---
+title: Tags
+summary: Things I blog about
+date: 2024-03-26T00:00:00AM
+draft: false
+images: []
+authors: ['Sri Panyam']
+location: "BodyView"
+---
+
+{{ $siteMetadata := (json "SiteMetadata.json" "") }}
+
+{{ if eq .Res.CurrentParamName "" }}
+  {{ $posts := (PagesByDate $siteMetadata.HideDrafts true 0 -1) }}
+  {{ $tagmap := AllTags $posts }}
+  {{ $sortedTags := KeysForTagMap $tagmap "-count" }}
+  {{ range $sortedTags }}
+    {{ $.Res.AddParam (Replace . " " "-" -1 )  }}
+  {{ end }}
+{{ else }}
+  {{ $currTag := .Res.CurrentParamName }}
+  {{ $posts := (PagesByTag $currTag $siteMetadata.HideDrafts true 0 -1) }}
+  {{ $title := Join " " "Posts for" $currTag }}
+  {{ template "PostList" dict
+        "Title" $title
+        "Site" .Context
+        "PageNum" 0
+        "PageSize" 100
+        "NumPages" -1
+        "FilteredPosts" $posts }}
+{{ end }}
+
