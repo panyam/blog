@@ -308,7 +308,7 @@ func GetPagesByTag(tag string, hideDrafts bool, desc bool, offset, count any) (o
 				if t == tag {
 					return true
 				}
-				if strings.Replace(t, " ", "-", -1) == tag {
+				if s3funcs.Slugify(t) == tag {
 					return true
 				}
 			}

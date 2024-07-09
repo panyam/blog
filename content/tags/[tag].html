@@ -15,14 +15,14 @@ location: "BodyView"
   {{ $tagmap := AllTags $posts }}
   {{ $sortedTags := KeysForTagMap $tagmap "-count" }}
   {{ range $sortedTags }}
-    {{ $.Res.AddParam (Replace . " " "-" -1 )  }}
+    {{ $.Res.AddParam (Slugify . )  }}
   {{ end }}
 {{ else }}
   {{ $currTag := .Res.CurrentParamName }}
   {{ $posts := (PagesByTag $currTag $siteMetadata.HideDrafts true 0 -1) }}
   {{ $title := Join " " "Posts for" $currTag }}
   {{ template "PostList" dict
-        "Title" $title
+        "Title" $currTag
         "Site" .Context
         "PageNum" 0
         "PageSize" 100
