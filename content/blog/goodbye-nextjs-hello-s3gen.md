@@ -166,13 +166,5 @@ Just serve the static files from the static folder and everything else via our m
 
 ## And more
 
-There is a lot more to S3Gen.  Head over to the [S3Gen documentation page](https://pkg.go.dev/github.com/panyam/s3gen) to learn more about S3Gen's capabilities and what else is planned for the future.
-
-
-
-
-
-
-
-
+There is a lot more to S3Gen.  Head over to the [S3Gen documentation page](https://pkg.go.dev/github.com/panyam/s3gen).  The documentation is still WIP but it will be constantly updated so you can learn more about S3Gen's capabilities and what else is planned for the future.
 
