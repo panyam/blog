@@ -5,8 +5,8 @@ draft: false
 images: []
 authors: ['Sri Panyam']
 hideInIndex: true
+templateParams: { BodyTemplateName: "BaseBody" } 
 ---
-
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 {{ $pageSize := Int $siteMetadata.MaxPostsPerPage }}
 {{ $allPosts := PagesByDate $siteMetadata.HideDrafts true 0 -1 }}
