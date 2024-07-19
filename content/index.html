@@ -4,7 +4,6 @@ date: 2024-03-26T00:00:00AM
 draft: false
 images: []
 authors: ['Sri Panyam']
-location: "BodyView"
 ---
 
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
@@ -30,26 +29,26 @@ location: "BodyView"
             <dl>
              <dt class="sr-only">Published on</dt>
              <dd class="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-               <time dateTime={{$post.DestPage.CreatedAt}}>{{ $post.DestPage.CreatedAt.Format "Mon Jan 2, 2006" }}</time>
+               <time dateTime={{$post.Page.CreatedAt}}>{{ $post.Page.CreatedAt.Format "Mon Jan 2, 2006" }}</time>
              </dd>
            </dl>
            <div class="space-y-5 xl:col-span-3">
              <div class="space-y-6">
                <div>
                  <h2 class="text-2xl font-bold leading-8 tracking-tight">
-                   <a href="{{$post.DestPage.Link}}"
-                     class="text-gray-900 dark:text-gray-100">{{$post.DestPage.Title}}</a>
+                   <a href="{{$post.Page.Link}}"
+                     class="text-gray-900 dark:text-gray-100">{{$post.Page.Title}}</a>
                   </h2>
                   <div class="flex flex-wrap">
-                    {{ range $post.DestPage.Tags }}{{ template "Tag" dict "text" . }}{{ end }}
+                    {{ range $post.Page.Tags }}{{ template "Tag" dict "text" . }}{{ end }}
                   </div>
                 </div>
-                <div class="prose max-w-none text-gray-500 dark:text-gray-400">{{$post.DestPage.Summary}}</div>
+                <div class="prose max-w-none text-gray-500 dark:text-gray-400">{{$post.Page.Summary}}</div>
               </div>
               <div class="text-base font-medium leading-6">
-                <a href="{{$post.DestPage.Link}}"
+                <a href="{{$post.Page.Link}}"
                   class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                  aria-label="Read {{$post.DestPage.Title}}">Read more &rarr;</a>
+                  aria-label="Read {{$post.Page.Title}}">Read more &rarr;</a>
               </div>
             </div>
           </div>
@@ -63,7 +62,7 @@ location: "BodyView"
 {{ if gt (len $posts) $maxPosts }}
 <div class="flex justify-end text-base font-medium leading-6">
   <a
-      href="{{.Context.PathPrefix}}/blog"
+      href="{{.Site.PathPrefix}}/blog"
     class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
     aria-label="all posts"
   >

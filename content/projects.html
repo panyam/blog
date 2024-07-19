@@ -5,7 +5,6 @@ date: 2024-03-26T00:00:00AM
 draft: false
 images: []
 authors: ['Sri Panyam']
-location: "BodyView"
 ---
 
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
@@ -23,7 +22,7 @@ location: "BodyView"
   <div class="container py-12">
     <div class="-m-4 flex flex-wrap">
       {{ range $projects }}
-        {{ template "Card" dict "Card" . "Site" $.Context }}
+        {{ template "Card" dict "Card" . "Site" $.Site }}
       {{ end }}
     </div>
   </div>

@@ -6,8 +6,7 @@ tags: ['grpc', 'interceptors', 'unary', 'streaming', 'middleware']
 draft: false
 summary: 'gRPC interceptors provide powerful middleware facilities in a standardized manner to grpc clients and services in both unary and streaming mode.'
 authors: ['Sri Panyam']
-page: PostPage
-location: "BodyView.ContentView"
+templateParams: { BodyTemplateName: "PostSimple" }
 ---
 
 ## Introduction
@@ -197,7 +196,7 @@ func startGatewayServer(grpc_addr string, gw_addr string) {
     // Step 1 - Add extra options to NewServeMux
     //
     mux := runtime.NewServeMux(
-      runtime.WithMetadata(func (ctx context.Context, request *http.Request) metadata.MD {
+      runtime.WithMetadata(func (ctx context.Site, request *http.Request) metadata.MD {
 
         //
         // Step 2 - Extend the context
@@ -239,7 +238,7 @@ Going back to our startGatewayServer method - once we are past the ServeMux, it 
 A client interceptor can be added as an additional DialOption!  That is it.   A [unary client interceptor](https://pkg.go.dev/google.golang.org/grpc#UnaryClientInterceptor) is just a function with the following signature:
 
 ```go showLineNumbers
-type UnaryClientInterceptor func(ctx context.Context,
+type UnaryClientInterceptor func(ctx context.Site,
       method string,        // Method to be invoked on the service (eg GetTopics)
       req,                  // Request payload  (eg GetTopicsRequest)
       reply interface{},    // Response payload (eg GetTopicsResponse)
@@ -253,7 +252,7 @@ The signature is hopefully self explanatory.  The key parameter is the `invoker`
 Our client interceptor is simple.  It will call the invoker if username/password are present otherwise will throw an error:
 
 ```go showLineNumbers
-func EnsureAuthExists(ctx context.Context,
+func EnsureAuthExists(ctx context.Site,
 	method string, // Method to be invoked on the service (eg GetTopics)
 	req, // Request payload  (eg GetTopicsRequest)
 	reply interface{}, // Response payload (eg GetTopicsResponse)
@@ -333,7 +332,7 @@ To do this we will add (as you guessed) a [UnaryServerInterceptor](https://pkg.g
 
 ```go showLineNumbers
 type UnaryServerInterceptor func(
-        ctx context.Context,
+        ctx context.Site,
         req interface{},
         info *UnaryServerInfo,
         handler UnaryHandler
@@ -348,7 +347,7 @@ This looks very similar to a UnaryClientInterceptor.   The important parameters 
 For our server side auth - we shall add a basic interceptor:
 
 ```go showLineNumbers 
-func EnsureAuthIsValid(ctx context.Context,
+func EnsureAuthIsValid(ctx context.Site,
 	req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (resp interface{}, err error) {
@@ -413,7 +412,7 @@ Up until now our service methods have been shielded so that they wont even be ca
 This is quite simple.  Let us take the `CreateTopic` method:
 
 ```go showLineNumbers 
-func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicRequest) (resp *protos.CreateTopicResponse, err error) {
+func (s *TopicService) CreateTopic(ctx context.Site, req *protos.CreateTopicRequest) (resp *protos.CreateTopicResponse, err error) {
 	resp = &protos.CreateTopicResponse{}
 	resp.Topic = s.EntityStore.Create(req.Topic)
 	return
@@ -423,7 +422,7 @@ func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicR
 It can now use the auth info passed in via the interceptors:
 
 ```go showLineNumbers 
-func (s *TopicService) CreateTopic(ctx context.Context, req *protos.CreateTopicRequest) (resp *protos.CreateTopicResponse, err error) {
+func (s *TopicService) CreateTopic(ctx context.Site, req *protos.CreateTopicRequest) (resp *protos.CreateTopicResponse, err error) {
 	resp = &protos.CreateTopicResponse{}
   req.Topic.CreatorId = GetAuthedUser(ctx)
   if req.Topic.CreatorId == "" {

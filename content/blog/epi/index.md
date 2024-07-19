@@ -5,18 +5,18 @@ tags: ['elements of programming interviews', 'algorithms', 'programming', 'haske
 draft: false
 images: []
 authors: ['Sri Panyam']
-page: PostPage
-location: "BodyView.ContentView"
 ---
 
 This is an index to the problems from THE book being solved in haskell (and counting). Some of the trivial ones will only be attempted on demand!
 
 ## Chapter 5 – Primitive Types
+
+{{ $siteMetadata := (json "SiteMetadata.json" "") }}
   
 {{ $posts := ( PagesByDate $siteMetadata.HideDrafts false 0 -1 ) }}
 
-{{ range $posts }}{{ if HasPrefix .DestPage.Title  "EPI 5." }}<p><a href="{{.DestPage.Link}}"><span>{{.DestPage.Title}}</span></a></p>{{ end }}{{ end }}
+{{ range $posts }}{{ if HasPrefix .Page.Title  "EPI 5." }}<p><a href="{{.Page.Link}}"><span>{{.Page.Title}}</span></a></p>{{ end }}{{ end }}
 
 ## Chapter 6 – Strings and Arrays
 
-{{ range $posts }}{{ if HasPrefix .DestPage.Title  "EPI 6." }}<p><a href="{{.DestPage.Link}}"><span>{{.DestPage.Title}}</span></a></p>{{ end }}{{ end }}
+{{ range $posts }}{{ if HasPrefix .Page.Title  "EPI 6." }}<p><a href="{{.Page.Link}}"><span>{{.Page.Title}}</span></a></p>{{ end }}{{ end }}

@@ -30,13 +30,23 @@ var site = s3.Site{
 	StaticFolders: []string{
 		"/static/", "static",
 	},
+	DefaultPageTemplate: s3.PageTemplate{
+		Name:   "BasePage.html",
+		Params: map[any]any{"BodyTemplateName": "BaseBody"},
+	},
+	GetTemplate: func(res *s3.Resource, out *s3.PageTemplate) {
+		relpath := res.RelPath()
+		if strings.HasPrefix(relpath, "/blog/") {
+			out.Params = map[any]any{"BodyTemplateName": "PostSimple"}
+		}
+	},
 }
 
 func main() {
 	flag.Parse()
 	if os.Getenv("APP_ENV") != "production" {
 		site.CommonFuncMap = TemplateFunctions()
-		site.NewViewFunc = NewView
+		// site.NewViewFunc = NewView
 		site.Watch()
 	}
 
@@ -250,8 +260,8 @@ func LeafPages(hideDrafts bool, orderby string, offset, count any) (out []*s3.Re
 			orderby = orderby[1:]
 		}
 		sortFunc = func(res1, res2 *s3.Resource) bool {
-			d1 := res1.DestPage
-			d2 := res2.DestPage
+			d1 := res1.Page.(*s3.DefaultPage)
+			d2 := res2.Page.(*s3.DefaultPage)
 			if d1 == nil || d2 == nil {
 				log.Println("D1: ", res1.FullPath)
 				log.Println("D2: ", res2.FullPath)
@@ -259,7 +269,7 @@ func LeafPages(hideDrafts bool, orderby string, offset, count any) (out []*s3.Re
 			}
 			sub := 0
 			if orderby == "date" {
-				sub = int(res1.DestPage.CreatedAt.Sub(res2.DestPage.CreatedAt))
+				sub = int(d1.CreatedAt.Sub(d2.CreatedAt))
 			} else if orderby == "title" {
 				sub = strings.Compare(d1.Title, d2.Title)
 			}
@@ -303,7 +313,7 @@ func GetPagesByTag(tag string, hideDrafts bool, desc bool, offset, count any) (o
 					return false
 				}
 			}
-			tags := res.DestPage.Tags
+			tags := res.Page.(*s3.DefaultPage).Tags
 			for _, t := range tags {
 				if t == tag {
 					return true
@@ -317,14 +327,14 @@ func GetPagesByTag(tag string, hideDrafts bool, desc bool, offset, count any) (o
 			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
 		},
 		func(res1, res2 *s3.Resource) bool {
-			d1 := res1.DestPage
-			d2 := res2.DestPage
+			d1 := res1.Page.(*s3.DefaultPage)
+			d2 := res2.Page.(*s3.DefaultPage)
 			if d1 == nil || d2 == nil {
 				log.Println("D1: ", res1.FullPath)
 				log.Println("D2: ", res2.FullPath)
 				return false
 			}
-			sub := res1.DestPage.CreatedAt.Sub(res2.DestPage.CreatedAt)
+			sub := res1.Page.(*s3.DefaultPage).CreatedAt.Sub(res2.Page.(*s3.DefaultPage).CreatedAt)
 			if desc {
 				return sub > 0
 			} else {
@@ -351,14 +361,14 @@ func GetPagesByDate(hideDrafts bool, desc bool, offset, count any) (out []*s3.Re
 			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
 		},
 		func(res1, res2 *s3.Resource) bool {
-			d1 := res1.DestPage
-			d2 := res2.DestPage
+			d1 := res1.Page.(*s3.DefaultPage)
+			d2 := res2.Page.(*s3.DefaultPage)
 			if d1 == nil || d2 == nil {
 				log.Println("D1: ", res1.FullPath)
 				log.Println("D2: ", res2.FullPath)
 				return false
 			}
-			sub := res1.DestPage.CreatedAt.Sub(res2.DestPage.CreatedAt)
+			sub := d1.CreatedAt.Sub(d2.CreatedAt)
 			if desc {
 				return sub > 0
 			} else {

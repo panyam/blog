@@ -5,8 +5,7 @@ tags: ['grpc', 'delve', 'live reload', 'air', 'debugging', 'docker', 'Dockerfile
 draft: false
 summary: 'We held off on packaging our main app in the docker-compose file since go binaries could not be live reloaded (on file changes) by default.  We will use the popular Air framework to enable live reloading of our service on file changes and then package this via docker.  We will also enable remote debugging of these services running in Docker'
 authors: ['Sri Panyam']
-page: PostPage
-location: "BodyView.ContentView"
+templateParams: { BodyTemplateName: "PostSimple" }
 ---
 
 ## Introduction

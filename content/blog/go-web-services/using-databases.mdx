@@ -86,7 +86,7 @@ onehub-postgres-1  | 2023-07-28 22:52:32.253 UTC [1] LOG:  database system is re
 
 The OneHub docker application should now show up in docker desktop and should look something like this:
 
-<img src="{{.Context.PathPrefix}}/static/images/docker-desktop-postgres.png" width={800} height={400} />
+<img src="{{.Site.PathPrefix}}/static/images/docker-desktop-postgres.png" width={800} height={400} />
 
 
 ### (Optional) Setup a DB Admin Interface
@@ -119,15 +119,15 @@ Now you can simply visit the [pgadmin web console](http://localhost:5480/browser
 
 1. On the left-side Object Explorer paanel, (Right) Click on `Servers >> Register >> Server...` and give a name to your server ("postgres")
 
-<img src="{{.Context.PathPrefix}}/static/images/docker-pgadmin-register.png" width={800}/>
+<img src="{{.Site.PathPrefix}}/static/images/docker-pgadmin-register.png" width={800}/>
 
 2. In the Connection tab use the host name "postgres" and set names of the database, username and password as set in the .env file for the POSTGRES_DB, POSTGRES_USER and POSTGRES_PASSWORD variables respectively.
 
-<img src="{{.Context.PathPrefix}}/static/images/docker-pgadmin-connection.png" width={800}/>
+<img src="{{.Site.PathPrefix}}/static/images/docker-pgadmin-connection.png" width={800}/>
 
 3. Click Save and off you go!
 
-<img src="{{.Context.PathPrefix}}/static/images/docker-pgadmin-newserver.png" width={800}/>
+<img src="{{.Site.PathPrefix}}/static/images/docker-pgadmin-newserver.png" width={800}/>
 
 ### Introducing Object Relational Mappers (ORMs)
 
@@ -199,7 +199,7 @@ We now have DB models.  We could at this point directly call the GORM apis from 
 
 Database use can be thought off as being in two extreme spectrums:
 
-<img src="{{.Context.PathPrefix}}/static/images/dbspectrums.png" width={800}/>
+<img src="{{.Site.PathPrefix}}/static/images/dbspectrums.png" width={800}/>
 
 On the one hand a "database" can be treated as a better filesystem with objects written by some key to prevent dataloss.   Any structure or consitency guarantees or optimization or indexes are fully the responsibility of the application layer.   This gets very complicated, error-prone and hard *very* fast.
 

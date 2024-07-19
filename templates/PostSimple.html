@@ -13,19 +13,19 @@
               <div>
                 <dt class="sr-only">Published on</dt>
                 <dd class="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                  {{ .GetPage.CreatedAt.Format "Mon Jan 2, 2006" }}
+                  {{ .Res.Page.CreatedAt.Format "Mon Jan 2, 2006" }}
                 </dd>
               </div>
             </dl>
             <div>
-              {{ template "PageTitle" dict "Title" .GetPage.Title }}
+              {{ template "PageTitle" dict "Title" .Res.Page.Title }}
             </div>
           </div>
         </header>
         <div class="divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0 " style="gridTemplateRows: 'auto 1fr'">
           <div class="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
             <article class="prose max-w-none pb-8 pt-10 dark:prose-dark">
-              {{ RenderView .ContentView  }}
+              {{ .Content | HTML }}
             </article >
           </div>
           {{/*{{ template "Comments" dict "frontMatter" .Content }}*/}}

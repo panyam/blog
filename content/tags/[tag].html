@@ -10,15 +10,13 @@ location: "BodyView"
 
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 
-{{ if eq .Res.CurrentParamName "" }}
+{{ if eq .Res.ParamName "" }}
   {{ $posts := (PagesByDate $siteMetadata.HideDrafts true 0 -1) }}
   {{ $tagmap := AllTags $posts }}
   {{ $sortedTags := KeysForTagMap $tagmap "-count" }}
-  {{ range $sortedTags }}
-    {{ $.Res.AddParam (Slugify . )  }}
-  {{ end }}
+  {{ range $sortedTags }}{{ $t := $.Res.AddParam (Slugify . )  }}{{ end }}
 {{ else }}
-  {{ $currTag := .Res.CurrentParamName }}
+  {{ $currTag := .Res.ParamName }}
   {{ $posts := (PagesByTag $currTag $siteMetadata.HideDrafts true 0 -1) }}
   {{ $title := Join " " "Posts for" $currTag }}
   {{ template "PostList" dict

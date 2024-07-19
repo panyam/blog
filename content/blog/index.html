@@ -5,8 +5,6 @@ draft: false
 images: []
 authors: ['Sri Panyam']
 hideInIndex: true
-page: BasePage
-location: "BodyView"
 ---
 
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
@@ -16,7 +14,7 @@ location: "BodyView"
 {{ $numPages := Ceil (Div ( len $allPosts ) $pageSize) }}
 {{ template "PostList" dict
       "Title" "AllPosts"
-      "Site" .Context
+      "Site" .Site
       "PageNum" 1
       "PageSize" $pageSize
       "NumPages" $numPages

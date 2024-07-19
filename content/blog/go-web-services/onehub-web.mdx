@@ -5,8 +5,7 @@ lastmod: '2022-06-08'
 tags: ['nextjs', 'web', 'frontend']
 draft: false
 authors: ['Sri Panyam']
-page: PostPage
-location: "BodyView.ContentView"
+templateParams: { BodyTemplateName: "PostSimple" }
 summary: A frontend/UI is a very important feature of an application accessible by users.   In this post we will show a simple frontend and evolve our service and setup to incorporate this new component going forward
 ---
 
@@ -30,7 +29,7 @@ For a chat application a UI is a no-brainer.  We will build a (super simple) Web
 
 Below is our current architecture:
 
-<center> <img src="{{.Context.PathPrefix}}/static/images/current-architecture.svg" width={800} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/current-architecture.svg" width={800} /> </center>
 
 * Currently the TopicService, MessageService and the gRPC Gateway all run within the same process (exposed in [cmd/server.go](https://github.com/panyam/onehub/blob/PART8_WEBUI/cmd/server.go)).   We have the flexibility to seperate them out if/when desired (a good trigger would be when we need to separate the data into their own datastores).
 * The grpc-gateway process accepts API requests (over http) and routes these to appropriate services (topics or messages).
@@ -40,7 +39,7 @@ Below is our current architecture:
 What we want is a new frontend (FE) service that only serves front end - either staticaly or as Server Side Rendered pages.  And this FE service would make (CRUD) API calls to Topics, Messages and other entities.  This leads to:
 
 <center>
-<img src="{{.Context.PathPrefix}}/static/images/proposed-architecture.svg" width={800} />
+<img src="{{.Site.PathPrefix}}/static/images/proposed-architecture.svg" width={800} />
 </center>
 
 
@@ -136,7 +135,7 @@ npm run dev
 
 Pointing your browser [here](http://localhost:4000/nextfe) should show a basic UI like this:
 
-<center> <img src="{{.Context.PathPrefix}}/static/images/part8/frontend-screenshot.png" width={800} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/part8/frontend-screenshot.png" width={800} /> </center>
 
 Not much going on there clearly.  This is currently running outside our docker compose environment.  Let us move it into our docker compose setup so we have a single entry point.
 
@@ -181,24 +180,24 @@ We are still using our fake users (where password == userid + "123") so you can 
 
 To login, click on signin and put in a user ID - This can be anything you desire as long as it is a combination of numbers and letters (only):
 
-<center> <img src="{{.Context.PathPrefix}}/static/images/part8/usecase-signin.png" width={800} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/part8/usecase-signin.png" width={800} /> </center>
 
 Since this user does not yet exist you will also be prompted for your Fullname to display in the future:
 
 
-<center> <img src="{{.Context.PathPrefix}}/static/images/part8/usecase-fullname.png" width={800} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/part8/usecase-fullname.png" width={800} /> </center>
 
 You are now ready to go ahead and chat.   Create a couple of topics by clicking on the "New" button the Topics panel (on the left).
 
-<center> <img src="{{.Context.PathPrefix}}/static/images/part8/creating-a-topic.png" width={800} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/part8/creating-a-topic.png" width={800} /> </center>
 
 And after creating a few more topics:
 
-<center> <img src="{{.Context.PathPrefix}}/static/images/part8/topic-listing.png" width={800} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/part8/topic-listing.png" width={800} /> </center>
 
 And off you go sending messages (as different users):
 
-<center> <img src="{{.Context.PathPrefix}}/static/images/part8/sending-messages.png" width={800} /> </center>
+<center> <img src="{{.Site.PathPrefix}}/static/images/part8/sending-messages.png" width={800} /> </center>
 
 ## Conclusion
 

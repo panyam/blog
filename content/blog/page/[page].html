@@ -4,30 +4,24 @@ date: 2024-03-26T00:00:00AM
 draft: false
 images: []
 authors: ['Sri Panyam']
-page: BasePage
-location: "BodyView"
 ---
-
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 {{ $pageSize := Int $siteMetadata.MaxPostsPerPage }}
 {{ $posts := LeafPages $siteMetadata.HideDrafts "-date" 0 -1 }}
 {{ $d := Div ( len $posts ) $pageSize }}
 {{ $numPages := Ceil ($d) }}
-
-{{ if eq .Res.CurrentParamName "" }}
-  NumPages, Len: {{$numPages}} {{len $posts }}
-  {{ range (IntList 1 $numPages 1) }}
-    {{ $.Res.AddParam (String .) }}
-  {{ end }}
+{{ if eq .Res.ParamName "" }}
+{{/*NumPages, Len: {{$numPages}} {{len $posts }}*/}}
+  {{ range (IntList 1 $numPages 1) }}{{ $tmp := $.Res.AddParam (String .) }}{{ end }}
 {{ else }}
   {{/* Do what is needed to show data for this page - list layout etc */}}
-  {{ $currPage := Int .Res.CurrentParamName }}
+  {{ $currPage := Int .Res.ParamName }}
   {{ $currPage0 := SubInt $currPage 1 }}
   {{ $offset := MultInts $pageSize $currPage0 }}
   {{ $filteredPosts := (Slice $posts ($offset) $pageSize ) }}
   {{ template "PostList" dict
         "Title" "AllPosts"
-        "Site" .Context
+        "Site" .Site
         "PageNum" $currPage
         "PageSize" $pageSize
         "NumPages" $numPages
