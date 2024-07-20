@@ -25,4 +25,4 @@ require (
 )
 
 // replace github.com/panyam/goutils v0.1.1 => ../goutils/
-replace github.com/panyam/s3gen v0.0.12 => ../s3gen/
+// replace github.com/panyam/s3gen v0.0.12 => ../s3gen/

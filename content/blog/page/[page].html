@@ -8,7 +8,8 @@ templateParams: { BodyTemplateName: "BaseBody" }
 ---
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 {{ $pageSize := Int $siteMetadata.MaxPostsPerPage }}
-{{ $posts := LeafPages $siteMetadata.HideDrafts "-date" 0 -1 }}
+{{/* $posts := LeafPages $siteMetadata.HideDrafts "-date" 0 -1 */}}
+{{ $posts := PagesByDate $siteMetadata.HideDrafts true 0 -1 }}
 {{ $d := Div ( len $posts ) $pageSize }}
 {{ $numPages := Ceil ($d) }}
 {{ if eq .Res.ParamName "" }}

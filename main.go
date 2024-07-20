@@ -220,6 +220,9 @@ func GetPagesByDate(hideDrafts bool, desc bool, offset, count any) (out []*s3.Re
 					return false
 				}
 			}
+			if strings.HasSuffix(res.RelPath(), "/blog/go-web-services/rest-http-gateway.mdx") {
+				log.Println("Filtered Res: ", res.RelPath(), offset, count)
+			}
 			return true
 			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
 		},
