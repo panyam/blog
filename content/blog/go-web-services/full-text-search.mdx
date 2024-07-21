@@ -2,15 +2,14 @@
 title: 'Part 9 - Full Text Search'
 date: 2024-06-24T11:29:10AM
 tags: ['full text search', 'elasticsearch', 'typesense']
-draft: true
+draft: false
 authors: ['Sri Panyam']
-summary: Let us add full text search capabilities to our chat service along with all the plumbing and knobs to control sync efficiency and consistency.
-templateParams: { BodyTemplateName: "PostSimple" }
+summary: Let us add full text search capabilities to our chat service along so that we can search for messages and topics by keywords
 ---
 
 ## Introduction
 
-In this post (Part 9) of our [series on building web services in Go](/blog/go-web-services/index), we will show how to enable search capabilities on our topics and messages.   [Full text search](https://en.wikipedia.org/wiki/Full-text_search) would allow users to search topics and messages by different facts (eg by titles, descriptions, message contents, users, and other tags).  
+In this post (Part 9) of our [series on building web services in Go](/blog/go-web-services), we will show how to enable search capabilities on our topics and messages.   [Full text search](https://en.wikipedia.org/wiki/Full-text_search) would allow users to search topics and messages by different facts (eg by titles, descriptions, message contents, users, and other tags).  
 
 ## Current Architecture
 
