@@ -21,24 +21,26 @@ Here our main entity related CRUD requests are handled (via services) by Postgre
 
 Another factor is horizontal scaling.   Though databases can be sharded/partitioned horizontally (eg based on Entities' ID/Primary Keys) indexing introduces a few challenges.  Recall that indexes are "inverse" relationships.   While we can partition an entity based on its ID, the index entries that an entity maps to may fall on different shards (eg different physical hosts).   This means a write to a single record may need transactional updates to multiple index shards.   This may be very expensive as locking will be needed.   Even worse in such distributed systems node failures may mean writes can be very flaky and unreliable.
 
+{{/*
 **TODO** - Link to [this](https://xata.io/blog/postgres-full-text-search-postgres-vs-elasticsearch) on how to do searches on PG itself when we are talking about small datasets or non distributed environments.
+*/}}
 
-## Requirements
+## Goals
 
-Before diving into the proposed architecture, let us discuss what we want from our search system (both functionally and operationally).  This influence our choice of design, architecture and technologies.
+So we want search.  Before diving into the final architecture, let us highlight what we want from our search system (both functionally and operationally).  This will influence our choice of design, architecture and technologies.
 
 1. Individual entity updates must be fast, durable and consistent (eg Topic creations, Topic updates, message sends/deletions/listings must succeed quickly without data-loss).
-2. Searching messages/topics (by different fields) must be fast but we want to vary how quickly an action in (1) is reflected in a respective search result.
+2. Searching messages/topics (by different fields) must be fast but we want to vary how quickly an action in (1) is reflected in a respective search result.  For example if user A creates a topic, T1, then it may not be immediately visible for user B's search topics query.  But user B must eventually see T1.
 3. It must be (reasonably) easy to update/manage/configure search indexes and even re-index them with idempotency guarantees.
 4. System must scale horizontally so we can grow based on different fault domains and it must be easy to spin up.
 
 As we scale our system we may be ok to tolerate delays between an entity update and when it is visible in a search query.   This is known as [eventual consistency](https://en.wikipedia.org/wiki/Eventual_consistency).
 
-**Time for a small pause here**.   Sharding, Replication, Fault tolerance (and more) are key concepts in distributed systems - [Martin Klepmann's classic](https://dataintensive.net/) is a MUST READ book for any distributed systems enthusiast.   We will not go into details all at once and instead address these concepts as we encounter them in building our app.
+**Time for a small pause here**.   Sharding, Replication, Fault tolerance (and more) are key concepts in distributed systems - [Martin Klepmann's classic](https://dataintensive.net/) is a MUST READ book for any distributed systems enthusiast.   We will not go into details all at once and instead address these concepts as we encounter them.
 
-## Proposed Architecture
+## Proposal
 
-Given our requirements we can start with a proposed architecture that allows an index that can be built incrementally and asynchronously:
+Given our requirements we can start with one architecture that allows indexes that can be built incrementally and asynchronously:
 
 <center> <img src="{{.Site.PathPrefix}}/static/images/part9/proposed-search-architecture.svg" height={600} /> </center>
 
@@ -68,24 +70,50 @@ There are several choices for the search store:
 
 In our post we will use Typesense as our search store.   Why?  Why not?
 
-## Getting Started
+## Setup Typesense
 
-### Setup Typesense
-
-First let us add another dependency in our [docker-compose.yml](https://github.com/panyam/onehub/blob/PART9_SEARCH/docker-compose.yml) to include typesense:
+First let us add another dependency in our [db-docker-compose.yml](https://github.com/panyam/onehub/blob/PART9_SEARCH/db-docker-compose.yml) to include typesense:
 
 ```yaml
   typesense:
-    image: typesense/typesense:0.25.0
+    networks:
+      - onehubnetwork
+    image: typesense/typesense:26.0-arm64
     restart: on-failure
     ports:
       - 8108:8108
     volumes:
       - ./.data/typesensedata:/data
-    command: '--data-dir /data --api-key=xyz --enable-cors'
+    command: '--data-dir /data --api-key=my_api_key --enable-cors'
 ```
 
-With this we have Typesense running on port 8108 (and exposed on the same port).   Typesense needs an API for validating its sclients so we have created a dummy one.  We can pass these as TYPESENSE_HOST and TYPESENSE_API_KEY environment variables for any other container that needs discover and access it.
+With this we have Typesense running on port 8108 (and exposed on the same port).   Typesense needs an API Key for validating its sclients so we have created one (my_api_key).  We can pass these as TYPESENSE_HOST and TYPESENSE_API_KEY environment variables for any other container that needs discover and access it.   To see the entities created in the database we are using a simple dashboard web-app - typesense-dashboard - also in [db-docker-compose.yml](https://github.com/panyam/onehub/blob/PART9_SEARCH/db-docker-compose.yml):
+
+```yaml
+  typesense-dashboard:
+    image: typesense-dashboard
+    volumes:
+      - ./configs/tsdash.config:/srv/config.json
+    ports:
+      - 8180:80
+```
+
+Before doing this however ensure you have built the typesense-dashboard docker image built:
+
+```
+cd /tmp
+git clone https://github.com/bfritscher/typesense-dashboard.git
+cd typesense-dashboard
+docker build -t typesense-dashboard .
+```
+
+Going to the typesense-dashboard [page](http://localhost:8180) should greet you with:
+
+<center> <img src="{{.Site.PathPrefix}}/static/images/part9/tsdash.png" height={600} /> </center>
+
+As you can see right now you do not have any entities created (as a result of the DB sync).  So let us go ahead and do that now.
+
+### Setup Typesense libraries
 
 You can even try out some sample calls by using one of the many [available client libraries](https://typesense.org/docs/0.25.1/api/api-clients.html).
 
@@ -94,6 +122,52 @@ Also install the python client library which will come in handy as we query Type
 ```
 pip install typesense
 ```
+
+## Setup the Sync Service
+
+There are two parts to our database Sync Service.
+
+1. The common platform level component that listens to change capture events from postgresql and exposes them as hooks to be implemenented.  This has been extracted out into a go library [dbsync](https://github.com/panyam/dbsync).
+2. Onehub specific sync logic that implements the interfaces exposed by the dbysnc library (eg changes from our postgres DB) to reflect the changes in ourour Typesense index store.
+
+In this post we will *not* talk much about (1).  The Dbsync library is still WIP and as such not fully documented.   We will touch upon the interfaces it exposes and those are used to implement (2) above.
+
+The onehub implementation of DBSync is in [cmd/dbsync/main.go](https://github.com/panyam/onehub/blob/PART9_SEARCH/cmd/dbsync/main.go).  Let us go through this step by step:
+
+### Setup the TypeSense schemas
+
+Entities in Typesense are stored as deep documents.  However for better indexing, it is beneficial to have schemas (type definitions for records) for the entities we are interested in - users, topics and messages.  
+
+For example to setup the user schema we do (in the main method of `cmd/dbsync/main.go`):
+
+```go
+	p := NewPG2TS()
+	p.tsclient.EnsureSchema("public.users", []gut.StringMap{
+		{"name": "id", "type": "string"},
+		{"name": "version", "type": "int64"},
+		{"name": "created_at", "type": "int64"},
+		{"name": "updated_at", "type": "int64"},
+		{"name": "name", "type": "string"},
+		{"name": "avatar", "type": "string", "optional": true},
+		{"name": "profile_data", "type": "object", "optional": true},
+	})
+```
+
+**[Line 1]**: We first create PG2TS struct instance (this type keeps track of various objects needed/used during the db sync process)
+**[Line 2-10]**: EnsureSchema on the typesense client (p.tsclient) sets up record and field definitions for the `user` entity type in TS.
+
+We do the same for topics and messages (see the main method).  Once these are setup, the sync is started with `p.Start()`.
+
+
+
+
+
+
+
+
+
+
+
 
 ### Enable Postgres for Logical Replication
 
