@@ -1,0 +1,58 @@
+---
+title: 'Part 10 - Introducing Observability'
+date: 2024-06-24T11:29:10AM
+tags: ['open telemetry', 'observability', 'monitoring']
+draft: false
+authors: ['Sri Panyam']
+summary: In this post we will start to monitor various aspects our application and add observability to it via Open Telemetry.
+---
+
+## Introduction
+
+Our [application](/blog/go-web-services) is getting complex.  It has several components.   Currently it is running as several services within a single docker-compose setup.  Simply showing logs on the console is not enough for a robust application.   Ensuring the health, performance, and reliability of applications is challenging and only getting more and more complex..  Systems are getting [more distributed](https://brooker.co.za/blog/2020/01/02/why-distributed.html) and [more complex](https://alvaro-videla.com/2015/12/learning-about-distributed-systems.html).   It is evermore important to understand their behavior and this requires more than just basic monitoring or logging. Here is where observability comes into play. Observability is an end to end and  holistic approach from which developers and operators gain deep insights into the internal state of a system - by observing and inspecting its outputs.
+
+Modern applications are built with a microservice architecture, where multiple services interact with each other over the network. In our own toy application, we have (perhaps intentional) complexity that spans requests entering through nginx, and then forwarded through the grpc gateway, to the grpc service handlers and finally served with data loaded from our databases.   We havent even mentioned front end components!!  This distributed nature makes it challenging to zero-in on the root cause of issues using traditional strategies alone. 
+
+For instance, a slow response time could be due to a database query? a network issue? or a bug in the code?  In all but the simplest of cases, just emitting "magic" logs at different points (eg "here in service1", "now here in service2" etc) is just infeasible.  Worse it clutters code bases and requires updates to running code for debugging (this may not even be possible) and is in general a very reactive approach to ensuring health and performance.   Without proper observability, identifying and addressing such issues can be like finding a needle in a haystack.
+
+In this post (and the sub-series) we will discuss the pillars of observability, introduce OpenTelemetry and start enabling tracing, metrics and logs in our application we have been building so far.
+
+## Pillars of Observability
+
+There are 3 core pillars of observability - Logging, Metrics and Traces (there are several others like Events, Profiles etc but these are the most important ones).
+
+### Logging
+
+Logging is the simplest pillar every developer learns about and uses from their earliest days.   They are the most granular form of observability data - capturing detailed information about different events within your system.   They can be unstructured (just brief logs like "We are here with value X = blah...") or structured (eg `{'msg': ...., 'time': ...., 'var1': value1..}`).  Either way they are crucial for in-depth analysis and troubleshooting.  With structured logging, correlation of logs with traces and metrics to get a complete picture of what happened and why is also enabled.
+
+### Metrics
+
+Metrics are the quantitative data about your system's performance.  They help with monitoring base level data such  CPU usage, memory consumption, request rates, error rates, etc.  They can also as higher level (and application specific) like number of active users, number of transactions, number of messages etc - however those are usually delegated to the realm of Events for analytics purposes rather than reliability and health monitoring purposes.  Typically a drastic change in upper level metrics (eg application level events and metrics) would trigger alerts that would be used to investigate corraltion with changes in lower level metrics.    Either way metrics are invaluable for setting alerts, identifying trends, and gaining insights into the overall health of your system.
+
+### Tracing
+
+While logs and metrics provide localized information about a particular system, they do not adequatly track the lifecycle of a request that usually spans multiple systems and endpoints.  Here is where tracing is useful.   A "slow" request can be attribute to any one or more of the systems it enters and exits.   Each "entry/exit" pair is a span and a swim-lane of spans forms a Trace for an enter request end to end. Traces help to see the path taken by a request, measure latencies, and identify where delays or errors occur and are particularly useful in microservices environments where a single request can span multiple services.
+
+## Open Telemetry
+
+In order to enable Metrics, Logs and Traces, developers and reliability engineers would add custom agents on hosts (running their services) to collect any logs, metric events and trace information emitted by the services.   This was problematic for a few reasons:
+
+* Without a consistent standard, these agents (or collectors) would be custom built by different vendors without any interoperability.
+* The source and backends were tightly coupled.   Eg application developers had to select how to emit the metrics and be bound by the limitations (both features and performance) of the backend store where metrics were captured and worse by the dashboard UI offered by the "metrics system" vendoer.
+* Same with traces and logs.
+* Not all vendors supported all pillars.  So developers had very little choice in vendors supporting all the pillars or had to go some of the capabilities.
+* Obviously vendor lock-in was a problem with such commitment upfront.
+* In essence - a very fragemented and challenging scene for observability.
+
+This changed with the advent of [OpenTelemetry](https://opentelemetry.io/).  OpenTelemetry (OTel for short) merged the several efforts of OpenTracing and OpenCensus into a single, unified [framework/architecture](https://opentelemetry.io/docs/collector/architecture/).  OTel provides standardized APIs, libraries, and agents for collecting traces, metrics, and logs.   Beyond collection it also provides standardized libraries for processing and exporting traces, metrics and logs to several backends.  This way developers could instrument their applications and services once and simply configure their collectors, processors and exporters in a consistent manner to target any vendor they chose at a given point in time.
+
+OTel is also designed (do checkout their [design goals](https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/design-goals.md)) to be  vendor-agnostic.   As such it supports several popular backends like Jaeger (for tracing), Prometheus (for metrics), Grafana (for visualizing metrics) and elastic search (for logging) and more.  This interoperability means organizations can choose the right tools for their needs without being locked into a specific vendor.
+
+Now developers can focus on building features rather than spending time on integrating and maintaining disparate observability tools. The consistent and easy-to-use APIs of OTel means dev process is streamlined.  It also offers comprehensive documentation and an active community support - further enhancing the developer experience.  
+
+## Conclusion
+
+For modern software development, Observability is indispensable.  It provides the insights needed to maintain and improve complex systems. In this sub-series, we will implement Observability in our toy application.   We will start with traces (as it is the easiest to visualize) and then implement metrics and logging.   All of this will be done using OpenTelemetry (and open source backends). By the end of this series, we will have a robust observability setup that will power our future features and scale reliabily and robustly.
+
+Stay tuned for the next post, where we will dive into setting up tracing with OpenTelemetry in OneHub.
+

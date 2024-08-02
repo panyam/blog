@@ -2,7 +2,7 @@
 title: 'Part 9 - Full Text Search'
 date: 2024-06-24T11:29:10AM
 tags: ['full text search', 'elasticsearch', 'typesense']
-draft: false
+draft: true
 authors: ['Sri Panyam']
 summary: Let us add full text search capabilities to our chat service along so that we can search for messages and topics by keywords
 ---
@@ -157,6 +157,90 @@ For example to setup the user schema we do (in the main method of `cmd/dbsync/ma
 **[Line 2-10]**: EnsureSchema on the typesense client (p.tsclient) sets up record and field definitions for the `user` entity type in TS.
 
 We do the same for topics and messages (see the main method).  Once these are setup, the sync is started with `p.Start()`.
+
+
+### Implement DBSync Interface
+
+Let us look at part of the interface exposed by the dbsync library.  Specifically the [PGMSGHandler](https://github.com/panyam/dbsync/blob/2b653cf4d86467f60801766a38b2dcfeb5ff9980/pgmsg.go#L19) type:
+
+```go
+
+type PGMSGHandler struct {
+	LastBegin             int
+	LastCommit            int
+	DB                    *PGDB
+	HandleBeginMessage    func(m *PGMSGHandler, idx int, msg *pglogrepl.BeginMessage) error
+	HandleCommitMessage   func(m *PGMSGHandler, idx int, msg *pglogrepl.CommitMessage) error
+	HandleRelationMessage func(m *PGMSGHandler, idx int, msg *pglogrepl.RelationMessage, tableInfo *PGTableInfo) error
+	HandleUpdateMessage   func(m *PGMSGHandler, idx int, msg *pglogrepl.UpdateMessage, reln *pglogrepl.RelationMessage) error
+	HandleDeleteMessage   func(m *PGMSGHandler, idx int, msg *pglogrepl.DeleteMessage, reln *pglogrepl.RelationMessage) error
+	HandleInsertMessage   func(m *PGMSGHandler, idx int, msg *pglogrepl.InsertMessage, reln *pglogrepl.RelationMessage) error
+	relnCache             map[uint32]*pglogrepl.RelationMessage
+}
+```
+
+The interesting bits are the Handle* methods (which are wrappers over another lower level CDC library - [pglogrepl](https://github.com/jackc/pglogrepl)).  These methods handle various changes coming from the underlying (postgres) DB.   Our dbsync service simply implements the HandleUpdateMessage, HandleInserMessage and HandleDeleteMessage methods (in the NewPG2TS constructor method):
+
+#### HandleInsertMessage:
+```go
+		HandleInsertMessage: func(m *dbsync.PGMSGHandler, idx int, msg *pglogrepl.InsertMessage, reln *pglogrepl.RelationMessage) error {
+			pkey, outmap, errors := dbsync.MessageToMap(out.pgdb, msg.Tuple, reln)
+			if errors != nil {
+				log.Println("Error converting to map: ", pkey, errors)
+			}
+
+			// Get the created and updated timestampes from the message
+			if _, ok := outmap["created_at"]; ok {
+				outmap["created_at"] = outmap["created_at"].(time.Time).Unix()
+			}
+			if _, ok := outmap["updated_at"]; ok {
+				outmap["updated_at"] = outmap["updated_at"].(time.Time).Unix()
+			}
+
+			// Get the table/relation entity being inserted into
+			tableinfo := out.pgdb.GetTableInfo(reln.RelationID)
+			doctype := fmt.Sprintf("%s.%s", reln.Namespace, reln.RelationName)
+			docid := tableinfo.GetRecordID(msg.Tuple, reln)
+
+			if _, ok := out.upserts[doctype]; !ok {
+				out.upserts[doctype] = make(map[string]gut.StringMap)
+			}
+			if _, ok := out.deletions[doctype]; !ok {
+				out.deletions[doctype] = make(map[string]bool)
+			}
+			// If the docuemnt was already marked for "deletion" then undo this
+			// and mark it as inserted "compact" and batch changes on a per document ID
+			// basis instead of making changes to the typesense DB on every update
+			delete(out.deletions[doctype], docid)
+			out.upserts[doctype][docid] = outmap
+
+			return nil
+		},
+```
+
+#### HandleDeleteMessage:
+
+```go
+		HandleDeleteMessage: func(m *dbsync.PGMSGHandler, idx int, msg *pglogrepl.DeleteMessage, reln *pglogrepl.RelationMessage) error {
+			// Instead of individual deletes we will batch them by collections
+			tableinfo := out.pgdb.GetTableInfo(reln.RelationID)
+			doctype := fmt.Sprintf("%s.%s", reln.Namespace, reln.RelationName)
+			docid := tableinfo.GetRecordID(msg.OldTuple, reln)
+
+			if _, ok := out.upserts[doctype]; !ok {
+				out.upserts[doctype] = make(map[string]gut.StringMap)
+			}
+			if _, ok := out.deletions[doctype]; !ok {
+				out.deletions[doctype] = make(map[string]bool)
+			}
+			delete(out.upserts[doctype], docid)
+			out.deletions[doctype][docid] = true
+			return nil
+		},
+```
+
+
+
 
 
 
