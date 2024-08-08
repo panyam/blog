@@ -1,0 +1,25 @@
+---
+title: 'Part 11 - Tracing with OpenTelemetry and Jaeger'
+date: 2024-07-21T11:29:10AM
+tags: ['opentelemetry', 'observability', 'monitoring', 'jaeger', 'otel']
+draft: false
+authors: ['Sri Panyam']
+summary: In this post we will get hands on and add the first pillar to our app - Tracing - so we can dissect the full end to end life of a request along the various components in our architecture.
+---
+
+## Introduction
+
+Tracing, a critical component, tracks requests through complex systems. This visibility reveals bottlenecks and errors, enabling faster resolutions. In our [previous post](/blog/go-web-services/introducing-observability) of our [go web services series](/blog/go-web-services) , we explored observability's significance. Today, we focus on tracing.   We'll discuss Jaeger.   Jaeger collects, stores, and visualizes traces from distributed systems. It provides crucial insights into request flows across services. By integrating Jaeger with OpenTelemetry, developers unify their tracing approach, ensuring consistent and comprehensive visibility. This integration simplifies diagnosing performance issues and enhances system reliability. In this post, we’ll set up Jaeger, integrate it with OpenTelemetry in our application, and explore visualizing traces for deeper insights.
+
+## Motivation
+
+What we are working towards is a Jaeger dashboard that looks like:
+
+<center> <img src="{{.Site.PathPrefix}}/static/images/part11/Jaeger_FrontPage.png" /> </center>
+
+As we go to various parts of the app (on the Onehub frontend) the various requests' traces are collected (from the point of hitting the grpc-gateway) with summary of each of them.   We can even drill down into one of the traces for a finer detailed view.   Look at the first POST request (for creating/sending a message in a topic):
+
+<center> <img src="{{.Site.PathPrefix}}/static/images/part11/Jaeger_DetailPage.png" /> </center>
+
+Here we see all the components the Create request touches along with their entry/exit times and time taken in and out of the methods.  Very powerful indeed.
+
