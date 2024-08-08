@@ -23,3 +23,241 @@ As we go to various parts of the app (on the Onehub frontend) the various reques
 
 Here we see all the components the Create request touches along with their entry/exit times and time taken in and out of the methods.  Very powerful indeed.
 
+## Highlevel Overview
+
+Our system is currently:
+
+```
+SHOW CURRENT SYSTEM
+
+DB, FE, DBSYNC, TYPESENSE, NGINX, POSTGRES, SERVICES, GRPC_GATEWAY
+```
+
+With instrumentation with OpenTelemtry our system will evolve to:
+
+```
+SHOW SYSTEM WITH OTEL + JAEGER + JAEGER_UI
+```
+
+As we noted [earlier](/blog/go-web-services/introducing-observability), it is quite onerous for each service to use separate clients to send to specific vendors.  Instead with an OTel collector running separately, we can ensure that all (interested) services can simply send metrics/logs/traces to this collector, which can then export to various backends as required - in this case Jaeger for traces.
+
+Let us get started.
+
+## Setup the OTel collector
+
+First step is to add our OTel collector running in the docker environment along with Jaeger so they are accessible.
+
+Note: We have split our original all-encompassing docker-compose.yml config into two parts:
+
+1. **infra-docker-compose.yml**: Contains all "infra" (non-application) related services liked databases (postgres, typesense) and monitoring services (OTel collector, Jaeger, Prometheus, etc).
+2. **docker-compose.yml**: Contains all application related services (nginx, grpc gateway, dbsync, frontend etc)
+
+
+The two docker compose environments are connected by a shared network (`onehubnetwork`) through which services in these environments can communicate with each other.  With this seperation we only need to restart a subset of services upon changes speeding our development.
+
+Back to our setup, in our infra-docker-compose.yml, add the following services:
+
+```yaml
+services:
+  ...
+
+  otel-collector:
+    networks:
+      - onehubnetwork
+    image: otel/opentelemetry-collector-contrib:0.105.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./configs/otel-collector.yaml:/etc/otel-collector.yaml
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  jaeger:
+    networks:
+      - onehubnetwork
+    image: jaegertracing/all-in-one:1.59
+    container_name: jaeger
+    environment:
+      QUERY_BASE_PATH: '/jaeger'
+      COLLECTOR_OTLP_GRPC_HOST_PORT: '0.0.0.0:4317'
+      COLLECTOR_OTLP_HTTP_HOST_PORT: '0.0.0.0:4318'
+      COLLECTOR_OTLP_ENABLED: true
+
+  prometheus:
+    networks:
+      - onehubnetwork
+    image: prom/prometheus:v2.53.1
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.external-url=/prometheus/'
+      - '--web.route-prefix=/prometheus/'
+    volumes:
+      - ./configs/prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+```
+
+Simple enough, this sets up two services in our docker environment:
+
+1. **otel-collector**: The sink of all signals (metrics/logs/traces) sent by the various services being monitored - (we will keep adding to this list over time).  It uses the standard OTel image along with our custom otel config (below) which describes various observability pipelines (ie how signals should be received, processed and exported in various ways).
+2. **jaeger**: Our Jaeger instance that will receive and store traces (exported by the otel-collector).   This hosts both the storage as well as the dashboard (UI) that we will export on the `/jaeger` http path prefix to be accessible via nginx. 
+3. **prometheus**: Though not required for this post we will also export metrics so that it can be scraped by Prometheus.  We will not discuss this in detail in this post.
+
+A few things to note:
+
+* Though not required for this post, we are passing the POSTGRES connection details (as environment variables) to the otel-collector so it can scrape postgres health metrics.
+* Jaeger (after v1.35) supports [OTLP](https://opentelemetry.io/docs/specs/otel/protocol/) natively.
+* The beauty of OTLP is that OTel collectors can be chained forming a network of OTel collectors/processors/forwarders/routers etc.
+* OTLP can be served either via a GRPC or a HTTP endpoint (on ports 4317 and 4318 respectively).
+* By default the OTLP services are started on `localhost:4317/4318`.  This is fine if Jaeger is run on the same host where the services (being monitored) are running.  However since Jaeger is running on a seperate pod they have to be bound to external addresses (0.0.0.0).  This was not clear in the documentation and resulted in significant hair-pulling.
+* `COLLECTOR_OTLP_ENABLED: true` is now the default and does not have to be specified explicitly.
+
+### OTel Configuration
+
+OTel also need to be configured to enable specific receivers, processors and exporters.  We will do that in [configs/otel-collector.yaml](https://github.com/panyam/onehub/blob/PART10_OTEL/configs/otel-collector.yaml).
+
+#### Adding receivers
+
+To tell OTel which modules to activate for "receiving" what we care about, add the `receivers` section:
+
+```
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+  postgresql:
+    endpoint: postgres:5432
+    transport: tcp
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    databases:
+      - ${POSTGRES_DB}
+    collection_interval: 10s
+    tls:
+      insecure: true
+```
+
+This activates an OTLP receiver on port 4317 and 4318 (grpc, http respectively).   There are many kinds of receivers that can be started.  As ane xample we have also added a "postgresql" receiver that will actively scrape postgres for metrics (though that is not relevant for this post).  Receivers can also be pull or push based.  Pull based receivers scrap specific targets (in this postgres) where as push based recievers are sent metrics/logs/traces from applications using the [OTel client sdk](https://opentelemetry.io/docs/languages/).
+
+That's it.  Now our collector is ready to receive (or scrape) the appropriate metrics.
+
+#### Add Processors
+
+Processors in OTel are a way to transform, map, batch, filter and/or enrich received signals before exporting them.   For example processors can sample metrics, filter logs or even batch signals for efficiency.  By default no processors are added (making the collector a pass-through).  We will ignore this for now.
+
+#### Add Exporters
+
+Now it is time to identify where we want the signals to be exported to - the specific backends that specialize in respective signals.  Just like receivers, exporters can also be pull or push based.  Push based exporters are used to emit signals to another receiver that acts in push mode.  These are outbound.  Pull-based exporters expose endpoints that can be scraped by other pull-based receivers (eg prometheus).   We will add exporter of each kind - one for tracing and one for prometheus to scrape from (though prometheus is no the topic of this post):
+
+```
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:9090
+    namespace: onehub
+  debug:
+```
+
+Here we have an exporter to jaeger running the OTLP collector - indicated by `otlp/jaeger`. This exporter will push traces regularly to Jaeger.  We are also adding a "scraper" endpoint on port 9090 which prometheus will scrape regularly from.
+
+The "debug" exporter simply is used for dumping signals to standard output/error streams.
+
+#### Define pipelines
+
+The receiver, processor, exporter sections simply define the modules that will be enabled by the collector.  They are still not invoked.  To actually invoke/activate them, they must be referred in "pipelines".  Pipelines are the connectors that define how signals flow through and are processed by the collector.  Our pipelines definitions (in the services section) will clarify this:
+
+```
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: []
+      exporters: [otlp/jaeger, debug]
+
+    metrics:
+      receivers: [otlp]
+      processors: []
+      exporters: [prometheus, debug]
+```
+
+Here we are defining two pipelines.  Note how similar are the pipelines but allow two different modes exporting (Jaeger and Prometheus).  Now we are seeing the power OTel and creating pipelines within it.
+
+1. **traces**
+
+<center> <img src="{{.Site.PathPrefix}}/static/images/part11/TracesExporter.png" /> </center>
+
+* Receive signals from client sdks
+* No processing
+* Export traces to console and Jaeger
+
+2. **metrics**
+
+* Receive signals from client sdks
+* No processing
+* Export metrics to console and prometheus (by exposing an endpoint for it to scrape).
+
+<center> <img src="{{.Site.PathPrefix}}/static/images/part11/PrometheusExporter.png" /> </center>
+
+## Exposing Monitoring UIs via Nginx
+
+Jaeger provides a dashboard for visualizing trace data about all our requests.  This can be visualized on a browser by enabling the following in our [nginx config](https://github.com/panyam/onehub/blob/PART10_OTEL/configs/nginx.conf).
+
+```nginx
+    ...
+    location ~ ^/jaeger {
+      if ($request_method = OPTIONS ) { return 200; }
+      proxy_pass http://jaeger:16686;     # Note that JaegerUI starts on port 16686 by default
+      proxy_pass_request_headers on;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_set_header Host $host;
+      proxy_set_header Host-With-Port $http_host;
+      proxy_set_header Connection '';
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-HTTPS    on;
+      proxy_set_header Authorization $http_authorization;
+      proxy_pass_header Authorization;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
+      proxy_set_header X-Forwarded-Prefix /;
+      proxy_http_version 1.1;
+      chunked_transfer_encoding off;                
+    }
+
+    location ~ ^/prometheus {
+      if ($request_method = OPTIONS ) { return 200; }
+      proxy_pass http://prometheus:9090;
+      proxy_pass_request_headers on;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_set_header Host $host;
+      proxy_set_header Host-With-Port $http_host;
+      proxy_set_header Connection '';
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-HTTPS    on;
+      proxy_set_header Authorization $http_authorization;
+      proxy_pass_header Authorization;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
+      proxy_set_header X-Forwarded-Prefix /;
+      proxy_http_version 1.1;
+      chunked_transfer_encoding off;                
+    }
+    ...
+```
+
+Again though not the topic of this post - we are also exposing the Prometheus UI via nginx at the http path prefix `/prometheus`.
+
+## Integrating the Client SDK
+
+So far we have the right systems where we can visualize, consume signals etc.  However our services are still not updated to emit the signals to OTel.   Here we will integrate with the (Golang) client SDK in various parts of our code.
