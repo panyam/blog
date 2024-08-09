@@ -1,6 +1,6 @@
 ---
 title: 'Part 11 - Tracing with OpenTelemetry and Jaeger'
-date: 2024-07-21T11:29:10AM
+date: 2024-08-01T11:29:10AM
 tags: ['opentelemetry', 'observability', 'monitoring', 'jaeger', 'otel']
 draft: false
 authors: ['Sri Panyam']
@@ -23,6 +23,24 @@ As we go to various parts of the app (on the Onehub frontend) the various reques
 
 Here we see all the components the Create request touches along with their entry/exit times and time taken in and out of the methods.  Very powerful indeed.
 
+## Getting Started
+
+TL;DR - To see this in action and validating the rest of the blog:
+
+1. Source for this is in [PART11_TRACING branch](https://github.com/panyam/onehub/tree/PART11_TRACING)
+2. Build all things needed (once you have checked out the branch):
+
+```bash
+make build
+```
+
+3. We have broken the docker-compose into two parts (this will be explained further down) so make sure you have two windows running.
+
+Terminal 1: `make updb dblogs`
+Terminal 2: `make up logs`
+
+4. Navigate [localhost:7080](http://localhost:7080) and off you go.
+
 ## Highlevel Overview
 
 Our system is currently:
@@ -30,7 +48,7 @@ Our system is currently:
 ```
 SHOW CURRENT SYSTEM
 
-DB, FE, DBSYNC, TYPESENSE, NGINX, POSTGRES, SERVICES, GRPC_GATEWAY
+DB, FE, DBSYNC, TYPESENSE, NGINX, POSTGRES, SERVICES, gRPC_GATEWAY
 ```
 
 With instrumentation with OpenTelemtry our system will evolve to:
@@ -49,13 +67,13 @@ First step is to add our OTel collector running in the docker environment along 
 
 Note: We have split our original all-encompassing docker-compose.yml config into two parts:
 
-1. **infra-docker-compose.yml**: Contains all "infra" (non-application) related services liked databases (postgres, typesense) and monitoring services (OTel collector, Jaeger, Prometheus, etc).
+1. **db-docker-compose.yml**: Contains all database and infra (non-application) related components liked databases (postgres, typesense) and monitoring services (OTel collector, Jaeger, Prometheus, etc).
 2. **docker-compose.yml**: Contains all application related services (nginx, grpc gateway, dbsync, frontend etc)
 
 
 The two docker compose environments are connected by a shared network (`onehubnetwork`) through which services in these environments can communicate with each other.  With this seperation we only need to restart a subset of services upon changes speeding our development.
 
-Back to our setup, in our infra-docker-compose.yml, add the following services:
+Back to our setup, in our db-docker-compose.yml, add the following services:
 
 ```yaml
 services:
@@ -115,7 +133,7 @@ A few things to note:
 
 ### OTel Configuration
 
-OTel also need to be configured to enable specific receivers, processors and exporters.  We will do that in [configs/otel-collector.yaml](https://github.com/panyam/onehub/blob/PART10_OTEL/configs/otel-collector.yaml).
+OTel also need to be configured to enable specific receivers, processors and exporters.  We will do that in [configs/otel-collector.yaml](https://github.com/panyam/onehub/blob/PART11_TRACING/configs/otel-collector.yaml).
 
 #### Adding receivers
 
@@ -206,9 +224,9 @@ Here we are defining two pipelines.  Note how similar are the pipelines but allo
 
 <center> <img src="{{.Site.PathPrefix}}/static/images/part11/PrometheusExporter.png" /> </center>
 
-## Exposing Monitoring UIs via Nginx
+## Exposing Dashboards via Nginx
 
-Jaeger provides a dashboard for visualizing trace data about all our requests.  This can be visualized on a browser by enabling the following in our [nginx config](https://github.com/panyam/onehub/blob/PART10_OTEL/configs/nginx.conf).
+Jaeger provides a dashboard for visualizing trace data about all our requests.  This can be visualized on a browser by enabling the following in our [nginx config](https://github.com/panyam/onehub/blob/PART11_TRACING/configs/nginx.conf).  Again though not the topic of this post - we are also exposing the Prometheus UI via nginx at the http path prefix `/prometheus`.
 
 ```nginx
     ...
@@ -256,8 +274,324 @@ Jaeger provides a dashboard for visualizing trace data about all our requests.  
     ...
 ```
 
-Again though not the topic of this post - we are also exposing the Prometheus UI via nginx at the http path prefix `/prometheus`.
+### Visualizing Traces in Jaeger
+
+Jaeger UI is quite comprehensive and has several features that you can explore.  Navigate to the [Jaeger UI](http://localhost:7080/jaeger) in the browser.   You will see a comprehensive interface for searching and analyzing traces.   Go ahead and familiarize yourself with the main sections, including the search bar and the trace list.  You can search for various traces by search criteria and filter by service, time durations, components etc.
+
+Analyze the trace timelines in the different requests to understand the sequence of operations. Each span represents a unit of work, showing start and end times, duration, and related metadata. This detailed view is very helpful in identifying performance bottlenecks and errors within the trace.
 
 ## Integrating the Client SDK
 
-So far we have the right systems where we can visualize, consume signals etc.  However our services are still not updated to emit the signals to OTel.   Here we will integrate with the (Golang) client SDK in various parts of our code.
+So far we have the right systems where we can visualize, consume signals etc.  However our services are still not updated to emit the signals to OTel.   Here we will integrate with the (Golang) client SDK in various parts of our code.  The [SDK](https://opentelemetry.io/docs/languages/go/) documentation is a fantastic place to first familiarize with some of the concepts.   
+
+Briefly we have:
+
+### [Resources](https://opentelemetry.io/docs/languages/go/resources/)
+
+Resources are the entity which is producing the signal.  In our case the scope of the resource is the binary hosting the services.   Currently we have a single resource for the entirety of the Onehub service but this could be split up later on. 
+
+This is defined in [cmd/backend/obs.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/obs.go).  Note that the client SDK did not need us to go into the details of the resource definition explicitly.  The standard helper (sdktrace.WithResource) lets us create a resource definition by inferring the most useful parts (like process name, pod name etc) at runtime. 
+
+Only override we had provided was the `OTEL_RESOURCE_ATTRIBUTES: service.name=onehub.backend,service.version=0.0.1` environment variable for the `onehub` service in [docker-compose.yml](https://github.com/panyam/onehub/blob/PART11_TRACING/docker-compose.yml).
+
+### [Contexts Propogation](https://opentelemetry.io/docs/concepts/context-propagation/)
+
+Context propogation is a very important topic in observability.  The various pillars are exponentially power when we can correlate signals from each of the pillars in identifying issues with our system.   Think of contexts as extra bits of data that can be tied to the signals that can be "joined" in some unique way to tie the various signals related to a particular group (say a reqeust).
+
+### Providers/Exporters
+
+For each of the signals, OTel provides a Provider interface (eg TracerProvider for exporting spans/traces, MeterProvider for exporting metrics, LoggerProvider for exporting logs and so on).  For each of these interfaces there can be several implementations, eg Debug provider for sending to stdout/err streams, OTel provider for exporting to an OTel endpoint, or even directly via a [variety of exporters](https://opentelemetry.io/ecosystem/registry/?component=exporter&language=go).   However in our case we want to defer the choice of any vendors out of our services and instead send all signals to the OTel collector running in our environment.
+
+To abstract this we will create an "OTELSetup" type that keeps track of the various providers we might want to use or swap out.  In  [cmd/backend/obs.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/obs.go) we have:
+
+```
+type OTELSetup[C any] struct {
+	ctx                 context.Context
+	shutdownFuncs       []ShutdownFunc
+	Resource            *resource.Resource
+	Context             C
+	SetupPropagator     func(o *OTELSetup[C])
+	SetupTracerProvider func(o *OTELSetup[C]) (trace.TracerProvider, ShutdownFunc, error)
+	SetupMeterProvider  func(o *OTELSetup[C]) (otelmetric.MeterProvider, ShutdownFunc, error)
+	SetupLogger         func(o *OTELSetup[C]) (logr.Logger, ShutdownFunc, error)
+	SetupLoggerProvider func(o *OTELSetup[C]) (*log.LoggerProvider, ShutdownFunc, error)
+}
+```
+
+This is a simple wrapper keeping track of common aspects needed by the OTel SDK.   Here we have providers (Logger, Tracer and Metric) as well as ways to provide context (for tracing).   The over-arching Resource used by all providers is also specified here.  Shutdown functions are interesting.  They are functions called by the providers when the underlying exporter has terminated (gracefully or due to an exit).  The wrapper itself takes a generic so specific instantiators of this Setup can use their own custom data. 
+
+The repo contains two implementations of this repo 
+* Logging signals to standard output/error - [cmd/backend/stdout.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/stdout.go)
+* Exporting signals to an OTel collector - [cmd/backend/otelcol.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/otelcol.go)
+
+We will instantiate the second one in our app.   We will not go into details of the specific implementations as they have been taken from the [examples](https://github.com/open-telemetry/opentelemetry-go/tree/main/example/) in the SDK with minor fixes and refactoring.  Specifically take a look at the [otel-collector](https://github.com/open-telemetry/opentelemetry-go/tree/main/example/otel-collector) example for inspiration.
+
+### Initialise the OTEL Providers
+
+The essence of enabling the collector in our services is that some kind of otel related "context" is started at all the "entry" points.  If this context is created at the start then it will be sent to all targets called here, which is then propogated subsequently (as long as we do the right thing).
+
+Taking the simple `ListTopics` api call (`api/vi/topics`) our reqeust takes the following path and back:
+
+```
+[ Browser ] ---> [ Nginx ] ---> [ gRPC Gateway ] ---> [ gRPC Service ] ---> [ Database ]
+```
+
+In our case the entry points here are at the start when the gRPC Gateway receives an API request from nginx (we could start tracing them from the point the http request hits Nginx to even highlight latencies at nginx but we will postpone for just a bit).  
+
+What is needed is:
+
+* gRPC Gateway Receives a request
+* It creates a "custom" otel specific `context.Context` instance
+* Creates a custom connection to the respective grpc service (eg TopicService) passing this context instead of the default one.
+* The respective service then uses this context when emitting the traces.
+
+
+Let us go through this step by step.
+
+### Initialize and Prepare the OTel SDK for use
+
+In [main.go](https://github.com/panyam/onehub/blob/c2e403b1fbfd77e26809c9a816cf9cb997688069/cmd/backend/main.go#L213), let us first initialise the collector connection:
+
+```go
+func main() {
+	flag.Parse()
+
+	// Handle SIGINT (CTRL+C) gracefully.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	collectorAddr := cmdutils.GetEnvOrDefault("OTEL_COLLECTOR_ADDR", "otel-collector:4317")
+	conn, err := grpc.NewClient(collectorAddr,
+		// Note the use of insecure transport here. TLS is recommended in production.
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Println("failed to create gRPC connection to collector: %w", err)
+		return
+	}
+	setup := NewOTELSetupWithCollector(conn)
+	err = setup.Setup(ctx)
+	if err != nil {
+		log.Println("error setting up otel: ", err)
+	}
+
+	defer func() {
+		err = setup.Shutdown(context.Background())
+	}()
+
+	ohdb := OpenOHDB()
+
+	srvErr := make(chan error, 2)
+
+	httpSrvChan := make(chan bool)
+	grpcSrvChan := make(chan bool)
+	go startGRPCServer(*addr, ohdb, srvErr, httpSrvChan)
+	go startGatewayServer(ctx, *gw_addr, *addr, srvErr, grpcSrvChan)
+
+	// Wait for interruption.
+	select {
+	case err = <-srvErr:
+		log.Println("Server error: ", err)
+		// Error when starting HTTP server or GRPC server
+		return
+	case <-ctx.Done():
+		// Wait for first CTRL+C.
+		// Stop receiving signal notifications as soon as possible.
+		stop()
+	}
+
+	// When Shutdown is called, ListenAndServe immediately returns ErrServerClosed.
+	httpSrvChan <- true
+	grpcSrvChan <- true
+
+```
+
+* **Lines 8-16**: we create a connection to the `otel-collector` running in our docker environment.
+* **Lines 17-21**: We then setup OTEL setup with tracer and metric providers so that our collector can now be pushed all traces and metrics (remember earlier we defined receivers in the otel config).
+* **Lines 23-25**: Setup finalizers to cleanup otel connections/providers etc on shutdown
+* **Lines 27**: Setup our DB and connections as before
+* **Lines 29 -**: Previously we simply started GRPC and Gateway services in the background and that was it.   We did not quite care about their return or exit statuses.  For a more resilient system it is important to have a better insight into the lifecycle of the services we are starting.   So now we pass "callback" channel for each of the services we are starting.  When the servers exit the respective methods will call back on these channels available to them to indicate that they have exited gracefully.   Our entire binary will exit when either one of these services exit.
+
+As an example our gateway service leverages this channels in the following way.  Instead of 
+
+```go
+	http.ListenAndServe(gw_addr, mux)
+```
+
+we now have (pay attention to **lines 9-14** where the server shutdown is watched for in a separate goroutine and **line 15** where the server exit error if any is sent back via the passed "notification" channel):
+
+```go
+	server := &http.Server{
+		Addr:        gw_addr,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
+		Handler: otelhttp.NewHandler(mux, "gateway", otelhttp.WithSpanNameFormatter(func(operation string, r *http.Request) string {
+			return fmt.Sprintf("%s %s %s", operation, r.Method, r.URL.Path)
+		})),
+	}
+
+	go func() {
+		<-stopChan
+		if err := server.Shutdown(context.Background()); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+	srvErr <- server.ListenAndServe()
+```
+
+Now the various parts of our services now have access to an "active" OTLP connection to use when ever signals are to be sent.
+
+### OTel Middleware for GRPC Gateway
+
+In the previous  the http.Server instance used to start the grpc Gateway is using a custom handler - the `http.Handler` in the [Otel HTTP](go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp) package.  This Handler takes an existing http.Handler instance and decorates it with the OTel context and ensuring its propogation to any other downstreams that are called.  Our handler is simple:
+
+```go
+	server := &http.Server{
+		Addr:        gw_addr,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
+		Handler: otelhttp.NewHandler(mux, "gateway", otelhttp.WithSpanNameFormatter(func(operation string, r *http.Request) string {
+			return fmt.Sprintf("%s %s %s", operation, r.Method, r.URL.Path)
+		})),
+	}
+```
+
+* **Line 4**: We create a new OTel specific wrapper to handle http requests
+* **Line 5**: We set the Span formatter option so that the traces can be identified uniquely by the method and http request paths.  Without this SpanNameFormatter, the default "name" for our traces at the gateway would simply be `"gateway"` resulting in all traces looking like:
+
+<center> <img src="{{.Site.PathPrefix}}/static/images/part11/TracesWithoutSpanNameFormatter.png" /> </center>
+
+### Wrapping Gateway to GRPC calls with OTel
+
+By default gRPC Gateway library creates a "plain" context when creating/managing connections to the underlying GRPC services. After all the gateway does not know anything about the OTel.   In this mode a connection to gRPC Gateway and the connection from the gateway to the gRPC service will be treated as two different traces.
+
+So it is import to remove the responsibility of creating gRPC connections away from the Gateway - and instead provide a connection that is already OTel aware.  We will do that now.
+
+Prior to OTel integration, we were registering a Gateway handler for our gRPCs with:
+
+```go
+	ctx := context.Background()
+	mux := runtime.NewServeMux()    // Not showing the interceptors
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+
+  // grpc_addr = ":9090"
+	v1.RegisterTopicServiceHandlerFromEndpoint(ctx, mux, grpc_addr, opts)
+	v1.RegisterMessageServiceHandlerFromEndpoint(ctx, mux, grpc_addr, opts)
+
+  // And other servers
+```
+
+Now passing a different connection is simple:
+
+```go
+	mux := // Creat the mux runtime as usual
+
+	// Use the OpenTelemetry gRPC client interceptor for tracing
+	trclient := grpc.WithStatsHandler(otelgrpc.NewClientHandler())
+
+	conn, err := grpc.NewClient(grpc_addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		trclient)
+
+	if err != nil {
+		srvErr <- err
+	}
+
+	err = v1.RegisterTopicServiceHandler(ctx, mux, conn)
+	if err != nil {
+		srvErr <- err
+	}
+
+  // And the Message and User server too...
+```
+
+What we have done is first create a `client` (**Line 6**) that acts as a client factory for our gRPC server.  The client is pretty simple with the only addition of the grpc ClientHandler being used to create the connection.   This ensures that the context in the current trace that began on a new http request is now propogated to the gRPC server via this Handler.
+
+That's it.  Now we should start seeing the new request to the Gateway and the Gateway->gRPC request in a single consolidated trace instead of as two different traces.
+
+### Begin and End Spans
+
+We are almost there.  So far:
+
+* We have enabled the OTel collector and Jaeger to receive and store trace (span) data (in docker-compose).
+* We setup the basic OTel collector (running as a separate pod) as our "provider" of tracers, metrics and logs (ie our application's OTel integration would use this endpoint to deposit all signals).
+* We wrapped the Gateway's http Handler to be OTel enabled so that traces and their contexts are created and propogated.
+* We overrode the (gRPC) client in the gateway so that it now wraps the OTel context from our OTel setup instead of using a default context.
+* We created global tracer/meter/logger instances so we can send actual signals using them.
+
+Now we need to emit spans for all "interesting" places in our code.  Take the ListTopics method for example (in services/topics.go):
+
+```go
+func (s *TopicService) ListTopics(ctx context.Context, req *protos.ListTopicsRequest) (resp *protos.ListTopicsResponse, err error) {
+	results, err := s.DB.ListTopics(ctx, "", 100)
+	if err != nil {
+		return nil, err
+	}
+	resp = &protos.ListTopicsResponse{Topics: gfn.Map(results, TopicToProto)}
+	return
+}
+```
+
+We call the database to fetch the topics and return it.  Similar the database access method is (in datastore/topicds.go):
+
+```go
+func (tdb *OneHubDB) ListTopics(ctx context.Context, pageKey string, pageSize int) (out []*Topic, err error) {
+	query := tdb.storage.Model(&Topic{}).Order("name asc")
+	if pageKey != "" {
+		count := 0
+		query = query.Offset(count)
+	}
+	if pageSize <= 0 || pageSize > tdb.MaxPageSize {
+		pageSize = tdb.MaxPageSize
+	}
+	query = query.Limit(pageSize)
+	err = query.Find(&out).Error
+	return out, err
+}
+```
+
+Here we would be mainly interested in how much time is spent in each of these methods.   We simply create spans in each of these and we are done.  Our additions to the service and datastore methods (respectively) are:
+
+**`services/topics.go`**:
+
+```go
+func (s *TopicService) ListTopics(ctx context.Context, req *protos.ListTopicsRequest) (resp *protos.ListTopicsResponse, err error) {
+	ctx, span := Tracer.Start(ctx, "ListTopics")
+	defer span.End()
+
+  ... rest of the code to query the DB and return a proto response
+}
+```
+
+**`datastore/topicds.go`**:
+
+```go
+func (tdb *OneHubDB) ListTopics(ctx context.Context, pageKey string, pageSize int) (out []*Topic, err error) {
+	_, span := Tracer.Start(ctx, "db.ListTopics")
+	defer span.End()
+
+  ... rest of the code to fetch rows from the DB and return them
+}
+```
+
+The general pattern is:
+
+**1. Create a span**:
+
+```go
+ctx, span := Tracer.Start(ctx, "<span name>")
+```
+
+Here the given context (ctx) is "wrapped" and a new context is returned.  We can (and should) pass this new wrapped context to futher methods that .  We do just that when we call the datastore ListTopics method.
+
+**2. End the span**:
+
+```go
+defer span.End()
+```
+
+Ending a span (wheneever the method returns) ensures that the right finish times/codes etc are recorded.  We can also do other things like add tags and statuses to this if necessary to cary more information to aid with debugging.
+
+That's it.  You can see your beautiful traces in Jaeger and get more and more insights into the performance of your requests end to end!
+
+## Conclusion
+
+
