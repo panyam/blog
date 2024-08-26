@@ -1,6 +1,6 @@
 ---
 title: 'Part 11 - Tracing with OpenTelemetry and Jaeger'
-date: 2024-08-01T11:29:10AM
+date: 2024-07-21T11:29:10AM
 tags: ['opentelemetry', 'observability', 'monitoring', 'jaeger', 'otel']
 draft: false
 authors: ['Sri Panyam']
@@ -9,7 +9,7 @@ summary: In this post we will get hands on and add the first pillar to our app -
 
 ## Introduction
 
-Tracing, a critical component, tracks requests through complex systems. This visibility reveals bottlenecks and errors, enabling faster resolutions. In our [previous post](/blog/go-web-services/introducing-observability) of our [go web services series](/blog/go-web-services) , we explored observability's significance. Today, we focus on tracing.   We'll discuss Jaeger.   Jaeger collects, stores, and visualizes traces from distributed systems. It provides crucial insights into request flows across services. By integrating Jaeger with OpenTelemetry, developers unify their tracing approach, ensuring consistent and comprehensive visibility. This integration simplifies diagnosing performance issues and enhances system reliability. In this post, we’ll set up Jaeger, integrate it with OpenTelemetry in our application, and explore visualizing traces for deeper insights.
+Tracing, a critical component, tracks requests through complex systems. This visibility reveals bottlenecks and errors, enabling faster resolutions. In our [previous post](/blog/go-web-services/introducing-observability) of our [go web services series](/blog/go-web-services) , we explored observability's significance. Today, we focus on tracing.   Jaeger collects, stores, and visualizes traces from distributed systems. It provides crucial insights into request flows across services. By integrating Jaeger with OpenTelemetry, developers can unify their tracing approach, ensuring consistent and comprehensive visibility. This integration simplifies diagnosing performance issues and enhances system reliability. In this post, we’ll set up Jaeger, integrate it with OpenTelemetry in our application, and explore visualizing traces for deeper insights.
 
 ## Motivation
 
@@ -45,19 +45,14 @@ Terminal 2: `make up logs`
 
 Our system is currently:
 
-```
-SHOW CURRENT SYSTEM
+<center> <img src="{{.Site.PathPrefix}}/static/images/part11/current-architecture-overview.png" /> </center>
 
-DB, FE, DBSYNC, TYPESENSE, NGINX, POSTGRES, SERVICES, gRPC_GATEWAY
-```
 
 With instrumentation with OpenTelemtry our system will evolve to:
 
-```
-SHOW SYSTEM WITH OTEL + JAEGER + JAEGER_UI
-```
+<center> <img src="{{.Site.PathPrefix}}/static/images/part11/architecture-with-otel.svg" /> </center>
 
-As we noted [earlier](/blog/go-web-services/introducing-observability), it is quite onerous for each service to use separate clients to send to specific vendors.  Instead with an OTel collector running separately, we can ensure that all (interested) services can simply send metrics/logs/traces to this collector, which can then export to various backends as required - in this case Jaeger for traces.
+As we noted [earlier](/blog/go-web-services/introducing-observability), it is quite onerous for each service to use separate clients to send to specific vendors.  Instead with an OTel collector running separately, we can ensure that all (interested) services can simply send metrics/logs/traces to this collector, which can then export to them various backends as required - in this case Jaeger for traces.
 
 Let us get started.
 
@@ -65,7 +60,7 @@ Let us get started.
 
 First step is to add our OTel collector running in the docker environment along with Jaeger so they are accessible.
 
-Note: We have split our original all-encompassing docker-compose.yml config into two parts:
+Note: We have split our original all-encompassing `docker-compose.yml` config into two parts:
 
 1. **db-docker-compose.yml**: Contains all database and infra (non-application) related components liked databases (postgres, typesense) and monitoring services (OTel collector, Jaeger, Prometheus, etc).
 2. **docker-compose.yml**: Contains all application related services (nginx, grpc gateway, dbsync, frontend etc)
@@ -73,7 +68,7 @@ Note: We have split our original all-encompassing docker-compose.yml config into
 
 The two docker compose environments are connected by a shared network (`onehubnetwork`) through which services in these environments can communicate with each other.  With this seperation we only need to restart a subset of services upon changes speeding our development.
 
-Back to our setup, in our db-docker-compose.yml, add the following services:
+Back to our setup, in our `db-docker-compose.yml`, add the following services:
 
 ```yaml
 services:
@@ -128,18 +123,18 @@ A few things to note:
 * Jaeger (after v1.35) supports [OTLP](https://opentelemetry.io/docs/specs/otel/protocol/) natively.
 * The beauty of OTLP is that OTel collectors can be chained forming a network of OTel collectors/processors/forwarders/routers etc.
 * OTLP can be served either via a GRPC or a HTTP endpoint (on ports 4317 and 4318 respectively).
-* By default the OTLP services are started on `localhost:4317/4318`.  This is fine if Jaeger is run on the same host where the services (being monitored) are running.  However since Jaeger is running on a seperate pod they have to be bound to external addresses (0.0.0.0).  This was not clear in the documentation and resulted in significant hair-pulling.
+* By default the OTLP services are started on `localhost:4317/4318`.  This is fine if Jaeger is run on the same host/pod where the services (being monitored) are running.  However since Jaeger is running on a seperate pod they have to be bound to external addresses (0.0.0.0).  This was not clear in the documentation and resulted in significant hair-pulling.
 * `COLLECTOR_OTLP_ENABLED: true` is now the default and does not have to be specified explicitly.
 
 ### OTel Configuration
 
-OTel also need to be configured to enable specific receivers, processors and exporters.  We will do that in [configs/otel-collector.yaml](https://github.com/panyam/onehub/blob/PART11_TRACING/configs/otel-collector.yaml).
+OTel also need to be configured with specific receivers, processors and exporters.  We will do that in [configs/otel-collector.yaml](https://github.com/panyam/onehub/blob/PART11_TRACING/configs/otel-collector.yaml).
 
 #### Adding receivers
 
-To tell OTel which modules to activate for "receiving" what we care about, add the `receivers` section:
+We need to tell the OTel collector which receivers are to be activated.  This is specified in the `receivers` section:
 
-```
+```yaml
 receivers:
   otlp:
     protocols:
@@ -159,7 +154,7 @@ receivers:
       insecure: true
 ```
 
-This activates an OTLP receiver on port 4317 and 4318 (grpc, http respectively).   There are many kinds of receivers that can be started.  As ane xample we have also added a "postgresql" receiver that will actively scrape postgres for metrics (though that is not relevant for this post).  Receivers can also be pull or push based.  Pull based receivers scrap specific targets (in this postgres) where as push based recievers are sent metrics/logs/traces from applications using the [OTel client sdk](https://opentelemetry.io/docs/languages/).
+This activates an OTLP receiver on port 4317 and 4318 (grpc, http respectively).   There are many kinds of receivers that can be started.  As ane xample we have also added a "postgresql" receiver that will actively scrape postgres for metrics (though that is not relevant for this post).  Receivers can also be pull or push based.  Pull based receivers periodically scrap specific targets (e.g. postgres) where as push based recievers listen to and 'receive' send metrics/logs/traces from applications using the [OTel client sdk](https://opentelemetry.io/docs/languages/).
 
 That's it.  Now our collector is ready to receive (or scrape) the appropriate metrics.
 
@@ -169,9 +164,9 @@ Processors in OTel are a way to transform, map, batch, filter and/or enrich rece
 
 #### Add Exporters
 
-Now it is time to identify where we want the signals to be exported to - the specific backends that specialize in respective signals.  Just like receivers, exporters can also be pull or push based.  Push based exporters are used to emit signals to another receiver that acts in push mode.  These are outbound.  Pull-based exporters expose endpoints that can be scraped by other pull-based receivers (eg prometheus).   We will add exporter of each kind - one for tracing and one for prometheus to scrape from (though prometheus is no the topic of this post):
+Now it is time to identify where we want the signals to be exported to - backends that are best suited for respective signals.  Just like receivers, exporters can also be pull or push based.  Push based exporters are used to emit signals to another receiver that acts in push mode.  These are outbound.  Pull-based exporters expose endpoints that can be scraped by other pull-based receivers (eg prometheus).   We will add exporter of each kind - one for tracing and one for prometheus to scrape from (though prometheus is not the topic of this post):
 
-```
+```yaml
 exporters:
   otlp/jaeger:
     endpoint: jaeger:4317
@@ -189,9 +184,9 @@ The "debug" exporter simply is used for dumping signals to standard output/error
 
 #### Define pipelines
 
-The receiver, processor, exporter sections simply define the modules that will be enabled by the collector.  They are still not invoked.  To actually invoke/activate them, they must be referred in "pipelines".  Pipelines are the connectors that define how signals flow through and are processed by the collector.  Our pipelines definitions (in the services section) will clarify this:
+The receiver, processor, exporter sections simply define the modules that will be enabled by the collector.  They are still not invoked.  To actually invoke/activate them, they must be referred in "pipelines".  Pipelines define how signals flow through and are processed by the collector.  Our pipelines definitions (in the `services` section) will clarify this:
 
-```
+```yaml
 service:
   extensions: [health_check]
   pipelines:
@@ -206,7 +201,7 @@ service:
       exporters: [prometheus, debug]
 ```
 
-Here we are defining two pipelines.  Note how similar are the pipelines but allow two different modes exporting (Jaeger and Prometheus).  Now we are seeing the power OTel and creating pipelines within it.
+Here we are defining two pipelines.  Note how similar the pipelines are but allow two different exporting modes (Jaeger and Prometheus).  Now we are seeing the power OTel and in creating pipelines within it.
 
 1. **traces**
 
@@ -280,36 +275,37 @@ Jaeger UI is quite comprehensive and has several features that you can explore. 
 
 Analyze the trace timelines in the different requests to understand the sequence of operations. Each span represents a unit of work, showing start and end times, duration, and related metadata. This detailed view is very helpful in identifying performance bottlenecks and errors within the trace.
 
-## Integrating the Client SDK
+## Integrating the client SDK
 
-So far we have the right systems where we can visualize, consume signals etc.  However our services are still not updated to emit the signals to OTel.   Here we will integrate with the (Golang) client SDK in various parts of our code.  The [SDK](https://opentelemetry.io/docs/languages/go/) documentation is a fantastic place to first familiarize with some of the concepts.   
+So far we have out setup our systems to visualize, consume signals etc.  However our services are still not updated to emit the signals to OTel.   Here we will integrate with the (Golang) client SDK in various parts of our code.  The [SDK](https://opentelemetry.io/docs/languages/go/) documentation is a fantastic place to first familiarize with some of the concepts.   
 
-Briefly we have:
+The key concepts we will deal with are described below.
 
 ### [Resources](https://opentelemetry.io/docs/languages/go/resources/)
 
-Resources are the entity which is producing the signal.  In our case the scope of the resource is the binary hosting the services.   Currently we have a single resource for the entirety of the Onehub service but this could be split up later on. 
+Resources are the entity which produces the signal.  In our case the scope of the resource is the binary hosting the services.   Currently we have a single resource for the entirety of the Onehub service but this could be split up later on. 
 
 This is defined in [cmd/backend/obs.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/obs.go).  Note that the client SDK did not need us to go into the details of the resource definition explicitly.  The standard helper (sdktrace.WithResource) lets us create a resource definition by inferring the most useful parts (like process name, pod name etc) at runtime. 
 
-Only override we had provided was the `OTEL_RESOURCE_ATTRIBUTES: service.name=onehub.backend,service.version=0.0.1` environment variable for the `onehub` service in [docker-compose.yml](https://github.com/panyam/onehub/blob/PART11_TRACING/docker-compose.yml).
+We only had to override one thing -  the `OTEL_RESOURCE_ATTRIBUTES: service.name=onehub.backend,service.version=0.0.1` environment variable for the `onehub` service in [docker-compose.yml](https://github.com/panyam/onehub/blob/PART11_TRACING/docker-compose.yml).
 
 ### [Contexts Propogation](https://opentelemetry.io/docs/concepts/context-propagation/)
 
-Context propogation is a very important topic in observability.  The various pillars are exponentially power when we can correlate signals from each of the pillars in identifying issues with our system.   Think of contexts as extra bits of data that can be tied to the signals that can be "joined" in some unique way to tie the various signals related to a particular group (say a reqeust).
+Context propogation is a very important topic in observability.  The various pillars are exponentially powerful when we can correlate signals from each of the pillars in identifying issues with our system.   Think of contexts as extra bits of data that can be tied to the signals - ie can be "joined" in some unique way to relate the various signals to a particular group (say a reqeust).
 
 ### Providers/Exporters
 
-For each of the signals, OTel provides a Provider interface (eg TracerProvider for exporting spans/traces, MeterProvider for exporting metrics, LoggerProvider for exporting logs and so on).  For each of these interfaces there can be several implementations, eg Debug provider for sending to stdout/err streams, OTel provider for exporting to an OTel endpoint, or even directly via a [variety of exporters](https://opentelemetry.io/ecosystem/registry/?component=exporter&language=go).   However in our case we want to defer the choice of any vendors out of our services and instead send all signals to the OTel collector running in our environment.
+For each of the signals, OTel provides a Provider interface (eg TracerProvider for exporting spans/traces, MeterProvider for exporting metrics, LoggerProvider for exporting logs and so on).  For each of these interfaces there can be several implementations, eg Debug provider for sending to stdout/err streams, OTel provider for exporting to another OTel endpoint (in a chain), or even directly via a [variety of exporters](https://opentelemetry.io/ecosystem/registry/?component=exporter&language=go).   However in our case we want to defer the choice of any vendors out of our services and instead send all signals to the OTel collector running in our environment.
 
 To abstract this we will create an "OTELSetup" type that keeps track of the various providers we might want to use or swap out.  In  [cmd/backend/obs.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/obs.go) we have:
 
-```
+```go
 type OTELSetup[C any] struct {
 	ctx                 context.Context
 	shutdownFuncs       []ShutdownFunc
 	Resource            *resource.Resource
 	Context             C
+
 	SetupPropagator     func(o *OTELSetup[C])
 	SetupTracerProvider func(o *OTELSetup[C]) (trace.TracerProvider, ShutdownFunc, error)
 	SetupMeterProvider  func(o *OTELSetup[C]) (otelmetric.MeterProvider, ShutdownFunc, error)
@@ -321,8 +317,9 @@ type OTELSetup[C any] struct {
 This is a simple wrapper keeping track of common aspects needed by the OTel SDK.   Here we have providers (Logger, Tracer and Metric) as well as ways to provide context (for tracing).   The over-arching Resource used by all providers is also specified here.  Shutdown functions are interesting.  They are functions called by the providers when the underlying exporter has terminated (gracefully or due to an exit).  The wrapper itself takes a generic so specific instantiators of this Setup can use their own custom data. 
 
 The repo contains two implementations of this repo 
+
 * Logging signals to standard output/error - [cmd/backend/stdout.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/stdout.go)
-* Exporting signals to an OTel collector - [cmd/backend/otelcol.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/otelcol.go)
+* Exporting signals to another OTel collector - [cmd/backend/otelcol.go](https://github.com/panyam/onehub/blob/PART11_TRACING/cmd/backend/otelcol.go)
 
 We will instantiate the second one in our app.   We will not go into details of the specific implementations as they have been taken from the [examples](https://github.com/open-telemetry/opentelemetry-go/tree/main/example/) in the SDK with minor fixes and refactoring.  Specifically take a look at the [otel-collector](https://github.com/open-telemetry/opentelemetry-go/tree/main/example/otel-collector) example for inspiration.
 
@@ -412,13 +409,15 @@ func main() {
 * **Lines 27**: Setup our DB and connections as before
 * **Lines 29 -**: Previously we simply started GRPC and Gateway services in the background and that was it.   We did not quite care about their return or exit statuses.  For a more resilient system it is important to have a better insight into the lifecycle of the services we are starting.   So now we pass "callback" channel for each of the services we are starting.  When the servers exit the respective methods will call back on these channels available to them to indicate that they have exited gracefully.   Our entire binary will exit when either one of these services exit.
 
-As an example our gateway service leverages this channels in the following way.  Instead of 
+As an example, let us see how our gateway service leverages this channel.
+
+Instead of starting the http server (for the grpc-gateway) as:
 
 ```go
 	http.ListenAndServe(gw_addr, mux)
 ```
 
-we now have (pay attention to **lines 9-14** where the server shutdown is watched for in a separate goroutine and **line 15** where the server exit error if any is sent back via the passed "notification" channel):
+We now have:
 
 ```go
 	server := &http.Server{
@@ -438,11 +437,13 @@ we now have (pay attention to **lines 9-14** where the server shutdown is watche
 	srvErr <- server.ListenAndServe()
 ```
 
+Pay attention to **lines 9-14** where the server shutdown is watched for in a separate goroutine and **line 15** where if there was an error when the server exited, it is sent back via the "notification" channel that was passed as an argument to this method.
+
 Now the various parts of our services now have access to an "active" OTLP connection to use when ever signals are to be sent.
 
 ### OTel Middleware for GRPC Gateway
 
-In the previous  the http.Server instance used to start the grpc Gateway is using a custom handler - the `http.Handler` in the [Otel HTTP](go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp) package.  This Handler takes an existing http.Handler instance and decorates it with the OTel context and ensuring its propogation to any other downstreams that are called.  Our handler is simple:
+Above, the http.Server instance used to start the grpc Gateway is using a custom handler - the `http.Handler` in the [Otel HTTP](go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp) package.  This Handler takes an existing http.Handler instance and decorates it with the OTel context and ensuring its propogation to any other downstreams that are called.
 
 ```go
 	server := &http.Server{
@@ -454,6 +455,8 @@ In the previous  the http.Server instance used to start the grpc Gateway is usin
 	}
 ```
 
+Our HTTP handler is simple:
+
 * **Line 4**: We create a new OTel specific wrapper to handle http requests
 * **Line 5**: We set the Span formatter option so that the traces can be identified uniquely by the method and http request paths.  Without this SpanNameFormatter, the default "name" for our traces at the gateway would simply be `"gateway"` resulting in all traces looking like:
 
@@ -461,7 +464,7 @@ In the previous  the http.Server instance used to start the grpc Gateway is usin
 
 ### Wrapping Gateway to GRPC calls with OTel
 
-By default gRPC Gateway library creates a "plain" context when creating/managing connections to the underlying GRPC services. After all the gateway does not know anything about the OTel.   In this mode a connection to gRPC Gateway and the connection from the gateway to the gRPC service will be treated as two different traces.
+By default gRPC Gateway library creates a "plain" context when creating/managing connections to the underlying GRPC services. After all the gateway does not know anything about OTel.   In this mode a connection (from the user/browser) to gRPC Gateway and the connection from the gateway to the gRPC service will be treated as two different traces.
 
 So it is import to remove the responsibility of creating gRPC connections away from the Gateway - and instead provide a connection that is already OTel aware.  We will do that now.
 
@@ -503,7 +506,7 @@ Now passing a different connection is simple:
   // And the Message and User server too...
 ```
 
-What we have done is first create a `client` (**Line 6**) that acts as a client factory for our gRPC server.  The client is pretty simple with the only addition of the grpc ClientHandler being used to create the connection.   This ensures that the context in the current trace that began on a new http request is now propogated to the gRPC server via this Handler.
+What we have done is first create a `client` (**Line 6**) that acts as a connection factory for our gRPC server.  The client is pretty simple.  Only that the grpc ClientHandler (`otelgrpc.NewClientHandler`) is being used to create the connection.   This ensures that the context in the current trace that began on a new http request is now propogated to the gRPC server via this Handler.
 
 That's it.  Now we should start seeing the new request to the Gateway and the Gateway->gRPC request in a single consolidated trace instead of as two different traces.
 
@@ -594,4 +597,4 @@ That's it.  You can see your beautiful traces in Jaeger and get more and more in
 
 ## Conclusion
 
-
+We covered a lot in this post and still barely scratched all the details behind OTel and tracing.   Instead of overloading this (already loaded) post we will introduce newer concepts and intricate details in future posts.  For now give this a go in your own services and try playing with other exporters and receivers in the otel contrib repo.

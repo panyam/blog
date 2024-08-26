@@ -4,7 +4,7 @@
   "Description": "My personal blog highlighting adventures in building random things on the side",
   "HideDrafts": true,
   "Language": "en-us",
-  "MaxPostsPerPage": 10,
+  "MaxPostsPerPage": 20,
   "Theme": "system",
   "SiteUrl": "https://buildmage.com",
   "SiteRepo": "https://github.com/panyam/",
