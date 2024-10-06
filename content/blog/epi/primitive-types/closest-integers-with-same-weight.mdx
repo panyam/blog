@@ -19,17 +19,21 @@ Given a 64 bit unsigned integer x (where `W(x) != 0 and W(x) != 64`) find y such
 
 An example would make this clear, eg if
 
+```
 X = 4 (dec) = 0100 (bin)
+```
 
 The candiates are:
 
+```
 0001 – Diff = 3
 
 0010 – Diff = 2
 
 1000 – Diff = 4
+```
 
-So Y = 010 (bin) = 2 (dec).
+So `Y = 010 (bin) = 2 (dec)`
 
 The solution to this is to start with X and find the first “01” or “10” starting from the LEFT and then swap the bits.
 
