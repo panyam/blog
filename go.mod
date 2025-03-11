@@ -1,6 +1,6 @@
 module github.com/panyam/blog
 
-go 1.23.5
+go 1.24
 
 toolchain go1.24.0
 
@@ -10,7 +10,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/gorilla/mux v1.8.1
 	github.com/panyam/goutils v0.1.2
-	github.com/panyam/s3gen v0.0.15
+	github.com/panyam/s3gen v0.0.16
 	github.com/panyam/templar v0.0.2
 )
 
