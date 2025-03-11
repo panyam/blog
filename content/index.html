@@ -6,6 +6,9 @@ images: []
 authors: ['Sri Panyam']
 ---
 
+{{# include "ScrollTopAndComment.html" #}}
+{{# include "Tag.html" #}}
+
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 {{ template "ScrollTopAndComment" }}
 <div class="divide-y divide-gray-200 dark:divide-gray-700">

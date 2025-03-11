@@ -6,15 +6,20 @@ images: []
 authors: ['Sri Panyam']
 templateParams: { BodyTemplateName: "BaseBody" } 
 ---
+
+{{# include "PostList.html" #}}
+
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 {{ $pageSize := Int $siteMetadata.MaxPostsPerPage }}
 {{/* $posts := LeafPages $siteMetadata.HideDrafts "-date" 0 -1 */}}
 {{ $posts := PagesByDate $siteMetadata.HideDrafts true 0 -1 }}
 {{ $d := Div ( len $posts ) $pageSize }}
 {{ $numPages := Ceil ($d) }}
+
 {{ if eq .Res.ParamName "" }}
   {{/*NumPages, Len: {{$numPages}} {{len $posts }}*/}}
   {{ range (IntList 1 $numPages 1) }}{{ $_ := $.Res.AddParam (String .) }}{{ end }}
+
 {{ else }}
   {{/* Do what is needed to show data for this page - list layout etc */}}
   {{ $currPage := Int .Res.ParamName }}

@@ -7,6 +7,10 @@ authors: ['Sri Panyam']
 hideInIndex: true
 templateParams: { BodyTemplateName: "BaseBody" } 
 ---
+
+
+{{# include "PostList.html" #}}
+
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 {{ $pageSize := Int $siteMetadata.MaxPostsPerPage }}
 {{ $allPosts := PagesByDate $siteMetadata.HideDrafts true 0 -1 }}

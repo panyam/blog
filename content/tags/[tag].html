@@ -6,16 +6,22 @@ draft: false
 images: []
 authors: ['Sri Panyam']
 location: "BodyView"
+params: "{{ .GetTagPage }}"
 ---
+
+{{# include "PostList.html" #}}
 
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 
 {{ if eq .Res.ParamName "" }}
+
   {{ $posts := (PagesByDate $siteMetadata.HideDrafts true 0 -1) }}
   {{ $tagmap := AllTags $posts }}
   {{ $sortedTags := KeysForTagMap $tagmap "-count" }}
   {{ range $sortedTags }}{{ $t := $.Res.AddParam (Slugify . )  }}{{ end }}
+
 {{ else }}
+
   {{ $currTag := .Res.ParamName }}
   {{ $posts := (PagesByTag $currTag $siteMetadata.HideDrafts true 0 -1) }}
   {{ $title := Join " " "Posts for" $currTag }}
@@ -26,5 +32,6 @@ location: "BodyView"
         "PageSize" 100
         "NumPages" -1
         "FilteredPosts" $posts }}
+
 {{ end }}
 

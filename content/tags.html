@@ -7,6 +7,8 @@ images: []
 authors: ['Sri Panyam']
 ---
 
+{{# include "Tag.html" #}}
+
 {{ $siteMetadata := (json "SiteMetadata.json" "") }}
 
   {{ $posts := (PagesByDate $siteMetadata.HideDrafts true 0 -1) }}

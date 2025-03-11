@@ -13,8 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	gfn "github.com/panyam/goutils/fn"
 	s3 "github.com/panyam/s3gen"
-	s3funcs "github.com/panyam/s3gen/funcs"
-	s3views "github.com/panyam/s3gen/views"
+	gotl "github.com/panyam/templar"
 )
 
 var (
@@ -22,10 +21,10 @@ var (
 )
 
 var site = s3.Site{
-	ContentRoot: "./content",
 	OutputDir:   "./output",
-	HtmlTemplates: []string{
-		"templates/*.html",
+	ContentRoot: "./content",
+	TemplateFolders: []string{
+		"./templates",
 	},
 	StaticFolders: []string{
 		"/static/", "static",
@@ -85,8 +84,6 @@ func withLogger(handler http.Handler) http.Handler {
 }
 
 // /////////// Page View related items
-type SiteView = s3views.View[*s3.Site]
-type BaseView = s3views.BaseView[*s3.Site]
 
 // //////////// Functions for our site
 func TemplateFunctions() template.FuncMap {
@@ -160,7 +157,8 @@ func LeafPages(hideDrafts bool, orderby string, offset, count any) (out []*s3.Re
 			// && (strings.HasSuffix(res.FullPath, ".md") || strings.HasSuffix(res.FullPath, ".mdx"))
 		},
 		sortFunc,
-		s3funcs.ToInt(offset), s3funcs.ToInt(count))
+		gotl.ToInt(offset),
+		gotl.ToInt(count))
 }
 
 func GetPagesByTag(tag string, hideDrafts bool, desc bool, offset, count any) (out []*s3.Resource) {
@@ -181,7 +179,7 @@ func GetPagesByTag(tag string, hideDrafts bool, desc bool, offset, count any) (o
 				if t == tag {
 					return true
 				}
-				if s3funcs.Slugify(t) == tag {
+				if gotl.Slugify(t) == tag {
 					return true
 				}
 			}
@@ -204,7 +202,7 @@ func GetPagesByTag(tag string, hideDrafts bool, desc bool, offset, count any) (o
 				return sub < 0
 			}
 		},
-		s3funcs.ToInt(offset), s3funcs.ToInt(count))
+		gotl.ToInt(offset), gotl.ToInt(count))
 }
 
 func GetPagesByDate(hideDrafts bool, desc bool, offset, count any) (out []*s3.Resource) {
@@ -238,7 +236,7 @@ func GetPagesByDate(hideDrafts bool, desc bool, offset, count any) (out []*s3.Re
 				return sub < 0
 			}
 		},
-		s3funcs.ToInt(offset), s3funcs.ToInt(count))
+		gotl.ToInt(offset), gotl.ToInt(count))
 }
 
 func KeysForTagMap(tagmap map[string]int, orderby string) []string {
