@@ -9,7 +9,7 @@ toolchain go1.24.0
 require (
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/gorilla/mux v1.8.1
-	github.com/panyam/s3gen v0.0.30
+	github.com/panyam/s3gen v0.0.32
 )
 
 require (
@@ -28,5 +28,5 @@ require (
 )
 
 // replace github.com/panyam/goutils v0.1.1 => ../goutils/
-// replace github.com/panyam/s3gen v0.0.30 => ../s3gen/
+// replace github.com/panyam/s3gen v0.0.32 => ../s3gen/
 // replace github.com/panyam/templar v0.0.2 => ../templar/
