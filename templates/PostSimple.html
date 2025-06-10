@@ -2,6 +2,7 @@
 {{# include "./ScrollTopAndComment.html" #}}
 {{# include "./Comments.html" #}}
 {{# include "./PageTitle.html" #}}
+{{# include "./Article.html" #}}
 
 {{ define "PostSimple" }}
   {{/* $SiteUrl := Join "/" .Site.SiteMetadata.SiteUrl "blog" .Post.Slug */}}
@@ -22,25 +23,27 @@
               <div>
                 <dt class="sr-only">Published on</dt>
                 <dd class="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                  {{ .Res.Page.CreatedAt.Format "Mon Jan 2, 2006" }}
+                  {{ .Res.Base.CreatedAt.Format "Mon Jan 2, 2006" }}
                 </dd>
               </div>
             </dl>
             <div>
-              {{ template "PageTitle" dict "Title" .Res.Page.Title }}
+              {{ template "PageTitle" dict "Title" .Res.Base.Title }}
             </div>
           </div>
         </header>
         <div class="divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0 " style="gridTemplateRows: 'auto 1fr'">
           <div class="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
             <article class="prose max-w-none pb-8 pt-10 dark:prose-dark">
-              {{ .Content | HTML }}
+              {{ $sourceAndTOC := ParseMD .Content }}
+              {{ StageSet "Document" $sourceAndTOC.Doc "TOC" $sourceAndTOC.TOC}}
+              {{ template "Article" . }}
             </article >
           </div>
           {{/*{{ template "Comments" dict "frontMatter" .Content }}*/}}
           <footer>
             <div class="flex flex-col text-sm font-medium sm:flex-row sm:justify-between sm:text-base">
-              {{ if and .Page .Page.PrevPage }}
+              {{ if and .Page .Base.PrevPage }}
                 <div class="pt-4 xl:pt-8">
                   <a
                       href="/blog/{{.PrevPost.Slug}}"
@@ -50,7 +53,7 @@
                   </a>
                 </div>
               {{ end }}
-              {{ if and .Page .Page.NextPage }}
+              {{ if and .Page .Base.NextPage }}
                 <div class="pt-4 xl:pt-8">
                   <a class="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                      href="/blog/{{.NextPost.Slug}}">

@@ -1,6 +1,7 @@
 {{# include "./Header.html" #}}
 {{# include "./Footer.html" #}}
 {{# include "./CommonPageHeader.html" #}}
+{{# include "./PostSimple.html" #}}
 
 <html lang="en" class="scroll-smooth">
   <head>
@@ -24,7 +25,7 @@
       <div class="flex h-screen flex-col justify-between">
         {{ template "Header" . }}
         <main class="mb-auto">
-          {{ BytesToString .Content | HTML }}
+          {{ template "PostSimple" . }}
         </main>
         {{ template "Footer" . }}
       </div>

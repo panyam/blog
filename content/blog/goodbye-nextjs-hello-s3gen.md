@@ -5,6 +5,7 @@ tags: ['static site generator', 'go', 'ssg', 's3gen']
 draft: false
 authors: ['Sri Panyam']
 summary: A brief journey on how I got off NextJS for hosting this blog and built a static site generator to host it instead.
+template: BasePageMD.html
 ---
 
 ## History

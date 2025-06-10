@@ -1,0 +1,6 @@
+{{ define "Article" }}
+<article class="prose max-w-none pb-8 pt-10 dark:prose-dark">
+  {{ $Doc := StageGet "Document" }}
+  {{ MDToHtml  $Doc  }}
+</article>
+{{ end }}

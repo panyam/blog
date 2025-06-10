@@ -1,20 +1,20 @@
 {{ define "SEO" }}
     {{ $siteMetadata := (json "SiteMetadata.json" "") }}
-    <title>{{.Page.Title}}</title>
+    <title>{{.Base.Title}}</title>
     <meta name="robots" content="follow, index" />
-    <meta name="description" content={{.Page.Description}} />
+    <meta name="description" content={{.Base.Description}} />
     <meta property="og:url" content={{$siteMetadata.SiteUrl}} />
     <meta property="og:type" content={{.OgType}} />
     <meta property="og:site_name" content={{$siteMetadata.Title}} />
-    <meta property="og:description" content={{.Page.Description}} />
-    <meta property="og:title" content={{.Page.Title}} />
+    <meta property="og:description" content={{.Base.Description}} />
+    <meta property="og:title" content={{.Base.Title}} />
     {{ range .OgImages }}
       <meta property="og:image" content={{.}} key={{.}} />
     {{ end }}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content={{$siteMetadata.Twitter}} />
-    <meta name="twitter:title" content={{.Page.Title}} />
-    <meta name="twitter:description" content={{.Page.Description}} />
+    <meta name="twitter:title" content={{.Base.Title}} />
+    <meta name="twitter:description" content={{.Base.Description}} />
     <meta name="twitter:image" content={{.TwImage}} />
     {{ if .CanonicalUrl }}
       <link
