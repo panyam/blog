@@ -10,7 +10,7 @@ clean:
 	rm -Rf output
 
 build:
-	rm -Rf output/static
+	rm -Rf output/static /tmp/main
 
 checklinks:
 	@if [ x"${NUM_LINKED_GOMODS}" != "x0" ]; then	\
