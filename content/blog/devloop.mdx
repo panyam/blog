@@ -34,13 +34,11 @@ Each of these had their own watch-and-rebuild needs. I could run five different 
 
 I needed an orchestrator. Something that could conduct these setups of tools while letting each run on their own independently. And maybe, just maybe, something that could expose all this activity to the AI assistants that were increasingly becoming part of my development flow.
 
-![Terminal Chaos vs Organized Output](terminal-comparison.svg)
+![Terminal Chaos vs Organized Output](/static/images/devloop/terminal-comparison.svg)
 
 ## Learning from the Best
 
-Before writing a single line of code, I spent time understanding the problems these tools solved. Air showed me what
-developers loved about live-reloading. Nodemon demonstrated the value of clear process management. Watchexec proved that
-language-agnostic tools have their place. More then their code, their users and use cases were fascinating.
+Before writing a single line of code, I spent time understanding the problems these tools solved. Air showed me what developers loved about live-reloading. Nodemon demonstrated the value of clear process management. Watchexec proved that language-agnostic tools have their place. More then their code, their users and use cases were fascinating.
 
 The initial prototype was almost embarrassingly simple:
 
@@ -53,7 +51,7 @@ type Rule struct {
 }
 ```
 
-But this simplicity forced me to think about the real problem. It wasn't about watching files - fsnotify had solved that. It wasn't about running commands - os/exec was mature. It was about orchestration, coordination, and presentation.
+But this simplicity forced me to think about the real problem. Just watching files isnt exciting nor did it add value - fsnotify had solved that. Same with "just" running commands - os/exec was mature.  My instinct was pointing towards orchestration, coordination, and presentation.
 
 ## The Two-Day Sprint
 
@@ -73,7 +71,7 @@ By the way of a tangent - there are a lot of interesting insights about where th
 
 The journey from wrapper to orchestrator happened in stages. First came the realization that I needed proper process management. Killing a web server cleanly is different from killing a build process. Process groups became my friend.
 
-![Architecture Evolution](architecture-evolution.svg)
+![Architecture Evolution](/static/images/devloop/architecture-evolution.svg)
 
 Then came the logging challenge. When you have five services outputting logs simultaneously, you need more than just timestamps. The prefix system was born:
 
@@ -123,7 +121,7 @@ I hit another wall. I was working on a microservices project where services were
 
 This sparked the agent/gateway architecture:
 
-![Agent Gateway Architecture](agent-gateway-flow.svg)
+![Agent Gateway Architecture](/static/images/devloop/agent-gateway-flow.svg)
 
 The gateway became a central hub, with agents connecting from each project. Now I had:
 - One place to see all logs
@@ -140,21 +138,19 @@ Goal here was definitely not to create another N+1 tool.   This was more about d
 
 The latest evolution came from a "what if" moment. What if my AI coding assistant could not just write code, but also run it, see the errors, and iterate? What if it could monitor builds across my entire stack?
 
-The Model Context Protocol (MCP) integration isn't about replacing developers. It's about augmenting our capabilities. Imagine telling your AI assistant: "The API is failing tests, can you check the logs and suggest a fix?" And it can actually do it.
+In one way -tThe Model Context Protocol (MCP) integration improves developer "bandwidth" reducing the need for context swtiches. Imagine telling your AI assistant: "The API is failing tests, can you check the logs and suggest a fix?" And it can actually do it.
 
-![MCP Integration Flow](mcp-integration.svg)
+![MCP Integration Flow](/static/images/devloop/mcp-integration.svg)
 
 ## Challenges and Reality Checks
 
 Let's talk about what didn't work:
 
-**Race Conditions**: File systems are eventually consistent. Sometimes a file save triggers multiple events. Sometimes events arrive out of order. Debouncing isn't just about performance - it's about correctness.
+**Race Conditions**: Sometimes a file save triggers multiple events. Sometimes events arrive out of order. Debouncing is great for performance and "eventual" correctness.
 
 **Cross-Platform Pain**: What works on macOS might not work on Linux. Windows has its own special requirements. Process management, in particular, is a minefield.
 
-**The Streaming Problem**: Streaming logs from multiple sources through gRPC to HTTP clients while maintaining order and
-not dropping messages... let's just say distributed systems and threading challenges are like snowflakes.  Very seldom
-are two of them alike.
+**The Streaming Problem**: Streaming logs from multiple sources through gRPC to HTTP clients while maintaining order and not dropping messages... let's just say distributed systems and threading challenges are like snowflakes.  Very seldom are two of them alike.
 
 ## Standing on Shoulders
 
