@@ -3,7 +3,7 @@ title: Devloop - Multi Project Watcher
 date: 2025-07-02T03:32:08PM
 tags: ['live-reload', 'hot-reload', 'multi-project', 'watcher', 'mcp']
 draft: false
-summary: 'The story behind why and how I built Devloop - a versatile tool for monitoring chagnes in your multi-component project and triggered various parallel builds'
+summary: 'The story behind why and how I built Devloop - a versatile tool for monitoring changes in your multi-component project and triggering various parallel builds'
 images: []
 authors: ['Sri Panyam']
 template: BasePageMD.html
@@ -13,7 +13,7 @@ template: BasePageMD.html
 
 I had three terminal windows open, each running a perfectly functional instance of [Air](https://github.com/air-verse/air). My Go services were hot-reloading beautifully, each in their own little world. Air was doing exactly what it promised - and doing it well. But as I alt-tabbed between terminals, trying to spot which service just logged that error, I realized I needed something different. Not better. Different.
 
-This is the story of how I built devloop, a multi-service orchestrator that stands on the shoulders of tools like Air, nodemon, and watchexec.
+This is the story of how I built devloop, a multi-service orchestrator that stands on the shoulders of tools like Air, [nodemon](https://github.com/remy/nodemon), and [watchexec](https://github.com/watchexec/watchexec).
 
 ## Five Terminals Is Four Too Many
 
@@ -64,7 +64,7 @@ Every line of code went through my filter. Every design decision was mine. But i
 
 The result? Clean, maintainable code that I understand completely - just delivered at 10x speed.
 
-There are a lot of of interesting insights on where they shined and where they whined, TL;DR - Gemini got me 80% there and then just started spinning creating more and more mess.  Brought Claude in to fix all the messy loops Gemini was getting itself into.
+There are a lot of interesting insights about where they shined and where they *whined*, TL;DR - Gemini got me 80% there and then just started spinning creating more and more mess.  Brought Claude in to fix all the messy loops Gemini was getting itself into.
 
 ## The Architecture Evolution
 
@@ -92,7 +92,7 @@ Air uses TOML, and it works great. But when I looked at my use cases, YAML made 
 - More familiar to the Kubernetes/Docker Compose generation
 - Easier to express complex watch patterns
 
-Dont get me wrong.  TOML is not inferior, YAML just suited my purposes better.  Frankly at somepoint Il just enable the configs to written in any format and they can be loaded just as easily.
+Dont get me wrong.  TOML is not inferior, YAML just suited my purposes better.  Frankly at some point I'll just enable the configs to be written in any format and they can be loaded just as easily.
 
 ### The Great Glob(sby)
 
@@ -155,17 +155,16 @@ are two of them alike.
 
 ## Standing on Shoulders
 
-None of this would have been possible without the incredible Go ecosystem:
-- fsnotify for file watching
-- cobra for CLI management  
-- gRPC and grpc-gateway for APIs
+None of this would have been possible without the incredible [Go](https://grpc.io/docs/languages/go/) ecosystem:
+- [fsnotify](https://github.com/fsnotify/fsnotify) for file watching
+- gRPC and [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway) for APIs
 - The countless examples and patterns from tools like Air, nodemon, and watchexec
 
-I owe a particular debt to [Rick](https://github.com/cosmtrek/cosmtrek), the creator of Air for setting an amazing benchmark on both simplicity and robustness one can expect from a tool like this.
+I owe a particular debt to [Rick/cosmtrek](https://github.com/cosmtrek), the creator of Air for setting an amazing benchmark on both simplicity and robustness one can expect from a tool like this.
 
 ## Where We Are Now
 
-Devloop is now at a point where it's stable and useful. It's running in my daily development workflow, orchestrating services, and making life a bit easier. The agent/gateway architecture is working well for distributed setups. The MCP integration is opening new possibilities.
+Devloop is now at a point where it's stable and useful. It's running in my daily development workflow, orchestrating services, and making life a bit easier. The agent/gateway architecture is working well for distributed setups. The Model Context Protocol (MCP) integration is opening new possibilities.
 
 But it's not perfect. Windows support could be better. The configuration syntax could be more intuitive. Performance with very large numbers of files needs to be observed and improved.
 
