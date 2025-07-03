@@ -1,0 +1,209 @@
+---
+title: Devloop - Multi Project Watcher
+date: 2025-07-02T03:32:08PM
+tags: ['live-reload', 'hot-reload', 'multi-project', 'watcher', 'mcp']
+draft: false
+summary: 'The story behind why and how I built Devloop - a versatile tool for monitoring chagnes in your multi-component project and triggered various parallel builds'
+images: []
+authors: ['Sri Panyam']
+template: BasePageMD.html
+---
+
+# Building Devloop: A versatile multi-project watcher and live builder.
+
+I had three terminal windows open, each running a perfectly functional instance of [Air](https://github.com/air-verse/air). My Go services were hot-reloading beautifully, each in their own little world. Air was doing exactly what it promised - and doing it well. But as I alt-tabbed between terminals, trying to spot which service just logged that error, I realized I needed something different. Not better. Different.
+
+This is the story of how I built devloop, a multi-service orchestrator that stands on the shoulders of tools like Air, nodemon, and watchexec.
+
+## Five Terminals Is Four Too Many
+
+Let me be clear upfront: Air is fantastic. I use it every day. If you're working on a single Go project, it's pretty much perfect. The same goes for nodemon in the Node.js world, or watchexec as a language-agnostic option. These tools have solved the live-reloading problem elegantly.
+
+But here's where my use case diverged. I was working on my goto setup:
+- A Go API backend
+- Another Go service for background jobs  
+- A React frontend with its own build process (and a htmx FE for another project)
+- Documentation bundles that needed rebuilding
+- The odd database migration to be run when (SQL) schemas changed.
+
+Each of these had their own watch-and-rebuild needs. I could run five different tools in five different terminals, but the cognitive overhead was killing me. When an error occurred, I had to:
+1. Figure out which terminal it came from
+2. Scroll back through interleaved logs
+3. Try to piece together the timeline of what happened
+
+I needed an orchestrator. Something that could conduct these setups of tools while letting each run on their own independently.
+
+![Terminal Chaos vs Organized Output](terminal-comparison.svg)
+
+## Learning from the Best
+
+Before writing a single line of code, I spent time understanding the problems these tools solved. Air showed me what
+developers loved about live-reloading. Nodemon demonstrated the value of clear process management. Watchexec proved that
+language-agnostic tools have their place. More then their code, their users and use cases were fascinating.
+
+The initial prototype was almost embarrassingly simple:
+
+```go
+// First attempt: just wrap multiple commands
+type Rule struct {
+    Name     string
+    Patterns []string
+    Command  string
+}
+```
+
+But this simplicity forced me to think about the real problem. It wasn't about watching files - fsnotify had solved that. It wasn't about running commands - os/exec was mature. It was about orchestration, coordination, and presentation.
+
+## The Two-Day Sprint
+
+Here's something I haven't mentioned yet: I built the entire first version of devloop in two days.  And I did it by pair programming with Claude and Gemini in what I can only describe as the most intense flow state I've ever experienced.    Let's be honest.  I think we are at point in time where keeping your AI usage secret is just ... well ... silly.  
+
+I'm not talking about copying and pasting from &lt;your-favorite-llm&gt;. I'm talking about using AI as a true programming partner - bouncing ideas, iterating on designs, and yes, generating code. But here's the key: I maintained complete ownership of the architecture and code quality. The AI was my accelerator, not my autopilot.  At points being able to identify wrong decisions the agents were making, interrupting them (in their "auto-accept" state) saved me a lot mess down the road.
+
+Every line of code went through my filter. Every design decision was mine. But instead of spending hours on boilerplate or searching through documentation, I could focus on the interesting problems. When I needed a process group implementation, I could discuss trade-offs with AI and get a working implementation in minutes instead of hours.
+
+The result? Clean, maintainable code that I understand completely - just delivered at 10x speed.
+
+There are a lot of of interesting insights on where they shined and where they whined, TL;DR - Gemini got me 80% there and then just started spinning creating more and more mess.  Brought Claude in to fix all the messy loops Gemini was getting itself into.
+
+## The Architecture Evolution
+
+The journey from wrapper to orchestrator happened in stages. First came the realization that I needed proper process management. Killing a web server cleanly is different from killing a build process. Process groups became my friend.
+
+![Architecture Evolution](architecture-evolution.svg)
+
+Then came the logging challenge. When you have five services outputting logs simultaneously, you need more than just timestamps. The prefix system was born:
+
+```go
+[backend]  Starting server on :8080
+[frontend] Webpack build completed
+[worker]   Processing job: send-emails
+[backend]  GET /api/users 200 OK
+```
+
+This seems obvious in retrospect, but getting the buffering right so that multi-line outputs stayed together took more attempts than I'd like to admit.
+
+## Technical Decisions and Trade-offs
+
+### Why YAML Over TOML?
+
+Air uses TOML, and it works great. But when I looked at my use cases, YAML made more sense:
+- Better support for lists and nested structures
+- More familiar to the Kubernetes/Docker Compose generation
+- Easier to express complex watch patterns
+
+Dont get me wrong.  TOML is not inferior, YAML just suited my purposes better.  Frankly at somepoint Il just enable the configs to written in any format and they can be loaded just as easily.
+
+### The Great Glob(sby)
+
+One of my favorite bugs came from glob pattern matching. The initial implementation used [gobwas/glob](https://github.com/gobwas/glob), which is blazing fast. But it interpreted `**` differently than most developers expected. 
+
+When someone writes `src/**/*.go`, they expect it to match both `src/main.go` and `src/pkg/util/helper.go`. However the `gobwas/glob` implmentation only allowed `1 or more` subdirectory matches instead of the `0 or more` expected by convention - eg .gitignore files.   So here I switched to using the [bmatcuk/doublestar](https://github.com/bmatcuk/doublestar) library.   The way around this would have been to rewrite `src/**/*.go` to `src/{*.go,**/*.go}` but it was just getting more complex and "magical" without explanation. 
+
+### Process Management: Lessons from the Trenches
+
+The hardest part wasn't starting processes - it was stopping them cleanly. Different platforms handle process groups differently. A web server needs graceful shutdown. A build process might spawn its own children.  Process management is a common challenge in tools like this. Here's the solution I arrived at:
+
+```go
+// Create a new process group
+cmd.SysProcAttr = &syscall.SysProcAttr{
+    Setpgid: true,
+}
+
+// Later, signal the entire group
+syscall.Kill(-pgid, syscall.SIGTERM)
+```
+
+## The Distributed Twist
+
+I hit another wall. I was working on a microservices project where services were spread across multiple repositories. Running devloop in each directory worked, but I was back to multiple terminals.
+
+This sparked the agent/gateway architecture:
+
+![Agent Gateway Architecture](agent-gateway-flow.svg)
+
+The gateway became a central hub, with agents connecting from each project. Now I had:
+- One place to see all logs
+- Unified API for monitoring
+- Ability to trigger builds across projects
+
+This had the immediate benefit of enabling "unified logging" and exposing the various watchers to MCP clients via an MCP server running on the gateway!
+
+Goal here was definitely not to create another N+1 tool.   This was more about decoupling the "management" experience from the actual work.   And in the process this was about improving the development experience.
+
+(By the way here was one of the times where the AI went off the rails trying to propose a Server running on the agent the Gateway would ping and query.  I had to correct it as it would have led to a ton of complexity and not to mention network and firewall hell).
+
+## Embracing the Future: MCP and AI Assistants
+
+The latest evolution came from a "what if" moment. What if my AI coding assistant could not just write code, but also run it, see the errors, and iterate? What if it could monitor builds across my entire stack?
+
+The Model Context Protocol (MCP) integration isn't about replacing developers. It's about augmenting our capabilities. Imagine telling your AI assistant: "The API is failing tests, can you check the logs and suggest a fix?" And it can actually do it.
+
+![MCP Integration Flow](mcp-integration.svg)
+
+## Challenges and Reality Checks
+
+Let's talk about what didn't work:
+
+**Race Conditions**: File systems are eventually consistent. Sometimes a file save triggers multiple events. Sometimes events arrive out of order. Debouncing isn't just about performance - it's about correctness.
+
+**Cross-Platform Pain**: What works on macOS might not work on Linux. Windows has its own special requirements. Process management, in particular, is a minefield.
+
+**The Streaming Problem**: Streaming logs from multiple sources through gRPC to HTTP clients while maintaining order and
+not dropping messages... let's just say distributed systems and threading challenges are like snowflakes.  Very seldom
+are two of them alike.
+
+## Standing on Shoulders
+
+None of this would have been possible without the incredible Go ecosystem:
+- fsnotify for file watching
+- cobra for CLI management  
+- gRPC and grpc-gateway for APIs
+- The countless examples and patterns from tools like Air, nodemon, and watchexec
+
+I owe a particular debt to [Rick](https://github.com/cosmtrek/cosmtrek), the creator of Air for setting an amazing benchmark on both simplicity and robustness one can expect from a tool like this.
+
+## Where We Are Now
+
+Devloop is now at a point where it's stable and useful. It's running in my daily development workflow, orchestrating services, and making life a bit easier. The agent/gateway architecture is working well for distributed setups. The MCP integration is opening new possibilities.
+
+But it's not perfect. Windows support could be better. The configuration syntax could be more intuitive. Performance with very large numbers of files needs to be observed and improved.
+
+And that's okay. Tools evolve. They grow with their use cases.
+
+## Try It Out
+
+If you're juggling multiple services in development, give devloop a try. It might not be the right fit for everyone - if you're happy with your current setup, stick with it! But if you find yourself drowning in terminals or wishing for a unified view of your development stack, it might help.
+
+```bash
+go install github.com/panyam/devloop@latest
+```
+
+Start simple with a `.devloop.yaml`:
+
+```yaml
+rules:
+  - name: "backend"
+    watch:
+      - action: "include"
+        patterns: ["**/*.go"]
+    commands:
+      - "go build -o bin/api ./cmd/api"
+      - "./bin/api"
+```
+
+The repository is at [github.com/panyam/devloop](https://github.com/panyam/devloop). Issues, PRs, and feedback are welcome. 
+
+## Looking Forward
+
+The future of development tooling is collaborative - not just between humans, but between humans and AI. Tools like devloop are bridges, connecting our traditional workflows with new possibilities.
+
+I'm excited to see where the community takes this. Maybe someone will build a GUI on top. Maybe the MCP integration will enable workflows I haven't imagined. Maybe someone will fork it and create something even better.
+
+That's the beauty of open source. We build on each other's work, each solving our own problems and sharing the solutions.
+
+Happy coding, and may your builds be ever swift and your logs forever organized.
+
+---
+
+*PS: If you're using Air, nodemon, or watchexec and they're working great for you - keep using them! The best tool is the one that solves your problem. Devloop just solves a different problem.*

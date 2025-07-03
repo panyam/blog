@@ -1,0 +1,98 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect x="0" y="0" width="800" height="600" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2c3e50">Devloop Agent/Gateway Architecture</text>
+  
+  <!-- Gateway Node -->
+  <g transform="translate(300, 80)">
+    <rect x="0" y="0" width="200" height="120" fill="#e74c3c" stroke="#c0392b" stroke-width="3" rx="10"/>
+    <text x="100" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="white" font-weight="bold">Gateway</text>
+    <text x="100" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">:8080 (HTTP/gRPC)</text>
+    <text x="100" y="75" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Project Registry</text>
+    <text x="100" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Log Aggregation</text>
+  </g>
+  
+  <!-- Agent Nodes -->
+  <!-- Backend Agent -->
+  <g transform="translate(50, 280)">
+    <rect x="0" y="0" width="180" height="100" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="8"/>
+    <text x="90" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="white" font-weight="bold">Backend Agent</text>
+    <text x="90" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Project: api-service</text>
+    <text x="90" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">Rules: build, test, run</text>
+    <text x="90" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">Status: Running</text>
+  </g>
+  
+  <!-- Frontend Agent -->
+  <g transform="translate(310, 280)">
+    <rect x="0" y="0" width="180" height="100" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="8"/>
+    <text x="90" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="white" font-weight="bold">Frontend Agent</text>
+    <text x="90" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Project: web-app</text>
+    <text x="90" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">Rules: webpack, lint</text>
+    <text x="90" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">Status: Building</text>
+  </g>
+  
+  <!-- Worker Agent -->
+  <g transform="translate(570, 280)">
+    <rect x="0" y="0" width="180" height="100" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="8"/>
+    <text x="90" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="white" font-weight="bold">Worker Agent</text>
+    <text x="90" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Project: job-processor</text>
+    <text x="90" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">Rules: worker, cron</text>
+    <text x="90" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">Status: Idle</text>
+  </g>
+  
+  <!-- Connections -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+  
+  <!-- Agent to Gateway connections -->
+  <path d="M 140 280 L 350 200" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+  <path d="M 400 280 L 400 200" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+  <path d="M 660 280 L 450 200" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+  
+  <!-- Client connections -->
+  <g transform="translate(100, 450)">
+    <rect x="0" y="0" width="120" height="60" fill="#27ae60" stroke="#229954" stroke-width="2" rx="5"/>
+    <text x="60" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">Web UI</text>
+    <text x="60" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">Dashboard</text>
+  </g>
+  
+  <g transform="translate(340, 450)">
+    <rect x="0" y="0" width="120" height="60" fill="#27ae60" stroke="#229954" stroke-width="2" rx="5"/>
+    <text x="60" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">CLI Client</text>
+    <text x="60" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">devloop cli</text>
+  </g>
+  
+  <g transform="translate(580, 450)">
+    <rect x="0" y="0" width="120" height="60" fill="#9b59b6" stroke="#8e44ad" stroke-width="2" rx="5"/>
+    <text x="60" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">AI Agent</text>
+    <text x="60" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">MCP Client</text>
+  </g>
+  
+  <!-- Client to Gateway connections -->
+  <path d="M 160 450 L 350 200" stroke="#27ae60" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 400 450 L 400 200" stroke="#27ae60" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 640 450 L 450 200" stroke="#9b59b6" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Labels for connections -->
+  <text x="250" y="240" font-family="Arial, sans-serif" font-size="11" fill="#666" transform="rotate(-30 250 240)">gRPC Stream</text>
+  <text x="550" y="240" font-family="Arial, sans-serif" font-size="11" fill="#666" transform="rotate(30 550 240)">gRPC Stream</text>
+  
+  <text x="250" y="340" font-family="Arial, sans-serif" font-size="11" fill="#27ae60" transform="rotate(-60 250 340)">HTTP/REST</text>
+  <text x="550" y="340" font-family="Arial, sans-serif" font-size="11" fill="#9b59b6" transform="rotate(60 550 340)">MCP Protocol</text>
+  
+  <!-- Data flow examples -->
+  <g transform="translate(50, 50)">
+    <rect x="0" y="0" width="200" height="30" fill="#f39c12" stroke="#d68910" stroke-width="1" rx="3"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" fill="white">trigger_build("backend")</text>
+  </g>
+  
+  <g transform="translate(550, 50)">
+    <rect x="0" y="0" width="200" height="30" fill="#3498db" stroke="#2980b9" stroke-width="1" rx="3"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" fill="white">[backend] Build complete</text>
+  </g>
+</svg>

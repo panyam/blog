@@ -1,0 +1,85 @@
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect x="0" y="0" width="800" height="400" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2c3e50">Terminal Chaos vs Organized Output</text>
+  
+  <!-- Left side: Terminal Chaos -->
+  <g transform="translate(50, 60)">
+    <rect x="0" y="0" width="300" height="300" fill="#1e1e1e" stroke="#333" stroke-width="2" rx="5"/>
+    <text x="150" y="25" text-anchor="middle" font-family="monospace" font-size="14" fill="#fff">Multiple Terminals</text>
+    
+    <!-- Terminal 1 -->
+    <rect x="10" y="40" width="280" height="80" fill="#2d2d2d" stroke="#444" stroke-width="1"/>
+    <text x="15" y="60" font-family="monospace" font-size="11" fill="#0f0">$ air</text>
+    <text x="15" y="75" font-family="monospace" font-size="11" fill="#fff">main.go changed</text>
+    <text x="15" y="90" font-family="monospace" font-size="11" fill="#fff">building...</text>
+    <text x="15" y="105" font-family="monospace" font-size="11" fill="#f00">Error: undefined: User</text>
+    
+    <!-- Terminal 2 -->
+    <rect x="10" y="130" width="280" height="80" fill="#2d2d2d" stroke="#444" stroke-width="1"/>
+    <text x="15" y="150" font-family="monospace" font-size="11" fill="#0f0">$ npm run dev</text>
+    <text x="15" y="165" font-family="monospace" font-size="11" fill="#fff">webpack building...</text>
+    <text x="15" y="180" font-family="monospace" font-size="11" fill="#0ff">Built in 1.2s</text>
+    <text x="15" y="195" font-family="monospace" font-size="11" fill="#fff">Watching for changes...</text>
+    
+    <!-- Terminal 3 -->
+    <rect x="10" y="220" width="280" height="80" fill="#2d2d2d" stroke="#444" stroke-width="1"/>
+    <text x="15" y="240" font-family="monospace" font-size="11" fill="#0f0">$ go run worker/main.go</text>
+    <text x="15" y="255" font-family="monospace" font-size="11" fill="#fff">Processing jobs...</text>
+    <text x="15" y="270" font-family="monospace" font-size="11" fill="#ff0">Warning: Queue empty</text>
+    <text x="15" y="285" font-family="monospace" font-size="11" fill="#fff">Retrying in 5s...</text>
+  </g>
+  
+  <!-- Arrow -->
+  <path d="M 380 200 L 420 200" stroke="#666" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+  
+  <!-- Right side: Organized Output -->
+  <g transform="translate(450, 60)">
+    <rect x="0" y="0" width="300" height="300" fill="#1e1e1e" stroke="#333" stroke-width="2" rx="5"/>
+    <text x="150" y="25" text-anchor="middle" font-family="monospace" font-size="14" fill="#fff">Devloop Output</text>
+    
+    <rect x="10" y="40" width="280" height="250" fill="#2d2d2d" stroke="#444" stroke-width="1"/>
+    
+    <!-- Organized logs with prefixes -->
+    <text x="15" y="60" font-family="monospace" font-size="11" fill="#0f0">$ devloop</text>
+    <text x="15" y="80" font-family="monospace" font-size="11" fill="#888">[devloop]  Starting orchestrator...</text>
+    <text x="15" y="95" font-family="monospace" font-size="11" fill="#888">[devloop]  Loaded 3 rules</text>
+    
+    <text x="15" y="115" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#f0f">[backend]</tspan> main.go changed
+    </text>
+    <text x="15" y="130" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#f0f">[backend]</tspan> building...
+    </text>
+    <text x="15" y="145" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#f0f">[backend]</tspan> <tspan fill="#f00">Error: undefined: User</tspan>
+    </text>
+    
+    <text x="15" y="165" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#0ff">[frontend]</tspan> webpack building...
+    </text>
+    <text x="15" y="180" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#0ff">[frontend]</tspan> Built in 1.2s
+    </text>
+    <text x="15" y="195" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#0ff">[frontend]</tspan> Watching for changes...
+    </text>
+    
+    <text x="15" y="215" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#ff0">[worker]</tspan> Processing jobs...
+    </text>
+    <text x="15" y="230" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#ff0">[worker]</tspan> <tspan fill="#ff0">Warning: Queue empty</tspan>
+    </text>
+    <text x="15" y="245" font-family="monospace" font-size="11" fill="#fff">
+      <tspan fill="#ff0">[worker]</tspan> Retrying in 5s...
+    </text>
+  </g>
+</svg>

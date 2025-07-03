@@ -1,0 +1,117 @@
+<svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect x="0" y="0" width="900" height="500" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2c3e50">Devloop Architecture Evolution</text>
+  
+  <!-- Stage 1: Simple Wrapper -->
+  <g transform="translate(50, 60)">
+    <text x="100" y="0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Stage 1: Simple Wrapper</text>
+    
+    <rect x="25" y="20" width="150" height="60" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="5"/>
+    <text x="100" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">Devloop v0.0.1</text>
+    
+    <!-- Commands below -->
+    <rect x="0" y="110" width="60" height="40" fill="#e0e0e0" stroke="#999" stroke-width="1" rx="3"/>
+    <text x="30" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">air</text>
+    
+    <rect x="70" y="110" width="60" height="40" fill="#e0e0e0" stroke="#999" stroke-width="1" rx="3"/>
+    <text x="100" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">npm</text>
+    
+    <rect x="140" y="110" width="60" height="40" fill="#e0e0e0" stroke="#999" stroke-width="1" rx="3"/>
+    <text x="170" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">go run</text>
+    
+    <!-- Arrows -->
+    <path d="M 100 80 L 30 110" stroke="#666" stroke-width="2"/>
+    <path d="M 100 80 L 100 110" stroke="#666" stroke-width="2"/>
+    <path d="M 100 80 L 170 110" stroke="#666" stroke-width="2"/>
+  </g>
+  
+  <!-- Stage 2: Process Management -->
+  <g transform="translate(300, 60)">
+    <text x="100" y="0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Stage 2: Process Groups</text>
+    
+    <rect x="25" y="20" width="150" height="80" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="5"/>
+    <text x="100" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">Devloop Core</text>
+    <text x="100" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Process Manager</text>
+    <text x="100" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Log Prefixing</text>
+    
+    <!-- Process groups -->
+    <g transform="translate(0, 130)">
+      <rect x="0" y="0" width="200" height="50" fill="#f0f0f0" stroke="#666" stroke-width="1" rx="3" stroke-dasharray="5,5"/>
+      <text x="100" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">Process Group</text>
+      
+      <rect x="10" y="25" width="50" height="20" fill="#90ee90" stroke="#228b22" stroke-width="1" rx="2"/>
+      <text x="35" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">PID 123</text>
+      
+      <rect x="70" y="25" width="50" height="20" fill="#90ee90" stroke="#228b22" stroke-width="1" rx="2"/>
+      <text x="95" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">PID 124</text>
+      
+      <rect x="130" y="25" width="50" height="20" fill="#90ee90" stroke="#228b22" stroke-width="1" rx="2"/>
+      <text x="155" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">PID 125</text>
+    </g>
+    
+    <path d="M 100 100 L 100 130" stroke="#666" stroke-width="2"/>
+  </g>
+  
+  <!-- Stage 3: Distributed -->
+  <g transform="translate(550, 60)">
+    <text x="150" y="0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Stage 3: Agent/Gateway</text>
+    
+    <!-- Gateway -->
+    <rect x="75" y="20" width="150" height="80" fill="#e74c3c" stroke="#c0392b" stroke-width="2" rx="5"/>
+    <text x="150" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">Gateway</text>
+    <text x="150" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">gRPC Server</text>
+    <text x="150" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">HTTP API</text>
+    
+    <!-- Agents -->
+    <g transform="translate(0, 130)">
+      <rect x="0" y="0" width="100" height="60" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="5"/>
+      <text x="50" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Agent</text>
+      <text x="50" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">Backend</text>
+      
+      <rect x="110" y="0" width="100" height="60" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="5"/>
+      <text x="160" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Agent</text>
+      <text x="160" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">Frontend</text>
+      
+      <rect x="220" y="0" width="100" height="60" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="5"/>
+      <text x="270" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Agent</text>
+      <text x="270" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">Worker</text>
+    </g>
+    
+    <!-- Connections -->
+    <path d="M 150 100 L 50 130" stroke="#666" stroke-width="2"/>
+    <path d="M 150 100 L 160 130" stroke="#666" stroke-width="2"/>
+    <path d="M 150 100 L 270 130" stroke="#666" stroke-width="2"/>
+  </g>
+  
+  <!-- Evolution arrows -->
+  <path d="M 225 100 L 275 100" stroke="#333" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M 475 100 L 525 100" stroke="#333" stroke-width="3" marker-end="url(#arrow)"/>
+  
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+  </defs>
+  
+  <!-- Timeline -->
+  <g transform="translate(50, 280)">
+    <line x1="0" y1="0" x2="800" y2="0" stroke="#999" stroke-width="2"/>
+    
+    <circle cx="50" cy="0" r="5" fill="#4a90e2"/>
+    <text x="50" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">v0.0.1</text>
+    <text x="50" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Basic wrapper</text>
+    
+    <circle cx="350" cy="0" r="5" fill="#4a90e2"/>
+    <text x="350" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">-</text>
+    <text x="350" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Process groups</text>
+    <text x="350" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Log prefixing</text>
+    
+    <circle cx="650" cy="0" r="5" fill="#e74c3c"/>
+    <text x="650" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">Latest</text>
+    <text x="650" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Agent/Gateway</text>
+    <text x="650" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">gRPC API</text>
+  </g>
+</svg>

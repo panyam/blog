@@ -1,0 +1,104 @@
+<svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect x="0" y="0" width="900" height="500" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2c3e50">MCP Integration: AI-Assisted Development</text>
+  
+  <!-- AI Assistant -->
+  <g transform="translate(50, 80)">
+    <rect x="0" y="0" width="180" height="100" fill="#9b59b6" stroke="#8e44ad" stroke-width="3" rx="10"/>
+    <text x="90" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="white" font-weight="bold">AI Assistant</text>
+    <text x="90" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">(Claude, GPT, etc)</text>
+    <text x="90" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">MCP Client</text>
+  </g>
+  
+  <!-- MCP Server -->
+  <g transform="translate(300, 80)">
+    <rect x="0" y="0" width="200" height="100" fill="#e67e22" stroke="#d35400" stroke-width="3" rx="10"/>
+    <text x="100" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="white" font-weight="bold">Devloop MCP</text>
+    <text x="100" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">Tool Registry</text>
+    <text x="100" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">:3000</text>
+  </g>
+  
+  <!-- Gateway -->
+  <g transform="translate(550, 80)">
+    <rect x="0" y="0" width="180" height="100" fill="#e74c3c" stroke="#c0392b" stroke-width="3" rx="10"/>
+    <text x="90" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="white" font-weight="bold">Gateway</text>
+    <text x="90" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">Project Control</text>
+    <text x="90" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">:8080</text>
+  </g>
+  
+  <!-- Connection arrows -->
+  <path d="M 230 130 L 300 130" stroke="#666" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M 500 130 L 550 130" stroke="#666" stroke-width="3" marker-end="url(#arrow)"/>
+  
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+  
+  <!-- Example workflow -->
+  <g transform="translate(50, 230)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Example Workflow:</text>
+    
+    <!-- Step 1 -->
+    <g transform="translate(0, 30)">
+      <circle cx="15" cy="15" r="12" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+      <text x="15" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">1</text>
+      <text x="40" y="20" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">User: "The API tests are failing, can you investigate?"</text>
+    </g>
+    
+    <!-- Step 2 -->
+    <g transform="translate(0, 70)">
+      <circle cx="15" cy="15" r="12" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+      <text x="15" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">2</text>
+      <text x="40" y="20" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">AI calls: </text>
+      <rect x="100" y="0" width="180" height="30" fill="#f0f0f0" stroke="#999" stroke-width="1" rx="3"/>
+      <text x="110" y="20" font-family="monospace" font-size="11" fill="#2c3e50">run_tests("backend")</text>
+    </g>
+    
+    <!-- Step 3 -->
+    <g transform="translate(0, 110)">
+      <circle cx="15" cy="15" r="12" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+      <text x="15" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">3</text>
+      <text x="40" y="20" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">AI calls: </text>
+      <rect x="100" y="0" width="240" height="30" fill="#f0f0f0" stroke="#999" stroke-width="1" rx="3"/>
+      <text x="110" y="20" font-family="monospace" font-size="11" fill="#2c3e50">read_logs("backend", filter="FAIL")</text>
+    </g>
+    
+    <!-- Step 4 -->
+    <g transform="translate(0, 150)">
+      <circle cx="15" cy="15" r="12" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+      <text x="15" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">4</text>
+      <text x="40" y="20" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">AI calls: </text>
+      <rect x="100" y="0" width="300" height="30" fill="#f0f0f0" stroke="#999" stroke-width="1" rx="3"/>
+      <text x="110" y="20" font-family="monospace" font-size="11" fill="#2c3e50">read_file("backend", "user_test.go")</text>
+    </g>
+    
+    <!-- Step 5 -->
+    <g transform="translate(0, 190)">
+      <circle cx="15" cy="15" r="12" fill="#27ae60" stroke="#229954" stroke-width="2"/>
+      <text x="15" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">5</text>
+      <text x="40" y="20" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">AI: "The test is expecting 'UserID' but the struct field is 'UserId'. Here's the fix..."</text>
+    </g>
+  </g>
+  
+  <!-- Available tools -->
+  <g transform="translate(550, 250)">
+    <rect x="0" y="0" width="300" height="200" fill="#ffffff" stroke="#dee2e6" stroke-width="2" rx="5"/>
+    <text x="150" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Available MCP Tools</text>
+    
+    <g transform="translate(20, 40)">
+      <text x="0" y="0" font-family="monospace" font-size="12" fill="#2c3e50">• list_projects()</text>
+      <text x="0" y="20" font-family="monospace" font-size="12" fill="#2c3e50">• trigger_build(project, rule)</text>
+      <text x="0" y="40" font-family="monospace" font-size="12" fill="#2c3e50">• run_tests(project, pattern)</text>
+      <text x="0" y="60" font-family="monospace" font-size="12" fill="#2c3e50">• check_status(project)</text>
+      <text x="0" y="80" font-family="monospace" font-size="12" fill="#2c3e50">• read_logs(project, filter)</text>
+      <text x="0" y="100" font-family="monospace" font-size="12" fill="#2c3e50">• read_file(project, path)</text>
+      <text x="0" y="120" font-family="monospace" font-size="12" fill="#2c3e50">• execute_command(project, cmd)</text>
+      <text x="0" y="140" font-family="monospace" font-size="12" fill="#2c3e50">• analyze_errors(project)</text>
+    </g>
+  </g>
+</svg>
