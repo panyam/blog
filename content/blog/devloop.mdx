@@ -36,6 +36,76 @@ I needed an orchestrator. Something that could conduct these setups of tools whi
 
 ![Terminal Chaos vs Organized Output](/static/images/devloop/terminal-comparison.svg)
 
+Before going into why I built devloop, let us look at the alternatives, aka ....
+
+## By why not just ...
+
+### ... Run each specific tool as a background daemon, pipe it all to a file and then tail all the files in a combined way?
+
+ie here you would so something like:
+
+```
+npm run dev 2>&1 | tee npm.log
+```
+
+```
+air 2>&1 | tee backend.log
+```
+
+and so on, and finally tail them together:
+
+```
+tail -f npm.log backend.log ..... 
+```
+
+Well you *could* if that is your jam and find that ergonomic enough.   First of all if any of the dev servers (npm or air) failed then you are out of luck.  
+
+### ... GNU Make with parallel execution?
+
+Following from above something like `make -j5 run-all` could theoretically run all your services. But Make wasn't designed for long-running processes. It's a build tool, not a process manager. Kill one service and Make gets confused. Plus, interleaved output becomes unreadable without prefixing.
+
+### ... write a shell script?
+
+
+eg:
+
+```bash
+  #!/bin/bash
+  npm run dev &
+  air &
+  ./worker &
+  wait
+```
+
+This is doable - until you need to restart just one service. Or see which one failed. Or grep logs. Or handle signals properly. Shell scripts grow complexity like entropy - always increasing, never decreasing.
+
+### ... VS Code multi-task runner?
+
+VS Code's task runner can run multiple tasks. But it's tied to VS Code, outputs to separate terminals, and isn't easily scriptable (definitely would love to learn more about this). What happens when you ssh into your dev box? Or when your AI assistant needs to check build status?
+
+### ... create systemd user services?
+
+You could write systemd unit files for each service. But now you're managing systemd configs for local development, dealing with journalctl for logs, and explaining to your macOS colleagues why it doesn't work on their machine.
+
+### ... Use tmux with synchronized panes?
+
+Tmux is great for managing multiple terminal sessions. You could split your terminal into panes and run each service. But you're still manually managing each process, logs are still separated, and you lose them when tmux crashes. Plus, good luck getting your AI assistant to read from tmux panes.
+
+### ... Bundle your services in a docker-compose environment?
+
+(or if you are adventurous in a minikube environment)?
+
+This is an excellent option if you want production level isolation and orchestration, but they come at a cost:
+
+  1. Startup overhead - Containers take time to build and start. When you're iterating, you want millisecond restarts, not 30-second container rebuilds
+  2. Debugging friction - Attaching debuggers, accessing logs, and using local dev tools is more complex through container layers
+  3. File sync lag - Volume mounting can be slow (especially on macOS), adding latency to the edit-reload cycle
+  4. Resource consumption - Running 5+ containers locally can eat up RAM and CPU
+  5. Different needs - Local dev often needs different configs, environment variables, and tools than production
+  6. Simplicity - You're trying to reduce complexity, not add orchestration layers.  Also with multi component builds you are still producing a single binary (or few binaries).   For example if one of your continuous trigger targets is documentation - containers are not exactly the cleanest choice for that.
+
+I love docker (and have often docker-compose environments where multiple microservices were invovlved.   But spinning up five containers just to develop locally felt like wearing a tuxedo to write code in my pajamas. The overhead - build times, volume mounting on Mac, RAM consumption - was getting in the way of the thing I actually wanted to do: write code and see it run. Fast.
+
 ## Learning from the Best
 
 Before writing a single line of code, I spent time understanding the problems these tools solved. Air showed me what developers loved about live-reloading. Nodemon demonstrated the value of clear process management. Watchexec proved that language-agnostic tools have their place. More then their code, their users and use cases were fascinating.
