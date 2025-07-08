@@ -1,7 +1,7 @@
 ---
 title: Devloop - When your Agents need to see your Builds
 date: 2025-07-02T03:32:08PM
-tags: ['live-reload', 'hot-reload', 'multi-project', 'watcher', 'mcp']
+tags: ['live-reload', 'hot-reload', 'multi-component', 'watcher', 'mcp']
 draft: false
 summary: 'The story behind why and how I built Devloop - a versatile tool for monitoring changes in your multi-component project and triggering various parallel builds'
 images: []
@@ -13,7 +13,7 @@ I had three terminal windows open, each running a perfectly functional instance 
 
 What started as a simple terminal organization tool evolved into something more interesting: a nice bridge between traditional development workflows and AI Coding Agents. But I'm getting ahead of myself...
 
-This is the story of why and how I built devloop, a multi-project watcher and orchestrator.
+This is the story of why and how I built devloop, a multi-component watcher and orchestrator.
 
 
 ## Five Terminals Is Four Too Many
@@ -123,15 +123,15 @@ type Rule struct {
 
 But this simplicity forced me to think about the real problem. Just watching files isnt exciting nor did it add value - fsnotify had solved that. Same with "just" running commands - os/exec was mature.  My instinct was pointing towards orchestration, coordination, and presentation.
 
-## The Two-Day Sprint
+## The Three-Day Sprint
 
-Here's something I haven't mentioned yet: I built the entire first version of devloop in two days.  And I did it by pair programming with Claude and Gemini in what I can only describe as the most intense flow state I've ever experienced.    Let's be honest.  I think we are at point in time where keeping your AI usage secret is just ... well ... silly.  
+Ummm, guess what: I built the entire first version of devloop in three days.  And I did it by pair programming with Claude and Gemini in what I can only describe as the most intense flow state I've ever experienced.    Let's be honest.  I think we are at point in time where keeping your AI usage secret is just ... well ... silly.  
 
-I'm not talking about copying and pasting from &lt;your-favorite-llm&gt;. I'm talking about using AI as a true programming partner - bouncing ideas, iterating on designs, and yes, generating code. But here's the key: I maintained complete ownership of the architecture and code quality. The AI was my accelerator, not my autopilot.  At points being able to identify wrong decisions the agents were making, interrupting them (in their "auto-accept" state) saved me a lot mess down the road.
+I'm not talking about copying and pasting from &lt;your-favorite-llm&gt;.   I'm talking not talking about continue-button-smashing-vibe-coding.  I am talking about using AI as a true programming partner - bouncing ideas, iterating (and challenging) on designs, and yes, **even** generating code.  But here's the key: I maintained complete ownership (and accountability) of the architecture and code quality. The AI was my accelerator, not my autopilot.  At points being able to identify wrong decisions the agents were making, interrupting them (in their "auto-accept" state) saved me a lot mess down the road.
 
 Every line of code went through my filter. Every design decision was mine. But instead of spending hours on boilerplate or searching through documentation, I could focus on the interesting problems. When I needed a process group implementation, I could discuss trade-offs with AI and get a working implementation in minutes instead of hours.
 
-The result? Clean, maintainable code that I understand completely - just delivered at 10x speed.
+The result? Clean, maintainable code that I understand completely - just delivered at 10x speed (I think "realistically" putting ego and optimistic estimations aside this would have taken me 2-3 weeks of full time effort - and if you apply Hoffstader's law the reality may have been 2 doublings of that estimate).
 
 And here's where things got meta. As I was building devloop with AI, I kept thinking: "What if the AI could actually see what's happening with my builds?  What if it could read the logs, understand the errors, and help fix them while the changes were triggering live builds?" This planted the seed for what would become the MCP integration.
 
