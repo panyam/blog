@@ -1,5 +1,5 @@
 ---
-title: WeeWar Map Extractor - The fun journey
+title: Building a WeeWar Map Extractor - Lessons from The Vibe Coding Trap
 date: 2025-07-09T03:32:08PM
 tags: ['weewar', 'opencv', 'hex tiles', 'extractor', 'python']
 draft: false
@@ -9,8 +9,6 @@ authors: ['Sri Panyam']
 template: BasePageMD.html
 ---
 
-# Building a WeeWar Hex Map Extractor: A Technical Journey
-
 WeeWar is a turn-based strategy game with hexagonal tile maps. Each map consists of different terrain types (grass, water, mountains, etc.) arranged in a hex grid.  I have been a huge fan of this game since its early days - going as far as to build a simple but sadly incomplete Flash (yep) based version of it.  But I gave up because having to recreate assets was not my fun time activity.
 
 <iframe width="100%" height="480" src="https://www.youtube.com/embed/QXg0vQhRALA?si=mh5IRSdRZ5oCp3TG" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
@@ -19,7 +17,7 @@ But have you ever tried to reverse-engineer a game map from a single image? Not 
 
 ## The Deceptively Simple Problem
 
-While one of my (Claude) sessions was doing its thing on a terminal, this game again came up on my mind and I thought well instead of rebuilding the game why not take up the boring activity I had eschewed all those years ago?  The challenge seemed straightforward: given only a preview image of a map, extract the individual hex tiles and determine their positions automatically.  Here's an amazing 
+While one of my (Claude) sessions was doing its thing on a terminal, this game again came up on my mind and I thought well instead of rebuilding the game why not take up the boring activity I had eschewed all those years ago?  The challenge seemed straightforward: given only a preview image of a map, extract the individual hex tiles and determine their positions automatically. 
 
 *How hard could it be?* Famous last words.
 
@@ -61,7 +59,7 @@ So at this point LLMs are smart enough to know they cant tackle it all so it pro
      ☐ Save extracted tiles with R_C_T_P.png naming convention
 ```
 
-Now whether at this point whether you thought Claude was going to crush or that it was going to spectacularly fail you both would be forgiven.  LLMs are at this crazy place right now but it is best not to always succumb to the vibe-coding (VC) hype despite what the VCs tell you!   And ofcourse I had an alternative flow for this blog regardless of how the LLM fared!
+Now whether at this point whether you thought Claude was going to crush or that it was going to spectacularly fail you both would be forgiven.  LLMs are at this crazy place right now but it is best not to always succumb to the Vibe Coding (VC) hype despite what the VCs tell you!   And of course I had an alternative flow for this blog regardless of how the LLM fared!
 
 Ok so when I ran the [python script](https://github.com/panyam/weemaps/blob/main/tile_extractor.py) it confidently gave me a bunch of images. I was really rooting for it.  But examining it files looked like this.  Not really off to a great start (i guess it *did* produce a great looking script that actually ran without errors):
 
@@ -102,22 +100,22 @@ Row 4: [8, 15, 14, 4, 8, 5, 5, 8]
 Row 5: [8, 8, 8, 4, 5, 5, 4, 8]
 ```
 
-Our [test image](https://github.com/panyam/weemaps/blob/main/maps.png) - Actually was a 7x7 hexagonal grid.  AND here's a funny thing about hex-grids - An x-coordinate actually "shifts" in position depending on whether it is on an odd numbered row or an even numbered row (il let you try to imagine this).
+Our [test image](https://github.com/panyam/weemaps/blob/main/maps.png) - Actually was a 7x7 hexagonal grid.  AND here's a funny thing about hex-grids - An x-coordinate actually "shifts" in position depending on whether it is on an odd numbered row or an even numbered row (I'll let you try to imagine this).
 
 Definitely some progress to this.  My gut is asking me to give up, but I need to try one more thing (I do have to 
 squeeze every token out of my pro plan!)
 
 ```
 > Ok you returned a rectangular of 6 rows by 7 columns.  However the image has 7 rows by 7 columns.  
-  Second problem is in the image some sections wont have any tiles.  
-  There id like your classifier to return a "0" - those represent "holes" in maps.   
+  Second problem is in the image some sections won't have any tiles.  
+  There I'd like your classifier to return a "0" - those represent "holes" in maps.   
   The third thing Id like you to do is to think about Hex tiles are laid out.  They are not in a rectangular grid.  
   The "x" position of the first tile in odd-number rows are always half-tile-width greater than the even-numbered rows.  
   
   Think about how to represent this.
 ```
 
-Ok so now we have the third type of classifier.  The all-hailing [Hex Map Classifier](https://github.com/panyam/weemaps/blob/main/hex_map_classifier.py) which hard coded the number of rows and columns to 7.  Dow.  Ok another quick scolding gave us the even better dynamic version - [Dynamic Hex Map Classifier](https://github.com/panyam/weemaps/blob/main/dynamic_hex_map_classifier.py):
+Ok so now we have the third type of classifier.  The all-hailing [Hex Map Classifier](https://github.com/panyam/weemaps/blob/main/hex_map_classifier.py) which hard coded the number of rows and columns to 7.  D'oh.  Ok another quick scolding gave us the even better dynamic version - [Dynamic Hex Map Classifier](https://github.com/panyam/weemaps/blob/main/dynamic_hex_map_classifier.py):
 
 ```
 > You are hardcoding the number of rows and columns.   You should not be!
@@ -172,16 +170,16 @@ table looked fancy, the visualizer showed a different picture.
 
 ## Try Hashing
 
-At this point my patience was wearing thin but my OCD wasnt let me give up.   Me explaining to the LLM in english was painful (sorry but english is *not* a better programming language).   I wanted to try something more automatic.
+At this point my patience was wearing thin but my OCD wasn't letting me give up.   Me explaining to the LLM in English was painful (sorry but English is *not* a better programming language).   I wanted to try something more automatic.
 
 In strings - especially large ones - performing bytewise comparisons are very slow so hashes can be used to test for equality.  Or rather they can be used for quick check to see if two strings are NOT equal.   If hashes are not equal, the underlying strings would NOT be equal.  However if two string hashes are "equal" then (and only then) would we need to check for full byte-by-byte comparisons.
 
-We can do something in images.   However unlike text - we are interested in similarities rather than equal.   Images can be altered slightly (flipping a single pixel) with very little perceived difference to the human eye.  So what is needed is a fuzzy hash that can provide a fingerprint of an image that can be used to compare with another image.   This works well with signals in general were values are NON-DISCRETE values.   One such technique is the [Perceptual Hash](https://en.wikipedia.org/wiki/Perceptual_hashing).   
+We can do something in images.   However unlike text - we are interested in similarities rather than strict equality.   Images can be altered slightly (flipping a single pixel) with very little perceived difference to the human eye.  So what is needed is a fuzzy hash that can provide a fingerprint of an image that can be used to compare with another image.   This works well with signals in general were values are NON-DISCRETE values.   One such technique is the [Perceptual Hash](https://en.wikipedia.org/wiki/Perceptual_hashing).   
 
 I wont go into the details of Perceptual Hashing (and the whole world of signal analysis - you should definitely check out [Fourier Transforms](https://en.wikipedia.org/wiki/Fourier_transform) and [Wavelet Transforms](https://en.wikipedia.org/wiki/Wavelet_transform)).
 
 
-As you can guess I wanted the LLM to use P-Hashing to test out the generated images (of the hex tiles) against the original map:
+As you can guess I wanted the LLM to use P-Hashing to test out the generated images (of the hex tiles) against the original map (The astute reader might me wondering why I did not ask the LLM for equality etc - well I'd say if you got it, then flaunt it!):
 
 ```
 > Ok I need you compare what you are producing.  Use a p-hash mechanism to measure what you produced with the original image.
@@ -201,8 +199,7 @@ This was great but our accuracy had not increased.  I then realized that the til
   "diagonally".
 ```
 
-This seemed to click something off.  It went on a frenzy generating an improved [classifer](https://github.com/panyam/weemaps/blob/main/correct_hex_classifier.py) and [rendering](https://github.com/panyam/weemaps/blob/main/correct_hex_generator.py).
-Finally we are seeing a decent generated image based on the new weights:
+This seemed to click something off.  It went on a frenzy generating an improved [classifer](https://github.com/panyam/weemaps/blob/main/correct_hex_classifier.py) and [rendering](https://github.com/panyam/weemaps/blob/main/correct_hex_generator.py).  Finally we are seeing a decent generated image based on the new weights:
 
 ```
 $ python correct_hex_classifier.py
@@ -237,7 +234,7 @@ Showing us:
 
 ![Image Differences](/static/images/weemaps/04_regenerated_map.png)
 
-Voila!  Well, sort of. While the final result does bear some resemblance to the original map, let’s be honest about what actually happened here.
+Voila!  Well, sort of. While this version came close (a few of the tiles were wrong - eg the "base" on the top left being replaced by an "ocean"), let’s be honest about what actually happened here.
 
 ## The Diminishing Returns of Vibe Coding
 
@@ -249,11 +246,11 @@ What started as a simple "extract hex tiles from this image" request turned into
 4. **Constant course corrections** when the approach went off track
 5. **Hardcoded parameters** for what should have been a generic solution
 
-By the end, I was essentially dictating the solution step-by-step while Claude implemented it. The "AI magic" had devolved into me being a very expensive rubber duck debugger.
+By the end, I was essentially dictating the solution step-by-step while Claude implemented it. The "AI magic" had devolved into me being a very expensive rubber duck debugger.  This in itself is not a bad thing but not every solution needs a hammer.
 
 ## The Real Problem: All-in-One Thinking
 
-The fundamental issue wasn't with Claude's capabilities - it was with my approach. Even though Ive always been fervently agasint the "keep smashing that continue button" approach, I too had fallen into the classic "Vibe Coding" trap of assuming that throwing an entire complex problem at an LLM would yield a complete solution. *"Just look at this image and extract all the tiles"*, *"Just look at the difference and course correct"*, *"Just take the fedback and course correct"*, *"Just ... one more thing ..."* - how hard could it be?
+The fundamental issue wasn't with Claude's capabilities - it was with my approach. Even though I've always been fervently against the "keep smashing that continue button" approach, I too had fallen into the classic "Vibe Coding" trap of assuming that throwing an entire complex problem at an LLM would yield a complete solution. *"Just look at this image and extract all the tiles"*, *"Just look at the difference and course correct"*, *"Just take the feedback and course correct"*, *"Just ... one more thing ..."* - how hard could it be?
 
 Very hard, as it turns out. Not because the individual components are impossible, but because:
 
@@ -266,7 +263,7 @@ The all-in-one approach was fundamentally flawed. I was asking Claude to be simu
 
 ## The Vibe Coding Trap
 
-This experience had a quite a few teaching (and lesson refreshing) about AI-assisted development for me: **following every LLM suggestion is not the same as successful collaboration**. I had become a passive participant in my own project, accepting each successive iteration without stepping back to question the fundamental approach.
+This experience taught me quite a few lessons (and refreshed some old ones) about AI-assisted development: **following every LLM suggestion is not the same as successful collaboration**. I had become a passive participant in my own project, accepting each successive iteration without stepping back to question the fundamental approach.
 
 The warning signs were everywhere:
 - Solutions getting more complex instead of simpler
@@ -274,7 +271,7 @@ The warning signs were everywhere:
 - Hardcoded parameters replacing robust algorithms
 - Each "fix" introducing new edge cases
 
-I am more vindicated now that real collaboration with AI requires **human leadership** - knowing when to accept suggestions, when to pivot approaches, and when to break problems down into manageable pieces.  And even better if you know what to build AND **how** to build it (use the AI as a fantasitc Code Search and Tree Transforming engine).
+I am more vindicated now that real collaboration with AI requires **human leadership** - knowing when to accept suggestions, when to pivot approaches, and when to break problems down into manageable pieces.  And even better if you know what to build AND **how** to build it (use the AI as a fantastic Code Search and Tree Transforming engine).
 
 ## The Path Forward
 
@@ -289,12 +286,10 @@ That realization led to what I call the "domain-specific" approach - a methodica
 
 The results? A production-ready system that can reliably extract hex tiles from any WeeWar map, with proper error handling, debug capabilities, and extensibility for future enhancements.
 
-But that's a story for [Part 2: The Smarter Approach](/blog/weemaps-part2), where we'll explore how combining human domain expertise and flashes-of-insihgts with AI implementation capabilities can solve complex problems that neither could tackle alone.
+But that's a story for [Part 2: The Smarter Approach](/blog/weemaps-part2), where we'll explore how combining human domain expertise and flashes-of-insights with AI implementation capabilities can solve complex problems that neither could tackle alone.
 
-**Lesson**: If you want one take way that is - Games are Fun beyond just playing them!
+**Lesson**: If you want one takeaway, it is - Games are Fun beyond just playing them!
 
-Well if you need a second more on the topic lesson: AI usage is here whether you like it or not (which I love).  So
-the most important skill is not going to be button smashing, but being able break down a problem, use domain expertise,
-think architecturally - you know - Good old fashioned software engineering (Ah the sweet irony).
+Well if you need a second lesson more on the topic: AI usage is here whether you like it or not (which I love).  So the most important skill is not going to be button smashing, but being able to break down a problem, use domain expertise, think architecturally - you know - Good old fashioned software engineering (Ah the sweet irony).
 
 
