@@ -237,6 +237,64 @@ Showing us:
 
 ![Image Differences](/static/images/weemaps/04_regenerated_map.png)
 
-Voila!
+Voila!  Well, sort of. While the final result does bear some resemblance to the original map, let’s be honest about what actually happened here.
+
+## The Diminishing Returns of Vibe Coding
+
+What started as a simple "extract hex tiles from this image" request turned into:
+
+1. **Multiple iterations** of increasingly complex scripts
+2. **Manual debugging** of confidence scores and tile classifications  
+3. **Hand-holding** the LLM through hexagonal grid geometry
+4. **Constant course corrections** when the approach went off track
+5. **Hardcoded parameters** for what should have been a generic solution
+
+By the end, I was essentially dictating the solution step-by-step while Claude implemented it. The "AI magic" had devolved into me being a very expensive rubber duck debugger.
+
+## The Real Problem: All-in-One Thinking
+
+The fundamental issue wasn't with Claude's capabilities - it was with my approach. Even though Ive always been fervently agasint the "keep smashing that continue button" approach, I too had fallen into the classic "Vibe Coding" trap of assuming that throwing an entire complex problem at an LLM would yield a complete solution. *"Just look at this image and extract all the tiles"*, *"Just look at the difference and course correct"*, *"Just take the fedback and course correct"*, *"Just ... one more thing ..."* - how hard could it be?
+
+Very hard, as it turns out. Not because the individual components are impossible, but because:
+
+- **Image processing requires domain expertise** that's hard to convey in natural language
+- **Computer vision problems need iterative debugging** with visual feedback at each step  
+- **Edge cases dominate** - the difference between "kinda works" and "production ready" is enormous
+- **Composite problems need decomposition** before AI can effectively assist
+
+The all-in-one approach was fundamentally flawed. I was asking Claude to be simultaneously a computer vision expert, a hexagonal geometry specialist, and a tile classification system. When it struggled with one aspect, the entire solution became unreliable.
+
+## The Vibe Coding Trap
+
+This experience had a quite a few teaching (and lesson refreshing) about AI-assisted development for me: **following every LLM suggestion is not the same as successful collaboration**. I had become a passive participant in my own project, accepting each successive iteration without stepping back to question the fundamental approach.
+
+The warning signs were everywhere:
+- Solutions getting more complex instead of simpler
+- Confidence scores being tuned instead of addressing root causes  
+- Hardcoded parameters replacing robust algorithms
+- Each "fix" introducing new edge cases
+
+I am more vindicated now that real collaboration with AI requires **human leadership** - knowing when to accept suggestions, when to pivot approaches, and when to break problems down into manageable pieces.  And even better if you know what to build AND **how** to build it (use the AI as a fantasitc Code Search and Tree Transforming engine).
+
+## The Path Forward
+
+This adventure convinced me that the problem needed a completely different approach. Instead of asking Claude to solve everything at once, I needed to:
+
+1. **Decompose the problem** into discrete, solvable components
+2. **Lead the architecture** decisions while letting AI handle implementation
+3. **Build incrementally** with validation at each step
+4. **Apply domain knowledge** to guide the solution
+
+That realization led to what I call the "domain-specific" approach - a methodical, human-led process that leverages AI for what it does best while maintaining human oversight for what we do best.
+
+The results? A production-ready system that can reliably extract hex tiles from any WeeWar map, with proper error handling, debug capabilities, and extensibility for future enhancements.
+
+But that's a story for [Part 2: The Smarter Approach](/blog/weemaps-part2), where we'll explore how combining human domain expertise and flashes-of-insihgts with AI implementation capabilities can solve complex problems that neither could tackle alone.
+
+**Lesson**: If you want one take way that is - Games are Fun beyond just playing them!
+
+Well if you need a second more on the topic lesson: AI usage is here whether you like it or not (which I love).  So
+the most important skill is not going to be button smashing, but being able break down a problem, use domain expertise,
+think architecturally - you know - Good old fashioned software engineering (Ah the sweet irony).
 
 
