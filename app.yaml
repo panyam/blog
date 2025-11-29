@@ -4,6 +4,8 @@ env_variables:
 handlers:
 - url: /static
   static_dir: static
+- url: /demos
+  static_dir: demos
 - url: /
   static_files: output/index.html
   upload: output/index.html
