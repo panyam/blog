@@ -13,42 +13,39 @@ WeeWar is a turn-based strategy game with hexagonal tile maps. Each map consists
 
 <iframe width="100%" height="480" src="https://www.youtube.com/embed/QXg0vQhRALA?si=mh5IRSdRZ5oCp3TG" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-But have you ever tried to reverse-engineer a game map from a single image? Not the kind of problem you'd expect to keep you up at night, but that's exactly what happened when I decided to extract WeeWar map layouts from their preview images.
+But have you ever tried to reverse-engineer a game map from a single image? Sure it is not everyone's fantasy problem
+that would keep you up at night.   But everybody's gotta have their weakness.   This is what happened when I decided to
+extract WeeWar map layouts from their screenshot images.
 
-## The Deceptively Simple Problem
+## Deceptively Simple Problem
 
 While one of my (Claude) sessions was doing its thing on a terminal, this game again came up on my mind and I thought well instead of rebuilding the game why not take up the boring activity I had eschewed all those years ago?  The challenge seemed straightforward: given only a preview image of a map, extract the individual hex tiles and determine their positions automatically. 
 
 *How hard could it be?* Famous last words.
 
-The requirements were deceptively simple but technically demanding:
+The requirements were seemingly simple but technically demanding:
 - Work with any scale of image (the system shouldn't depend on hardcoded tile sizes)
 - Detect the hex grid structure from visual boundaries
 - Extract individual tiles without neighbor contamination
 - Handle the tiles typically found in a XxY WeeWar map (large maps could have over 30 rows and/or columns)
-
 
 This is the "AI Era".  So my first instinct was to throw this to Claude (cli).  Here was my first attempt:
 
 ```
 You have the images of tiles/terrain in the folder ./AllTiles .   Each tile is numbered so the images will be called <tileType>.png and represents a particular kind of terrain (eg grass, sea, dessert etc).  Some tiles will have color variations (denoting which player has occupied the tile - eg a building belonging to player 3).
 
-Select the image "./map.png".  It contains hexagonal tiles with each tile mapping to one of the tiles in the ./AllTiles
-folder.  I want you to extract each of the tiles the image and save it as R_C_T_P.png where R is the row number, C is the
-column and T is the tileType and P is which player has occupied the tile.  If the tile is a neutral color then you can
-set P=x (to denote a neutral terrain).
+Select the image "./map.png".  It contains hexagonal tiles with each tile mapping to one of the tiles in the ./AllTiles folder.  I want you to extract each of the tiles the image and save it as R_C_T_P.png where R is the row number, C is the column and T is the tileType and P is which player has occupied the tile.  If the tile is a neutral color then you can set P=x (to denote a neutral terrain).
 ```
 
 Here's the test map btw:
 
 
-![Our Test Map](https://github.com/panyam/weemaps/blob/main/map.png?raw=true)
+![Our Test Map](https://github.com/panyam/weemaps/blob/main/allinone/map.png?raw=true)
 
 So at this point LLMs are smart enough to know they cant tackle it all so it proposed to create a script to do just that:
 
 ```
-⏺ I'll help you extract individual tiles from the map image and save them with the specified naming convention. Let me start by examining the structure and
-  creating a plan.
+⏺ I'll help you extract individual tiles from the map image and save them with the specified naming convention. Let me start by examining the structure and creating a plan.
 
 ⏺ Update Todos
   ⎿  ☐ Examine the map.png image to understand the hexagonal tile layout
@@ -61,7 +58,7 @@ So at this point LLMs are smart enough to know they cant tackle it all so it pro
 
 Now whether at this point whether you thought Claude was going to crush or that it was going to spectacularly fail you both would be forgiven.  LLMs are at this crazy place right now but it is best not to always succumb to the Vibe Coding (VC) hype despite what the VCs tell you!   And of course I had an alternative flow for this blog regardless of how the LLM fared!
 
-Ok so when I ran the [python script](https://github.com/panyam/weemaps/blob/main/tile_extractor.py) it confidently gave me a bunch of images. I was really rooting for it.  But examining it files looked like this.  Not really off to a great start (i guess it *did* produce a great looking script that actually ran without errors):
+Ok so when I ran the [python script](https://github.com/panyam/weemaps/blob/main/allinone/tile_extractor.py) it confidently gave me a bunch of images. I was really rooting for it.  But examining it files looked like this.  Not really off to a great start (i guess it *did* produce a great looking script that actually ran without errors):
 
 ![First pass by Claude at De-Hexing](/static/images/weemaps/01_claude_results.png)
 
@@ -71,7 +68,7 @@ Now you cant just give up on LLMs on the first try.  I tried one more thing:
 > Ok that did not quite work.  You seem to have segemented the image in rectangular blocks instead of along the hexagonal tile boundaries.   
 ```
 
-Which resulted in [hex_tile_extractor.py](https://github.com/panyam/weemaps/blob/main/tile_extractor.py) ...
+Which resulted in [hex_tile_extractor.py](https://github.com/panyam/weemaps/blob/main/allinone/tile_extractor.py) ...
 
 ... Which was not actually bad.  We now saw the following grid summary:
 
@@ -100,7 +97,7 @@ Row 4: [8, 15, 14, 4, 8, 5, 5, 8]
 Row 5: [8, 8, 8, 4, 5, 5, 4, 8]
 ```
 
-Our [test image](https://github.com/panyam/weemaps/blob/main/maps.png) - Actually was a 7x7 hexagonal grid.  AND here's a funny thing about hex-grids - An x-coordinate actually "shifts" in position depending on whether it is on an odd numbered row or an even numbered row (I'll let you try to imagine this).
+Our [test image](https://github.com/panyam/weemaps/blob/main/allinone/maps.png) - Actually was a 7x7 hexagonal grid.  AND here's a funny thing about hex-grids - An x-coordinate actually "shifts" in position depending on whether it is on an odd numbered row or an even numbered row (I'll let you try to imagine this).
 
 Definitely some progress to this.  My gut is asking me to give up, but I need to try one more thing (I do have to 
 squeeze every token out of my pro plan!)
@@ -115,7 +112,7 @@ squeeze every token out of my pro plan!)
   Think about how to represent this.
 ```
 
-Ok so now we have the third type of classifier.  The all-hailing [Hex Map Classifier](https://github.com/panyam/weemaps/blob/main/hex_map_classifier.py) which hard coded the number of rows and columns to 7.  D'oh.  Ok another quick scolding gave us the even better dynamic version - [Dynamic Hex Map Classifier](https://github.com/panyam/weemaps/blob/main/dynamic_hex_map_classifier.py):
+Ok so now we have the third type of classifier.  The all-hailing [Hex Map Classifier](https://github.com/panyam/weemaps/blob/main/llinone/hex_map_classifier.py) which hard coded the number of rows and columns to 7.  D'oh.  Ok another quick scolding gave us the even better dynamic version - [Dynamic Hex Map Classifier](https://github.com/panyam/weemaps/blob/main/allinone/dynamic_hex_map_classifier.py):
 
 ```
 > You are hardcoding the number of rows and columns.   You should not be!
@@ -161,7 +158,7 @@ But this is going to get hard to debug.  Let us whip up a visualizer too:
   AllTiles/<tileNumber>.svg.  The output should a html page with a .svg showing in it alongside the original image (map.png).
 ```
 
-Result: [Hex Map Visualizer](https://github.com/panyam/weemaps/blob/main/hex_map_visualizer.py)
+Result: [Hex Map Visualizer](https://github.com/panyam/weemaps/blob/main/allinone/hex_map_visualizer.py)
 
 A picture is worth a 1000 words.  Or rather is great for invalidating a 1000 classifier results!   Sadly while our tile
 table looked fancy, the visualizer showed a different picture.
@@ -185,7 +182,7 @@ As you can guess I wanted the LLM to use P-Hashing to test out the generated ima
 > Ok I need you compare what you are producing.  Use a p-hash mechanism to measure what you produced with the original image.
 ```
 
-Result: [The Image Visualizer](https://github.com/panyam/weemaps/blob/main/image_comparison.py)
+Result: [The Image Visualizer](https://github.com/panyam/weemaps/blob/main/allinone/image_comparison.py)
 
 Here was a resultant diff between expected and produced images:
 
@@ -199,7 +196,7 @@ This was great but our accuracy had not increased.  I then realized that the til
   "diagonally".
 ```
 
-This seemed to click something off.  It went on a frenzy generating an improved [classifer](https://github.com/panyam/weemaps/blob/main/correct_hex_classifier.py) and [rendering](https://github.com/panyam/weemaps/blob/main/correct_hex_generator.py).  Finally we are seeing a decent generated image based on the new weights:
+This seemed to click something off.  It went on a frenzy generating an improved [classifer](https://github.com/panyam/weemaps/blob/main/allinone/correct_hex_classifier.py) and [rendering](https://github.com/panyam/weemaps/blob/main/allinone/correct_hex_generator.py).  Finally we are seeing a decent generated image based on the new weights:
 
 ```
 $ python correct_hex_classifier.py
@@ -271,22 +268,22 @@ The warning signs were everywhere:
 - Hardcoded parameters replacing robust algorithms
 - Each "fix" introducing new edge cases
 
-I am more vindicated now that real collaboration with AI requires **human leadership** - knowing when to accept suggestions, when to pivot approaches, and when to break problems down into manageable pieces.  And even better if you know what to build AND **how** to build it (use the AI as a fantastic Code Search and Tree Transforming engine).
+I am more vindicated now that real collaboration with AI requires **human leadership**.  You just have to know when to accept suggestions, when to pivot approaches, and when to break problems down into manageable pieces.  And even better if you know what to build AND **how** to build it (use the AI as a fantastic Code Search and Tree Transforming engine).
 
 ## The Path Forward
 
-This adventure convinced me that the problem needed a completely different approach. Instead of asking Claude to solve everything at once, I needed to:
+As I was on this journey, it started to creep up on me that a completely different approach was needed.  Ofcourse my ego
+wouldnt let go.  Instead of asking Claude to solve everything at once, I needed to:
 
 1. **Decompose the problem** into discrete, solvable components
 2. **Lead the architecture** decisions while letting AI handle implementation
 3. **Build incrementally** with validation at each step
 4. **Apply domain knowledge** to guide the solution
 
-That realization led to what I call the "domain-specific" approach - a methodical, human-led process that leverages AI for what it does best while maintaining human oversight for what we do best.
-
-The results? A production-ready system that can reliably extract hex tiles from any WeeWar map, with proper error handling, debug capabilities, and extensibility for future enhancements.
-
-But that's a story for [Part 2: The Smarter Approach](/blog/weemaps-part2), where we'll explore how combining human domain expertise and flashes-of-insights with AI implementation capabilities can solve complex problems that neither could tackle alone.
+I think we as engineers know this but each one has to come to the realization at their own pace/time.   I had to get to
+a more "domain-specific" approach - SOmethign that was methodical, human-led and would leverages AI for what it does
+best while maintaining human oversight for what we do best.  This is what we will look at in [Part 2](/blog/weemaps-part2).   Not everything
+needs an LLM all the time.  There are some good old techniques that would come to my rescue.   
 
 **Lesson**: If you want one takeaway, it is - Games are Fun beyond just playing them!
 

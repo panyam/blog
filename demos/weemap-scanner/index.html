@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeeMap Scanner AI (Local)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- TensorFlow.js and Models -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0/dist/mobilenet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier@1.2.2/dist/knn-classifier.min.js"></script>
+
+    <style>
+      /* Custom Scrollbar for the map viewer */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111827; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #374151; 
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #4b5563; 
+      }
+    </style>
+
+<link rel="stylesheet" href="/index.css">
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "@heroicons/react/": "https://aistudiocdn.com/@heroicons/react@^2.2.0/",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/demos/weemap-scanner/assets/index-da1593d2.js"></script>
+</head>
+  <body class="bg-gray-900 text-white">
+    <div id="root"></div>
+    
+  </body>
+</html>

@@ -7,6 +7,13 @@
   <head>
     {{ template "CommonPageHeader" dict "Site" .Site }}
     <title>{{.FrontMatter.Title}}</title>
+<!-- KaTeX for math rendering -->
+<!--
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body);"></script>
+-->
   </head>
   <body class="bg-white text-black antialiased dark:bg-gray-900 dark:text-white">
     <!-- Section Container -->
@@ -31,5 +38,14 @@
       </div>
     </div>
     </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    const isDark = localStorage.getItem('dark-mode') === 'true' ||
+      (!('dark-mode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: isDark ? 'dark' : 'default'
+    });
+  </script>
   </body>
 </html>

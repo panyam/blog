@@ -23,6 +23,7 @@ var site = s3.Site{
 	},
 	StaticFolders: []string{
 		"/static/", "static",
+		"/demos/", "demos",
 	},
 	DefaultBaseTemplate: s3.BaseTemplate{
 		Name:   "BasePage.html",
