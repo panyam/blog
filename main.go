@@ -29,18 +29,30 @@ var site = s3.Site{
 		Name:   "BasePage.html",
 		Params: map[any]any{"BodyTemplateName": "BaseBody"},
 	},
-	/*
-		GetTemplate: func(res *s3.Resource, out *s3.PageTemplate) {
-			relpath := res.RelPath()
-			if strings.HasPrefix(relpath, "/blog/") {
-				out.Params = map[any]any{"BodyTemplateName": "PostSimple"}
-			}
-		},
-	*/
+}
+
+var sitemapGen = &s3.SitemapGenerator{
+	BaseURL:    "https://panyam.github.io",
+	OutputPath: "sitemap.xml",
+	ChangeFreq: "weekly",
+	Priority:   0.5,
+}
+
+var rssGen = &s3.RSSGenerator{
+	Title:       "Sri's Blog",
+	Description: "Writings on software engineering, Go, and more",
+	BaseURL:     "https://panyam.github.io",
+	OutputPath:  "feed.xml",
+	MaxItems:    20,
 }
 
 func main() {
 	flag.Parse()
+
+	// Register generators
+	sitemapGen.Register(&site)
+	rssGen.Register(&site)
+
 	if os.Getenv("APP_ENV") != "production" {
 		site.Watch()
 	}
