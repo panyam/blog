@@ -1,7 +1,7 @@
 ---
 title: Testing Co-Located Assets
 date: 2025-11-29T03:00:00PM
-draft: false
+draft: true
 summary: A test post to verify co-located asset handling
 tags:
   - testing
