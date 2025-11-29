@@ -29,6 +29,6 @@ require (
 
 // replace github.com/panyam/goutils v0.1.10 => ../goutils/
 
-// replace github.com/panyam/s3gen v0.1.1 => ../s3gen/
+replace github.com/panyam/s3gen v0.1.1 => ../s3gen/
 
 // replace github.com/panyam/templar v0.0.20 => ../templar/

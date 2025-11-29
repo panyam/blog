@@ -35,8 +35,12 @@ var site = s3.Site{
 		Name:   "BasePage.html",
 		Params: map[any]any{"BodyTemplateName": "BaseBody"},
 	},
+	// Co-located asset patterns - images next to markdown files
+	AssetPatterns: []string{
+		"*.png", "*.jpg", "*.jpeg", "*.gif", "*.svg", "*.webp",
+	},
 	BuildRules: []s3.Rule{
-		cssMinifier,
+		// cssMinifier,
 	},
 }
 
