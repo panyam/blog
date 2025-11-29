@@ -9,7 +9,7 @@ toolchain go1.24.0
 require (
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/gorilla/mux v1.8.1
-	github.com/panyam/s3gen v0.0.33
+	github.com/panyam/s3gen v0.1.0
 )
 
 require (
@@ -27,8 +27,8 @@ require (
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 
-replace github.com/panyam/goutils v0.1.10 => ../goutils/
+// replace github.com/panyam/goutils v0.1.10 => ../goutils/
 
-replace github.com/panyam/s3gen v0.0.33 => ../s3gen/
+// replace github.com/panyam/s3gen v0.1.0 => ../s3gen/
 
-replace github.com/panyam/templar v0.0.20 => ../templar/
+// replace github.com/panyam/templar v0.0.20 => ../templar/
