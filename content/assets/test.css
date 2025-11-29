@@ -1,0 +1,19 @@
+/* This is a test CSS file */
+.container {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    margin: 10px;
+}
+
+/* Another comment */
+.header {
+    background-color: #333;
+    color: white;
+    font-size: 24px;
+}
+
+.content p {
+    line-height: 1.6;
+    margin-bottom: 1em;
+}

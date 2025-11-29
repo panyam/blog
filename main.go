@@ -15,6 +15,12 @@ var (
 	addr = flag.String("addr", DefaultGatewayAddress(), "Address where the http grpc gateway endpoint is running")
 )
 
+// CSS minifier for Transform phase
+var cssMinifier = &s3.CSSMinifier{
+	OutputSuffix:    ".min",
+	ExcludePatterns: []string{"*.min.css"},
+}
+
 var site = s3.Site{
 	OutputDir:   "./output",
 	ContentRoot: "./content",
@@ -28,6 +34,9 @@ var site = s3.Site{
 	DefaultBaseTemplate: s3.BaseTemplate{
 		Name:   "BasePage.html",
 		Params: map[any]any{"BodyTemplateName": "BaseBody"},
+	},
+	BuildRules: []s3.Rule{
+		cssMinifier,
 	},
 }
 
