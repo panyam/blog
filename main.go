@@ -45,7 +45,7 @@ var site = s3.Site{
 }
 
 var sitemapGen = &s3.SitemapGenerator{
-	BaseURL:    "https://panyam.github.io",
+	BaseURL:    "https://buildmage.com",
 	OutputPath: "sitemap.xml",
 	ChangeFreq: "weekly",
 	Priority:   0.5,
