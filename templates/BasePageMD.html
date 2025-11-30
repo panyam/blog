@@ -47,5 +47,104 @@
       theme: 'neutral' // isDark ? 'dark' : 'light'
     });
   </script>
+
+  <!-- Zoomable Image Lightbox -->
+  <style>
+    .prose img {
+      cursor: zoom-in;
+      transition: transform 0.2s ease;
+    }
+    .prose img:hover {
+      transform: scale(1.02);
+    }
+    .image-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.9);
+      cursor: zoom-out;
+      padding: 2rem;
+    }
+    .image-lightbox.active {
+      display: flex;
+    }
+    .image-lightbox img {
+      max-width: 95vw;
+      max-height: 95vh;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .lightbox-close svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+    }
+  </style>
+
+  <div class="image-lightbox" id="imageLightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox(); event.stopPropagation();" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <img id="lightboxImage" src="" alt="" onclick="event.stopPropagation()">
+  </div>
+
+  <script>
+    // Make all images in prose content zoomable
+    document.addEventListener('DOMContentLoaded', function() {
+      const proseImages = document.querySelectorAll('.prose img');
+      proseImages.forEach(img => {
+        img.addEventListener('click', function() {
+          openLightbox(this.src, this.alt);
+        });
+      });
+    });
+
+    function openLightbox(src, alt) {
+      const lightbox = document.getElementById('imageLightbox');
+      const lightboxImg = document.getElementById('lightboxImage');
+      lightboxImg.src = src;
+      lightboxImg.alt = alt || '';
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      const lightbox = document.getElementById('imageLightbox');
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeLightbox();
+      }
+    });
+  </script>
   </body>
 </html>

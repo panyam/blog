@@ -52,6 +52,44 @@ I set myself a few constraints being the frugal self that I am:
 
 The solution needed to run 100% in the browser, using the user's GPU, learning from just a handful of examples.   Thus was born the **WeeMap Scanner**.  Let us look at the first part of the fun - The geometry.
 
+### But First - The Payoff
+
+Before we dive into hex math and embeddings, here's what we're building toward. Watch how the classifier evolves as we teach it:
+
+<table width="100%">
+<tr>
+  <td width="50%">
+    <img src="/static/images/weemaps/part2/05_first_time_run.png" />
+    <span>A. 0 examples - No Predictions</span>
+  </td>
+  <td width="50%">
+    <img src="/static/images/weemaps/part2/06_with_five_terrain_examples.png" />
+    <span>B. 5 examples - Some terrains work</span>
+  </td>
+</tr
+<tr>
+  <td width="50%">
+    <img src="/static/images/weemaps/part2/07_with_lt_20_examples.png" />
+    <span>C. Less than 20 examples - We have most of it</span>
+  </td>
+  <td width="50%">
+    <img src="/static/images/weemaps/part2/08_30_plus_examples.png" />
+    <span>D. 30+ examples - Bingo</span>
+  </td>
+</tr
+</table>
+
+| | |
+|:---:|:---:|
+
+A. With zero training data, every tile is a wild guess (in fact we have no predictions as expected). 
+B. Once you add a handful of labeled examples (say 5-6) the system already starts recognizing patterns.  We just
+specified a couple of examples for Empty, Grass and Forest tiles and almost all forest tiles were classified correctly
+(a couple of landbases were mis-classified).
+C. By the time we got to almost 20 examples (2-3 per tile type) we had a pretty clear classification of most of the
+tiles.
+D. And with close to 40 examples we had pretty sophisticated patterns being classified correctly.
+
 ---
 
 ## Hexagons are Annoying (at first)
@@ -358,6 +396,11 @@ graph TD
 
 The classifier is literally just building a list of (embedding, label) pairs. No matrix multiplication, no weight updates. Just a list.
 
+After labeling just a handful of terrain types (say, 2-3 examples of Grass and Mountain each):
+
+![A few examples improve terrain, but unknowns still fail](/static/images/weemaps/part2/05_demo_few_examples.png)
+*Grass and Mountain tiles now classify correctly. But Water? Forest? The classifier has never seen them - so it guesses (poorly).*
+
 ### Classification vs Regression
 
 Quick aside: KNN can do two things:
@@ -451,6 +494,11 @@ I was blown away by the simplicity of this. The system can now correctly classif
 
 This is the power of **compositional generalization**. Instead of learning 3,000 combinations, we learn ~60 individual
 concepts (10 terrains + 30 units + 10 colors + some infrastructure) and combine them freely.
+
+This independence cuts both ways. If you've only labeled red units so far:
+
+![Red units work, blue units fail](/static/images/weemaps/part2/06_demo_red_only.png)
+*The Unit Owner classifier knows "Red" but has no concept of "Blue" yet. It confidently (and wrongly) labels every blue unit as red. One example of a blue unit fixes this instantly.*
 
 ### Generalization to Other Games
 
@@ -759,6 +807,11 @@ const predictCategory = async (category: keyof TileProperties) => {
 
 This means the UI can always show *something*. Before the user has trained any units, every tile shows "Unit: None". As soon as they label one tank, all the tanks on the map light up. Immediate feedback.
 
+Here's what that chaos looks like in practice when you first load a map with zero training:
+
+![Empty model - completely wrong classifications](/static/images/weemaps/part2/04_demo_empty_model.png)
+*With zero examples, the KNN has nothing to compare against. Every prediction is essentially random - or in this case, just "None" for everything.*
+
 ## Undefined Labels
 
 Another edge case I hit: what if someone trains a tile with an empty string or `undefined` as a label? The KNN will happily store that, and later predictions might return `"undefined"` as a string. Yes, literally the string "undefined".
@@ -794,6 +847,13 @@ from examples, and the browser provides a free runtime.  There is a lot a user c
 few tiles and watching the system generalize.
 
 This approach works beyond WeeWar. Any hex-based strategy game - Civilization, Battle for Wesnoth and more - can use the same pipeline. The 5 classifier categories might change (Civ cares about resources and improvements), but the architecture stays the same.
+
+### The Real Test: A New Map
+
+The ultimate validation isn't how well it works on the map you trained it on - it's whether it generalizes to maps it's never seen:
+
+![Trained model generalizing to a completely different map](/static/images/weemaps/part2/07_demo_generalization.png)
+*Same model, different map. The ~50 examples from the first map transfer seamlessly. MobileNet's embeddings capture visual features that persist across maps - a "Forest" tile looks similar regardless of which map it's on.*
 
 ### Try It Out
 
