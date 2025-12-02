@@ -1,5 +1,5 @@
 ---
-title: WeeMap - WeeWar Map Scanner - With Basic ML
+title: WeeMap - Map Extractor - With KNNs and TensorFlow.js
 date: 2025-11-28T03:32:08PM
 tags: ['weewar', 'knn', 'classifier', 'hex tiles', 'mobilenet', 'TensorFlow.js']
 draft: false
@@ -11,21 +11,16 @@ summary: Learn how to use basic ML techniques to extract details from maps of he
 
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-# WeeMap - WeeWar Map Scanner
-
-![WeeMap Scanner Demo](/static/images/weemaps/part2/00_hero_image.png)
+![WeeMap Extractor Demo](/static/images/weemaps/part2/00_hero_image.png)
+[DEMO](/demos/weemap-scanner/) and the [SOURCE](https://github.com/panyam/weemaps/tree/main/part2-scanner)
 
 ## The power of Nostalgia (again)
 
-I really miss WeeWar. If you've read my other posts, you know this already. It was a simple, browser-based, turn-based
-strategy game that consumed an embarrassing chunk of my late 2000s. I even tried building a Flash clone at one point but
-gave up when recreating the pixel art assets became tedious. Civilization has been a constant since the original (though
-my brother can never get tired of mocking my utter incompetence at it). There's something about grids that makes
-tactical decisions feel more deliberate (especially hex grids).
+I really miss WeeWar. If you've read my other posts, you know this already. It was a simple, browser-based, turn-based strategy game that consumed an embarrassing chunk of my late 2000s. I even tried building a Flash clone at one point but gave up when recreating the pixel art assets became tedious. Civilization has been a constant since the original (though my brother can never get tired of mocking my utter incompetence at it). There's something about grids that makes tactical decisions feel more deliberate (especially hex grids).
 
-(Side note: if you're also nostalgic for WeeWar, check out [TinyAttack](https://tinyattack.com). They've done a fantastic job recreating the spirit of the game. It's great to see this style of turn-based strategy still alive.)
+**(Side note: if you're also nostalgic for WeeWar, check out [TinyAttack](https://tinyattack.com). They've done a fantastic job recreating the spirit of the game. It's great to see this style of turn-based strategy still alive.)**
 
-This project started as a continuation of my [WeeWar map extraction experiments](/blog/weemap-scanner). In that post, I tried generating tile extraction scripts with Claude's help. I had made a few assumptions (known screen/tile sizes, number of rows/columns of hex tiles etc).   The perceptual hashing approach worked for pure terrain - a "Grass" tile hashes consistently, a "Mountain" tile hashes consistently. You can build a lookup table and match against it.  But the moment a unit stood on a tile, everything got messy and fell apart. The hash of "Grass" and "Grass with Infantry" were completely different values. The algorithm saw them as unrelated images. If I wanted to recognize "this is Grass AND there's a Tank on it," something smarter than comparing p-hashes was needed.
+This project started as a continuation of my [WeeWar map extraction experiments](/blog/weemaps). In that post, I tried generating tile extraction scripts with Claude's help. I had made a few assumptions (known screen/tile sizes, number of rows/columns of hex tiles etc).   The perceptual hashing approach worked for pure terrain - a "Grass" tile hashes consistently, a "Mountain" tile hashes consistently. You can build a lookup table and match against it.  But the moment a unit stood on a tile, everything got messy and fell apart. The hash of "Grass" and "Grass with Infantry" were completely different values. The algorithm saw them as unrelated images. If I wanted to recognize "this is Grass AND there's a Tank on it," something smarter than comparing p-hashes was needed.
 
 So I set out to push it a bit more and wanted to build a tool that takes a raw screenshot and converts it into structured JSON:
 
@@ -50,7 +45,7 @@ I set myself a few constraints being the frugal self that I am:
 - Reliable and easy to correct - I wanted this to be "incremental" in its accuracy.   The ability to have the human-in-the-loop to
   nudge slightly to improve behavior was very desirable.
 
-The solution needed to run 100% in the browser, using the user's GPU, learning from just a handful of examples.   Thus was born the **WeeMap Scanner**.  Let us look at the first part of the fun - The geometry.
+The solution needed to run 100% in the browser, using the user's GPU, learning from just a handful of examples.   Thus was born the **WeeMap Extractor**.  Let us look at the first part of the fun - The geometry.
 
 ### But First - The Payoff
 
@@ -66,7 +61,7 @@ Before we dive into hex math and embeddings, here's what we're building toward. 
     <img src="/static/images/weemaps/part2/06_with_five_terrain_examples.png" />
     <span>B. 5 examples - Some terrains work</span>
   </td>
-</tr
+</tr>
 <tr>
   <td width="50%">
     <img src="/static/images/weemaps/part2/07_with_lt_20_examples.png" />
@@ -76,11 +71,8 @@ Before we dive into hex math and embeddings, here's what we're building toward. 
     <img src="/static/images/weemaps/part2/08_30_plus_examples.png" />
     <span>D. 30+ examples - Bingo</span>
   </td>
-</tr
+</tr>
 </table>
-
-| | |
-|:---:|:---:|
 
 A. With zero training data, every tile is a wild guess (in fact we have no predictions as expected). 
 B. Once you add a handful of labeled examples (say 5-6) the system already starts recognizing patterns.  We just
@@ -123,7 +115,7 @@ The visual representation looks wrong at first - `q` doesn't go straight up - bu
 
 ![Axial Coordinates](/static/images/weemaps/part2/02_axial_coordinates.png)
 
-For a deeper exploration of hex coordinate systems, Amit Patel's [Red Blob Games hexagon guide](https://www.redblobgames.com/grids/hexagons/) is the definitive resource. His interactive visualizations are how I finally internalized how axial coordinates work. I keep that page bookmarked permanently.  (The above images as you will notice are screenshots from his amazing site).  In WeeMap Scanner, I loop through the visual grid (cols/rows) to render the UI, but immediately convert to Axial (`q`, `r`) for all data operations.
+For a deeper exploration of hex coordinate systems, Amit Patel's [Red Blob Games hexagon guide](https://www.redblobgames.com/grids/hexagons/) is the definitive resource. His interactive visualizations are how I finally internalized how axial coordinates work. I keep that page bookmarked permanently.  (The above images as you will notice are screenshots from his amazing site).  In this tool , I loop through the visual grid (cols/rows) to render the UI, but immediately convert to Axial (`q`, `r`) for all data operations.
 
 ### The Hex-to-Pixel Math
 
@@ -211,21 +203,13 @@ This is where I wanted something that could learn things like - "this image cont
 
 ## Borrowing Someone Else's Eyes
 
-At this point you are already thinking - LLMs and Neural Networks... are all you need!!   Why not just train a neural
-network? Training a neural network from scratch to recognize WeeWar tiles would require thousands of labeled examples.
-Worse I'd have to do that again for a new game (say Civ). I don't have datasets of that size or richness or range, and
-collecting it would defeat the purpose of a quick analysis tool.
+At this point you are already thinking - LLMs and Neural Networks... are all you need!!   Why not just train a neural network? Training a neural network from scratch to recognize WeeWar tiles would require thousands of labeled examples.  Worse I'd have to do that again for a new game (say Civ). I don't have datasets of that size or richness or range, and collecting it would defeat the purpose of a quick analysis tool.
 
 What is however abundant on the net are screenshots of various games. What is even more interesting about these screenshots is they are pretty high fidelity and have a lot of repetitions that are great for learning from. Eg in the following screenshot of WeeWar there are a **lot** of similar tiles:
 
 ![WeeWar Tiles](/static/images/weemaps/part2/03_weewar_screenshot.jpg)
 
-So it would be great to have a way where we could take an existing model that was already trained on a lot of images and
-repurpose it for our task. There is thankfully a name for this technique - **[Transfer
-Learning](https://www.ibm.com/think/topics/transfer-learning)**! TL helps sidestep the need to rebuild our dataset
-repository again. It is (at least in hindsight) a simple idea - take a neural network that's already been trained (in
-this case on millions of images, eg ImageNet), and repurpose its learned representations for our task.  I used
-[MobileNet](https://huggingface.co/docs/timm/en/models/mobilenet-v3) for this.
+So it would be great to have a way where we could take an existing model that was already trained on a lot of images and repurpose it for our task. There is thankfully a name for this technique - **[Transfer Learning](https://www.ibm.com/think/topics/transfer-learning)**! TL helps sidestep the need to rebuild our dataset repository again. It is (at least in hindsight) a simple idea - take a neural network that's already been trained (in this case on millions of images, eg ImageNet), and repurpose its learned representations for our task.  I used [MobileNet](https://huggingface.co/docs/timm/en/models/mobilenet-v3) for this.
 
 ### Why MobileNet?
 
@@ -239,7 +223,8 @@ I actually ended up using **MobileNet**, a lightweight CNN designed for mobile a
 
 MobileNet was trained to classify images into 1000 ImageNet categories - dogs, cars, furniture, etc. It knows nothing about WeeWar. But thankfully the [early and middle layers of MobileNet](https://medium.com/@godeep48/an-overview-on-mobilenet-an-efficient-mobile-vision-cnn-f301141db94d) have learned general visual features. Edges. Textures. Color patterns. Shapes. These features transfer across domains. The network's ability to detect "green textured region" or "metallic gray shape" applies just as well to game sprites as it does to photographs.
 
-The TensorFlow.js team even provides a pre-packaged version specifically for transfer learning use cases: `@tensorflow-models/mobilenet`. In WeeMap Scanner, I load it via CDN scripts in `index.html`:
+The TensorFlow.js team even provides a pre-packaged version specifically for transfer learning use cases:
+`@tensorflow-models/mobilenet`. Here, I load it via CDN scripts in `index.html`:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
@@ -353,7 +338,7 @@ If you've used RAG systems, this should feel familiar. When you query a vector d
 
 The difference is scale and purpose:
 - **RAG**: Millions of documents, finding relevant context for an LLM
-- **WeeMap Scanner**: Dozens of examples, directly classifying an image
+- **WeeMap**: Dozens of examples, directly classifying an image
 
 RAG typically returns the raw documents and lets the LLM figure out what to do with them. KNN for classification takes it one step further - it votes on the labels and gives you a definitive answer.
 
@@ -395,11 +380,6 @@ graph TD
 ```
 
 The classifier is literally just building a list of (embedding, label) pairs. No matrix multiplication, no weight updates. Just a list.
-
-After labeling just a handful of terrain types (say, 2-3 examples of Grass and Mountain each):
-
-![A few examples improve terrain, but unknowns still fail](/static/images/weemaps/part2/05_demo_few_examples.png)
-*Grass and Mountain tiles now classify correctly. But Water? Forest? The classifier has never seen them - so it guesses (poorly).*
 
 ### Classification vs Regression
 
@@ -495,10 +475,7 @@ I was blown away by the simplicity of this. The system can now correctly classif
 This is the power of **compositional generalization**. Instead of learning 3,000 combinations, we learn ~60 individual
 concepts (10 terrains + 30 units + 10 colors + some infrastructure) and combine them freely.
 
-This independence cuts both ways. If you've only labeled red units so far:
-
-![Red units work, blue units fail](/static/images/weemaps/part2/06_demo_red_only.png)
-*The Unit Owner classifier knows "Red" but has no concept of "Blue" yet. It confidently (and wrongly) labels every blue unit as red. One example of a blue unit fixes this instantly.*
+This independence cuts both ways. If you've only labeled red units so far.  *The Unit Owner classifier knows "Red" but has no concept of "Blue" yet. It confidently (and wrongly) labels every blue unit as red. One example of a blue unit fixes this instantly.*
 
 ### Generalization to Other Games
 
@@ -543,7 +520,7 @@ Predicted yield: ~3
 ```
 
 This is **KNN Regression** instead of KNN Classification.  Basically the the final step of the algorithm uses a
-different aggregation (max vs avg). I haven't implemented this in WeeMap Scanner yet, but I have a gut feel this is a natural extension.
+different aggregation (max vs avg). I haven't implemented this in the extractor yet, but I have a gut feel this is a natural extension.
 
 ### Alternatives to KNN Regression
 
@@ -564,7 +541,7 @@ Like regular KNN regression, but closer neighbors contribute more to the average
 - *Pros*: Still instant "training," respects that closer = more relevant
 - *Cons*: Slightly more complex, need to choose a weighting scheme (inverse distance, Gaussian, etc.)
 
-For WeeMap Scanner, I'd probably try **Weighted KNN** first if I implemented regression. It keeps the instant-learning property while being a bit smarter about how it combines neighbor values. TensorFlow.js doesn't have weighted KNN built-in, but it wouldn't be hard to implement on top of the raw distances.
+For this extractor, I'd probably try **Weighted KNN** first if I implemented regression. It keeps the instant-learning property while being a bit smarter about how it combines neighbor values. TensorFlow.js doesn't have weighted KNN built-in, but it wouldn't be hard to implement on top of the raw distances.
 
 <!--
 ## What About Cloud Vision APIs?
@@ -660,7 +637,7 @@ graph LR
     style C fill:#ff9,stroke:#333
 ```
 
-For WeeMap Scanner:
+For WeeMap Extractor:
 - **Input**: Cropped hex tile image (HTMLImageElement)
 - **Preprocess**: Nothing special - TensorFlow.js handles image → tensor conversion
 - **Inference**: `net.infer(image, true)` → embedding, then `classifier.predictClass(embedding)` → label
@@ -747,10 +724,7 @@ export const addExample = async (image: HTMLImageElement, label: string) => {
 
 With that one line, memory usage stays constant regardless of how many tiles you process.
 
-Thankfully this is a small shift in our mental model.   In browser ML, you're doing (or have to be conscious about)
-manual memory management. It feels like writing C in JavaScript (ok that is a bit harsh given all we are doing is an
-extra dispose). Every tensor allocation needs a corresponding disposal.   Especially be careful in a loop - Miss one in
-a loop, and you have a memory leak.
+Thankfully this is a small shift in our mental model.   In browser ML, you're doing (or have to be conscious about) manual memory management. It feels like writing C in JavaScript (ok that is a bit harsh given all we are doing is an extra dispose). Every tensor allocation needs a corresponding disposal.   Especially be careful in a loop - Miss one in a loop, and you have a memory leak.
 
 ## Parallel Prediction
 
@@ -807,9 +781,10 @@ const predictCategory = async (category: keyof TileProperties) => {
 
 This means the UI can always show *something*. Before the user has trained any units, every tile shows "Unit: None". As soon as they label one tank, all the tanks on the map light up. Immediate feedback.
 
-Here's what that chaos looks like in practice when you first load a map with zero training:
+Here's what that "chaos" looks like in practice when you first load a map with zero training:
 
-![Empty model - completely wrong classifications](/static/images/weemaps/part2/04_demo_empty_model.png)
+![Empty model - completely wrong classifications](/static/images/weemaps/part2/05_first_time_run.png)
+
 *With zero examples, the KNN has nothing to compare against. Every prediction is essentially random - or in this case, just "None" for everything.*
 
 ## Undefined Labels
@@ -852,7 +827,7 @@ This approach works beyond WeeWar. Any hex-based strategy game - Civilization, B
 
 The ultimate validation isn't how well it works on the map you trained it on - it's whether it generalizes to maps it's never seen:
 
-![Trained model generalizing to a completely different map](/static/images/weemaps/part2/07_demo_generalization.png)
+![Trained model generalizing to a completely different map](/static/images/weemaps/part2/09_on_new_map.png)
 *Same model, different map. The ~50 examples from the first map transfer seamlessly. MobileNet's embeddings capture visual features that persist across maps - a "Forest" tile looks similar regardless of which map it's on.*
 
 ### Try It Out
