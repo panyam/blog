@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML in the Browser: From Game Nostalgia to Production Patterns</title>
+    <link rel="stylesheet" href="presentation.css">
+    <link rel="stylesheet" href="weemap-presentation.css">
+    <style>
+    </style>
+</head>
+<body>
+    <!-- Controls bar outside the slides -->
+    <div class="controls-bar">
+        <button class="presenter-mode-btn" onclick="openNotesWindow()">&#128221; Notes</button>
+        <div class="slide-counter">
+            <span id="slideNum">1</span> / <span id="totalSlides">23</span>
+        </div>
+    </div>
+
+    <div class="slideshow-container">
+
+        <!-- Slide 1: Title -->
+        <div class="slide active title-slide">
+            <h1>ML in the Browser</h1>
+            <h2>From Game Nostalgia to Production Patterns</h2>
+            <p style="font-size: 1.3em; margin-top: 40px; opacity: 0.9;">
+                Or: How I accidentally learned transfer learning<br>while procrastinating
+            </p>
+            <div style="margin-top: 80px;">
+                <p style="font-size: 1.2em;">Sri Panyam</p>
+                <p style="opacity: 0.8;">buildmage.com</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Opening (1-2 minutes)</h3>
+                <ul>
+                    <li>Introduce yourself</li>
+                    <li>Set the tone: this is a fun side project that accidentally taught me real ML concepts</li>
+                    <li>Mention the subtitle - "procrastinating" gets a laugh and sets expectations</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"Let me start with a question that might surprise you..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: The Hook -->
+        <div class="slide">
+            <h1>The Question</h1>
+            <div class="emoji-big">&#129300;</div>
+            <h2 style="text-align: center; font-size: 2.2em;">
+                "Can you run <em>real</em> ML entirely in a browser tab?"
+            </h2>
+            <div class="stats-grid" style="margin-top: 50px;">
+                <div class="stat-box">
+                    <span class="stat-number">&#128683;</span>
+                    <div class="stat-label">No backend</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&#128176;</span>
+                    <div class="stat-label">No API costs</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&#128274;</span>
+                    <div class="stat-label">No data leaving device</div>
+                </div>
+            </div>
+            <div class="highlight" style="margin-top: 40px; text-align: center;">
+                <h3>Yes.  And let's learn in the next 30 minutes.</h3>
+            </div>
+            <div class="speaker-notes">
+                <h3>Key Point (2 minutes)</h3>
+                <p><strong>Pause after the question.</strong> Let it land.</p>
+                <ul>
+                    <li>Most people assume ML needs servers, GPUs, cloud infrastructure</li>
+                    <li>The three constraints (no backend, no API costs, no data leaving) sound impossible together</li>
+                    <li>Build anticipation - "Yes, and I'll prove it"</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"To explain how, let me tell you about a game I was obsessed with..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: The Nostalgia Setup -->
+        <div class="slide">
+            <h1>The Nostalgia Setup</h1>
+            <h2>WeeWar (2007-2015) - RIP &#129686;</h2>
+            <div style="display: flex; justify-content: center; margin: 20px 0;">
+                <iframe
+                    width="560"
+                    height="315"
+                    src="https://www.youtube.com/embed/QXg0vQhRALA"
+                    title="WeeWar Gameplay"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    style="border-radius: 10px;">
+                </iframe>
+            </div>
+            <ul>
+                <li>Browser-based hex strategy game</li>
+                <li>Consumed an embarrassing chunk of my late 2000s</li>
+                <li>Wanted to extract map data from old screenshots</li>
+            </ul>
+            <div class="highlight">
+                <p><strong>Goal:</strong> Screenshot &#8594; Structured JSON with terrain, units, owners</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Context (2 minutes)</h3>
+                <p><strong>Keep this brief - it's context, not the point.</strong></p>
+                <ul>
+                    <li>WeeWar was a browser-based hex strategy game (think simplified Civ)</li>
+                    <li>Shut down in 2011 - RIP</li>
+                    <li>I wanted to extract map data from old screenshots for... nostalgia reasons</li>
+                    <li>Mention TinyAttack if anyone wants a modern equivalent</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"So what does 'extract map data' actually mean?"</p>
+            </div>
+        </div>
+
+        <!-- Slide 4: The Problem -->
+        <div class="slide">
+            <h1>The Problem</h1>
+            <h2>Screenshot &#8594; Structured Data</h2>
+            <div class="code-block">
+[{
+  "q": 10, "r": 5,
+  "terrain": "Forest",
+  "unit": "Tank",
+  "owner": "Red"
+}, ...]
+            </div>
+            <h2>My Constraints (being frugal)</h2>
+            <ul>
+                <li><strong>Easy to share</strong> - No Python backend, static site only</li>
+                <li><strong>Cheap</strong> - No API costs (600+ tiles per map adds up!)</li>
+                <li><strong>Low effort</strong> - No 10,000 labeled screenshots lying around</li>
+                <li><strong>Correctable</strong> - Human-in-the-loop to nudge accuracy</li>
+            </ul>
+            <div class="speaker-notes">
+                <h3>Define the Problem (2-3 minutes)</h3>
+                <ul>
+                    <li>Show the JSON output - this is what "structured data" means</li>
+                    <li>Walk through each constraint:
+                        <ul>
+                            <li>Static site = shareable, hostable for free</li>
+                            <li>No API costs = sustainable hobby project</li>
+                            <li>No massive dataset = realistic for a side project</li>
+                            <li>Human-in-the-loop = can correct mistakes</li>
+                        </ul>
+                    </li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"My first attempt was the obvious one..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 5: First Attempt -->
+        <div class="slide">
+            <h1>First Attempt: Perceptual Hashing</h1>
+            <h2>The Idea</h2>
+            <p>Hash each tile, compare against known tiles, find closest match</p>
+
+            <!-- Visual example of phashes -->
+            <div style="display: flex; justify-content: center; gap: 40px; margin: 25px 0; flex-wrap: wrap;">
+                <div style="text-align: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="./images/tile_grass.png" alt="Grass tile" style="width: 60px; height: 60px; border-radius: 5px; border: 2px solid #27ae60;">
+                        <span style="font-size: 1.5em;">&#8594;</span>
+                        <code style="background: #ecf0f1; padding: 8px 12px; border-radius: 5px; font-size: 0.85em;">a3c1e7f0</code>
+                    </div>
+                    <div style="color: #27ae60; margin-top: 5px; font-weight: bold;">Grass</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="./images/tile_grass.png" alt="Grass tile" style="width: 60px; height: 60px; border-radius: 5px; border: 2px solid #27ae60;">
+                        <span style="font-size: 1.5em;">&#8776;</span>
+                        <img src="./images/tile_grass.png" alt="Grass tile" style="width: 60px; height: 60px; border-radius: 5px; border: 2px solid #27ae60;">
+                    </div>
+                    <div style="color: #27ae60; margin-top: 5px; font-weight: bold;">&#10003; Match!</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="./images/tile_grass.png" alt="Grass tile" style="width: 60px; height: 60px; border-radius: 5px; border: 2px solid #e74c3c;">
+                        <span style="font-size: 1.5em;">&#8800;</span>
+                        <img src="./images/tile_grass_tank.png" alt="Grass with tank" style="width: 60px; height: 60px; border-radius: 5px; border: 2px solid #e74c3c;">
+                    </div>
+                    <div style="color: #e74c3c; margin-top: 5px; font-weight: bold;">&#10007; No match!</div>
+                </div>
+            </div>
+
+            <h2>The Result</h2>
+            <table class="comparison-table">
+                <tr>
+                    <td>Empty terrain (Grass, Mountain)</td>
+                    <td class="good">&#10003; Works!</td>
+                </tr>
+                <tr>
+                    <td>"Grass" vs "Grass + Tank"</td>
+                    <td class="bad">&#10007; Completely different hashes</td>
+                </tr>
+            </table>
+            <div class="highlight">
+                <p><strong>Problem:</strong> The algorithm sees "Grass" and "Grass with Tank" as unrelated images</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>The Failure (2-3 minutes)</h3>
+                <ul>
+                    <li>Perceptual hashing: create a "fingerprint" of an image based on visual features</li>
+                    <li>Works great for finding similar images (duplicate detection)</li>
+                    <li>Problem: "Grass" and "Grass + Tank" hash to completely different values</li>
+                    <li>The algorithm sees them as unrelated - no concept of "grass is still there underneath"</li>
+                </ul>
+                <h3>Key Point</h3>
+                <p>This failure led to the insight that made everything work.</p>
+                <h3>Transition</h3>
+                <p>"I needed something that could see BOTH layers..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: The Insight -->
+        <div class="slide">
+            <h1>The Insight</h1>
+            <div class="emoji-big">&#128161;</div>
+            <h2 style="text-align: center;">
+                What if we could borrow "visual understanding"<br>from a model that's already seen millions of images?
+            </h2>
+            <div class="highlight" style="margin-top: 50px; text-align: center;">
+                <h3>This is called Transfer Learning</h3>
+                <p>Take a pre-trained model, reuse its learned representations, add your own task on top</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>The Aha Moment (1-2 minutes)</h3>
+                <p><strong>This is the conceptual breakthrough. Let it breathe.</strong></p>
+                <ul>
+                    <li>What if we could use a model that already "understands" images?</li>
+                    <li>Not trained on our specific task, but on general visual concepts</li>
+                    <li>This is called Transfer Learning</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"Let me explain what that actually means..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: Transfer Learning -->
+        <div class="slide">
+            <h1>Transfer Learning in 60 Seconds</h1>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Traditional ML</th>
+                        <th>Transfer Learning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Train from scratch</td>
+                        <td>Use pre-trained model</td>
+                    </tr>
+                    <tr>
+                        <td>Need massive dataset</td>
+                        <td>Need handful of examples</td>
+                    </tr>
+                    <tr>
+                        <td>Weeks of GPU time</td>
+                        <td>Instant</td>
+                    </tr>
+                    <tr>
+                        <td>$$$ compute costs</td>
+                        <td>Free (runs in browser)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight">
+                <p><strong>Key Idea:</strong> Someone else already trained a model on millions of images. We just reuse their work.</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>The Concept (2-3 minutes)</h3>
+                <ul>
+                    <li>Walk through the comparison table</li>
+                    <li>Emphasize: someone else spent millions training on millions of images</li>
+                    <li>We just reuse their work - stand on the shoulders of giants</li>
+                    <li>This is how most practical ML works now - very few people train from scratch</li>
+                </ul>
+                <h3>Industry Note</h3>
+                <p>Transfer learning is how GPT fine-tuning works, how BERT is used, etc. Same concept, different modality.</p>
+                <h3>Transition</h3>
+                <p>"The specific model I used is called MobileNet..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: MobileNet -->
+        <div class="slide">
+            <h1>Enter MobileNet</h1>
+            <h2>A neural network that runs in your browser</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-number">15MB</span>
+                    <div class="stat-label">Model size</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">1M+</span>
+                    <div class="stat-label">Images trained on</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">1000</span>
+                    <div class="stat-label">Categories it knows</div>
+                </div>
+            </div>
+            <h2>The Magic</h2>
+            <p>MobileNet knows nothing about WeeWar. But it knows what "green texture" and "metallic shape" look like.</p>
+            <div class="highlight">
+                <p><strong>Early/middle layers</strong> learned general visual features: edges, textures, colors, shapes. These transfer across domains.</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>The Tool (2 minutes)</h3>
+                <ul>
+                    <li>MobileNet: designed specifically for mobile/browser - small and fast</li>
+                    <li>15MB is tiny by ML standards (GPT-3 is 175GB)</li>
+                    <li>Trained on ImageNet - 1000 categories like "dog", "car", "pizza"</li>
+                    <li>Knows nothing about WeeWar - but knows what visual features look like</li>
+                </ul>
+                <h3>Key Insight</h3>
+                <p>The early layers learned edges, textures, colors, shapes. These are universal - they transfer to any image domain.</p>
+                <h3>Transition</h3>
+                <p>"But we don't want classifications like 'golden retriever'. We want something else..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 9: Embeddings -->
+        <div class="slide">
+            <h1>Embeddings: The Key Concept</h1>
+            <h2>Instead of classification, extract the "fingerprint"</h2>
+            <div class="architecture-flow">
+                <div class="flow-box">Image</div>
+                <div class="flow-arrow">&#8594;</div>
+                <div class="flow-box">MobileNet</div>
+                <div class="flow-arrow">&#8594;</div>
+                <div class="flow-box">1024 numbers</div>
+            </div>
+            <div class="code-block">
+<span class="comment">// The 'true' stops at the feature layer</span>
+<span class="keyword">const</span> embedding = net.infer(image, <span class="keyword">true</span>);
+<span class="comment">// Returns: [0.9, 0.1, 0.5, ...] (1024 floats)</span>
+            </div>
+            <h2>Why This Matters</h2>
+            <ul>
+                <li><strong>Similar images &#8594; Similar embeddings</strong> (close in 1024-D space)</li>
+                <li><strong>Different images &#8594; Distant embeddings</strong></li>
+            </ul>
+            <div class="highlight">
+                <p><strong>Same concept as text embeddings in RAG/LLMs</strong> - but for images!</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>The Core Idea (3-4 minutes)</h3>
+                <p><strong>This is the most important slide conceptually. Take your time.</strong></p>
+                <ul>
+                    <li>Instead of asking "what is this?", we ask "what does this look like?"</li>
+                    <li>The embedding is a 1024-number fingerprint</li>
+                    <li>Similar images = similar fingerprints (close in vector space)</li>
+                    <li>The 'true' parameter is the key - stops before final classification</li>
+                </ul>
+                <h3>RAG Connection</h3>
+                <p>If anyone knows RAG/LLMs: this is exactly like text embeddings. Same concept, visual instead of semantic.</p>
+                <h3>Transition</h3>
+                <p>"This has huge implications beyond games..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 10: Industry Applications of Embeddings -->
+        <div class="slide">
+            <h1>Why This Matters for Industry</h1>
+            <h2>You don't need to train anything</h2>
+            <p>MobileNet gives you instant visual understanding for:</p>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-number">&#128722;</span>
+                    <div class="stat-label"><strong>Product classification</strong><br>"Is this a shirt or pants?"</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&#128269;</span>
+                    <div class="stat-label"><strong>Defect detection</strong><br>"Does this part have a scratch?"</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&#128196;</span>
+                    <div class="stat-label"><strong>Document sorting</strong><br>"Invoice or receipt?"</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&#128247;</span>
+                    <div class="stat-label"><strong>Visual search</strong><br>"Find similar products"</div>
+                </div>
+            </div>
+            <div class="highlight">
+                <p><strong>All running client-side, offline-capable, zero API costs</strong></p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Real Applications (2 minutes)</h3>
+                <ul>
+                    <li>Product classification: e-commerce, inventory management</li>
+                    <li>Defect detection: manufacturing QA without training custom models</li>
+                    <li>Document sorting: invoice vs receipt vs contract</li>
+                    <li>Visual search: "find products that look like this"</li>
+                </ul>
+                <h3>Key Point</h3>
+                <p>All of this runs client-side. No data leaves the device. No API costs. Works offline.</p>
+                <h3>Transition</h3>
+                <p>"So we have embeddings. How do we go from embedding to label?"</p>
+            </div>
+        </div>
+
+        <!-- Slide 11: KNN -->
+        <div class="slide">
+            <h1>K-Nearest Neighbors (KNN)</h1>
+            <h2>The "Kindergarten Algorithm"</h2>
+            <div class="phase-box">
+                <h3>How it works:</h3>
+                <ol style="margin-left: 20px;">
+                    <li>Store labeled examples (embedding + label)</li>
+                    <li>When classifying: find K closest stored examples</li>
+                    <li>Majority vote wins</li>
+                </ol>
+            </div>
+            <h2>That's it. Seriously.</h2>
+            <ul>
+                <li>No gradient descent</li>
+                <li>No backpropagation</li>
+                <li>No training loop</li>
+            </ul>
+            <div class="highlight">
+                <p><strong>You show it an example, it remembers it. You ask it to classify, it finds similar things and votes.</strong></p>
+            </div>
+            <div class="speaker-notes">
+                <h3>The Algorithm (3 minutes)</h3>
+                <p><strong>KNN is often dismissed as "too simple." That's its strength here.</strong></p>
+                <ul>
+                    <li>Step 1: Store labeled examples (just a list!)</li>
+                    <li>Step 2: When classifying, find the K closest examples</li>
+                    <li>Step 3: Majority vote wins</li>
+                    <li>That's literally it. No training loop, no weights to optimize.</li>
+                </ul>
+                <h3>Why K=3?</h3>
+                <p>Default in TensorFlow.js. Works well with small datasets. Higher K needs more examples.</p>
+                <h3>Transition</h3>
+                <p>"Why is this perfect for browser ML?"</p>
+            </div>
+        </div>
+
+        <!-- Slide 12: Why KNN -->
+        <div class="slide">
+            <h1>Why KNN for Browser ML?</h1>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Traditional Neural Net</th>
+                        <th>KNN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Train for hours/days</td>
+                        <td class="good">Instant "learning"</td>
+                    </tr>
+                    <tr>
+                        <td>Need GPU</td>
+                        <td class="good">Just math</td>
+                    </tr>
+                    <tr>
+                        <td>Fixed after training</td>
+                        <td class="good">Add examples anytime</td>
+                    </tr>
+                    <tr>
+                        <td>Black box</td>
+                        <td class="good">Explainable ("it matched these 3")</td>
+                    </tr>
+                    <tr>
+                        <td>Need thousands of examples</td>
+                        <td class="good">Works with 5-10</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight">
+                <p><strong>Perfect for:</strong> Few examples, real-time feedback, human-in-the-loop</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>The Comparison (2 minutes)</h3>
+                <ul>
+                    <li>Walk through each row of the table</li>
+                    <li>Emphasize "instant learning" - no waiting for training</li>
+                    <li>"Add examples anytime" - user can improve the model on the fly</li>
+                    <li>"Explainable" - you can see WHY it made a decision</li>
+                </ul>
+                <h3>Key Point</h3>
+                <p>KNN is "embarrassingly simple" but perfect for few-shot, human-in-the-loop scenarios.</p>
+                <h3>Transition</h3>
+                <p>"Now here's where it gets interesting..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 13: The Secret Sauce -->
+        <div class="slide">
+            <h1>The Secret Sauce</h1>
+            <h2>5 Independent Classifiers, 1 Embedding</h2>
+            <div class="architecture-flow" style="flex-direction: column; align-items: center;">
+                <div class="flow-box" style="background: #9b59b6;">Image &#8594; MobileNet &#8594; Embedding</div>
+                <div style="font-size: 2em; margin: 15px 0;">&#8595;</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                    <div class="flow-box">Terrain</div>
+                    <div class="flow-box">Unit</div>
+                    <div class="flow-box">Unit Owner</div>
+                    <div class="flow-box">Tile Owner</div>
+                    <div class="flow-box">Infrastructure</div>
+                </div>
+            </div>
+            <div class="highlight" style="margin-top: 30px;">
+                <h3>Compositional Generalization</h3>
+                <p>Classify "Blue Mech on Mountain" without ever seeing that combo - as long as you've seen Blue, Mech, and Mountain separately.</p>
+            </div>
+            <p style="text-align: center; font-size: 1.3em; margin-top: 20px;">
+                <strong>Instead of 3,000 combinations, learn ~60 concepts</strong>
+            </p>
+            <div class="speaker-notes">
+                <h3>The Innovation (3-4 minutes)</h3>
+                <p><strong>This is the part I'm most proud of. Take time here.</strong></p>
+                <ul>
+                    <li>A tile has multiple properties: terrain, unit, owner, etc.</li>
+                    <li>If we train ONE classifier for "Red Tank on Forest", we need every combination</li>
+                    <li>10 terrains x 30 units x 10 colors = 3,000 combinations!</li>
+                    <li>Solution: 5 independent classifiers, all using the SAME embedding</li>
+                </ul>
+                <h3>Compositional Generalization</h3>
+                <p>See "Blue Mech on Mountain" even if you've never seen that exact combo - as long as you've seen Blue, Mech, and Mountain separately.</p>
+                <h3>Transition</h3>
+                <p>"This pattern applies way beyond games..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 14: Industry Pattern -->
+        <div class="slide">
+            <h1>This Pattern Works Beyond Games</h1>
+            <h2>Same architecture, different labels</h2>
+            <table class="tier-table">
+                <thead>
+                    <tr>
+                        <th>Domain</th>
+                        <th>Independent Classifiers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>E-commerce</strong></td>
+                        <td>Category, Brand, Condition, Color, Size</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medical Imaging</strong></td>
+                        <td>Tissue type, Anomaly present, Severity, Location</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Manufacturing QA</strong></td>
+                        <td>Part type, Defect type, Defect location, Severity</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Document Processing</strong></td>
+                        <td>Doc type, Language, Department, Urgency</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight">
+                <p><strong>Key Insight:</strong> Multi-label classification without exponential training data</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Industry Applications (2 minutes)</h3>
+                <ul>
+                    <li>Walk through the table - show how each domain maps to independent classifiers</li>
+                    <li>E-commerce: classify category AND brand AND condition from one image</li>
+                    <li>Medical: tissue type AND anomaly AND severity</li>
+                    <li>The key insight: multi-label without exponential training data</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"Let me show you how simple the code actually is..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 15: The Stack -->
+        <div class="slide">
+            <h1>The Stack</h1>
+            <h2>Three script tags to ML in the browser</h2>
+            <div class="code-block">
+<span class="comment">&lt;!-- Core TensorFlow.js runtime --&gt;</span>
+&lt;script src="<span class="string">tfjs.min.js</span>"&gt;&lt;/script&gt;
+
+<span class="comment">&lt;!-- MobileNet for transfer learning --&gt;</span>
+&lt;script src="<span class="string">mobilenet.min.js</span>"&gt;&lt;/script&gt;
+
+<span class="comment">&lt;!-- KNN classifier --&gt;</span>
+&lt;script src="<span class="string">knn-classifier.min.js</span>"&gt;&lt;/script&gt;
+            </div>
+            <div class="stats-grid" style="margin-top: 30px;">
+                <div class="stat-box">
+                    <span class="stat-number">~15MB</span>
+                    <div class="stat-label">Total download</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">~2s</span>
+                    <div class="stat-label">Model load time</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">~10ms</span>
+                    <div class="stat-label">Per-tile inference</div>
+                </div>
+            </div>
+            <div class="speaker-notes">
+                <h3>Implementation (2 minutes)</h3>
+                <ul>
+                    <li>Three script tags - that's all the ML infrastructure</li>
+                    <li>tfjs: the runtime</li>
+                    <li>mobilenet: the pre-trained model</li>
+                    <li>knn-classifier: the classification layer</li>
+                </ul>
+                <h3>Performance Notes</h3>
+                <ul>
+                    <li>15MB download on first load (cached after)</li>
+                    <li>~2 seconds to load model</li>
+                    <li>~10ms per tile inference</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"Enough theory. Let's see it work..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 16: Live Demo -->
+        <div class="slide">
+            <h1>Let's See It Work</h1>
+            <div class="demo-placeholder">
+                <h2>&#127918; Live Demo Time</h2>
+                <p style="font-size: 1.3em;">
+                    1. Load a map screenshot<br>
+                    2. Label 5-6 tiles<br>
+                    3. Watch it generalize<br>
+                    4. Try a different map
+                </p>
+            </div>
+            <p style="text-align: center; font-size: 1.2em;">
+                <strong>buildmage.com/demos/weemap-scanner/</strong>
+            </p>
+            <div class="speaker-notes">
+                <h3>Demo Flow (8-10 minutes)</h3>
+                <ol>
+                    <li>Load a WeeWar map screenshot</li>
+                    <li>Show that initially there are no predictions (empty classifiers)</li>
+                    <li>Click a grass tile, label it "Grass"</li>
+                    <li>Click a forest tile, label it "Forest"</li>
+                    <li>Click a water tile, label it "Water"</li>
+                    <li>Show the map updating - similar tiles get classified</li>
+                    <li>Add a few unit examples (tank, infantry)</li>
+                    <li>Add color examples (red, blue)</li>
+                    <li>Show compositional generalization working</li>
+                    <li>Load a DIFFERENT map - show it still works</li>
+                </ol>
+                <h3>If Demo Fails</h3>
+                <p>Have screenshots ready as backup. The blog post has the progression images.</p>
+            </div>
+        </div>
+
+        <!-- Slide 17: What Just Happened -->
+        <div class="slide">
+            <h1>What Just Happened</h1>
+            <h2>Recap of the demo</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-number">~50</span>
+                    <div class="stat-label">Labeled examples</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&lt;2min</span>
+                    <div class="stat-label">Training time</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">0</span>
+                    <div class="stat-label">API calls</div>
+                </div>
+            </div>
+            <ul style="margin-top: 30px;">
+                <li>&#10003; Trained in seconds (just storing embeddings)</li>
+                <li>&#10003; Generalized to unseen tiles</li>
+                <li>&#10003; Worked on a completely different map</li>
+                <li>&#10003; All in browser, no network calls</li>
+                <li>&#10003; User can correct mistakes and improve</li>
+            </ul>
+            <div class="speaker-notes">
+                <h3>Recap (2 minutes)</h3>
+                <ul>
+                    <li>~50 labeled examples - about 2 minutes of clicking</li>
+                    <li>"Training" is instant - just storing embeddings</li>
+                    <li>Zero API calls - everything local</li>
+                    <li>Generalized to tiles it never saw</li>
+                    <li>Worked on a completely different map</li>
+                </ul>
+                <h3>Key Point</h3>
+                <p>This is real ML, not a toy. The same pattern works in production.</p>
+                <h3>Transition</h3>
+                <p>"But it's not all magic. There are gotchas..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 18: Gotchas -->
+        <div class="slide">
+            <h1>The Gotchas</h1>
+            <h2>Browser ML isn't magic - things to watch for</h2>
+            <div class="phase-box">
+                <h3>1. Memory Management</h3>
+                <p>TensorFlow.js tensors live on GPU. You MUST call <code>.dispose()</code> or leak memory.</p>
+                <div class="code-block">
+<span class="keyword">const</span> embedding = net.infer(image, <span class="keyword">true</span>);
+classifier.addExample(embedding, label);
+embedding.<span class="keyword">dispose</span>();  <span class="comment">// CRITICAL!</span>
+                </div>
+            </div>
+            <div class="phase-box">
+                <h3>2. Model Load Time</h3>
+                <p>15MB on first load. Show a loading indicator. Consider lazy loading.</p>
+            </div>
+            <div class="phase-box">
+                <h3>3. Cold Start</h3>
+                <p>Need initial examples. Design your UX for the "teach first" flow.</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Practical Issues (3 minutes)</h3>
+                <p><strong>Be honest about limitations - builds credibility.</strong></p>
+                <ul>
+                    <li><strong>Memory:</strong> TensorFlow.js tensors live on GPU. MUST call .dispose() or you leak memory. This is like manual memory management in C.</li>
+                    <li><strong>Load time:</strong> 15MB model takes a few seconds. Show a loading indicator.</li>
+                    <li><strong>Cold start:</strong> Need initial examples. Design UX for "teach first" flow.</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"So when should you actually use this?"</p>
+            </div>
+        </div>
+
+        <!-- Slide 19: When to Use -->
+        <div class="slide">
+            <h1>When to Use Browser ML</h1>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th style="background: #27ae60;">&#10003; Good Fit</th>
+                        <th style="background: #e74c3c;">&#10007; Not Ideal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Privacy-sensitive (data stays local)</td>
+                        <td>Need highest possible accuracy</td>
+                    </tr>
+                    <tr>
+                        <td>Few-shot / human-in-the-loop</td>
+                        <td>Have massive training data</td>
+                    </tr>
+                    <tr>
+                        <td>Offline capability needed</td>
+                        <td>Complex multi-step reasoning</td>
+                    </tr>
+                    <tr>
+                        <td>Quick prototypes / demos</td>
+                        <td>Need model updates without client changes</td>
+                    </tr>
+                    <tr>
+                        <td>Per-user personalization</td>
+                        <td>Standardized predictions across users</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="speaker-notes">
+                <h3>Decision Framework (2 minutes)</h3>
+                <ul>
+                    <li>Walk through both columns</li>
+                    <li>Good fit: privacy, few-shot, offline, prototypes, personalization</li>
+                    <li>Not ideal: need highest accuracy, have massive data, need standardized predictions</li>
+                </ul>
+                <h3>Key Point</h3>
+                <p>Browser ML is a tool, not a replacement. Use it where it fits.</p>
+                <h3>Transition</h3>
+                <p>"This pattern exists beyond my silly game project..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 20: Beyond Games -->
+        <div class="slide">
+            <h1>Beyond Games</h1>
+            <h2>Real-world applications of this pattern</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-number">&#129302;</span>
+                    <div class="stat-label"><strong>Teachable Machine</strong><br>Google's drag-and-drop ML</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&#128248;</span>
+                    <div class="stat-label"><strong>Photo organization</strong><br>On-device face/object grouping</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&#9855;</span>
+                    <div class="stat-label"><strong>Accessibility tools</strong><br>Real-time object identification</div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">&#128302;</span>
+                    <div class="stat-label"><strong>AR filters</strong><br>Face/pose detection in browser</div>
+                </div>
+            </div>
+            <div class="highlight">
+                <p><strong>The pattern:</strong> Pre-trained model + simple classifier + user feedback = instant ML app</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Real World (2 minutes)</h3>
+                <ul>
+                    <li>Teachable Machine: Google's no-code ML tool uses exactly this pattern</li>
+                    <li>Photo organization: on-device grouping without cloud</li>
+                    <li>Accessibility: real-time object identification for visually impaired</li>
+                    <li>AR filters: face/pose detection in browser</li>
+                </ul>
+                <h3>The Pattern</h3>
+                <p>Pre-trained model + simple classifier + user feedback = instant ML app</p>
+                <h3>Transition</h3>
+                <p>"If you want to try this yourself..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 21: Try It -->
+        <div class="slide">
+            <h1>Try It Yourself</h1>
+            <div class="stats-grid" style="margin-top: 50px;">
+                <div class="stat-box" style="padding: 30px;">
+                    <span class="stat-number">&#127918;</span>
+                    <div class="stat-label" style="font-size: 1.2em; margin-top: 15px;">
+                        <strong>Demo</strong><br>
+                        buildmage.com/demos/weemap-scanner/
+                    </div>
+                </div>
+                <div class="stat-box" style="padding: 30px;">
+                    <span class="stat-number">&#128214;</span>
+                    <div class="stat-label" style="font-size: 1.2em; margin-top: 15px;">
+                        <strong>Blog Post</strong><br>
+                        buildmage.com/blog/weemaps-part2
+                    </div>
+                </div>
+                <div class="stat-box" style="padding: 30px;">
+                    <span class="stat-number">&#128187;</span>
+                    <div class="stat-label" style="font-size: 1.2em; margin-top: 15px;">
+                        <strong>Source Code</strong><br>
+                        github.com/panyam/weemaps
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes">
+                <h3>Resources (1 minute)</h3>
+                <ul>
+                    <li>Demo: play with it yourself</li>
+                    <li>Blog post: full technical details, code snippets, explanations</li>
+                    <li>Source code: MIT licensed, fork it, learn from it</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"Let me leave you with the key takeaways..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 22: Takeaways -->
+        <div class="slide">
+            <h1>Key Takeaways</h1>
+            <div class="takeaway-box">
+                <h3>1. Transfer Learning</h3>
+                <p>Skip the "need 10,000 images" problem. Someone else did the hard work.</p>
+            </div>
+            <div class="takeaway-box">
+                <h3>2. Embeddings</h3>
+                <p>Turn images into comparable fingerprints. Same concept as text embeddings in RAG.</p>
+            </div>
+            <div class="takeaway-box">
+                <h3>3. KNN</h3>
+                <p>Instant, explainable classification. Perfect for few-shot learning.</p>
+            </div>
+            <div class="takeaway-box">
+                <h3>4. Browser ML is Viable</h3>
+                <p>For the right use cases: privacy, offline, prototypes, personalization.</p>
+            </div>
+            <div class="takeaway-box">
+                <h3>5. Side Projects are the Best Way to Learn</h3>
+                <p>Nostalgia + curiosity = accidentally useful skills.</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Summary (2-3 minutes)</h3>
+                <p><strong>Walk through each takeaway box.</strong></p>
+                <ol>
+                    <li><strong>Transfer Learning:</strong> Don't train from scratch. Stand on shoulders of giants.</li>
+                    <li><strong>Embeddings:</strong> Visual fingerprints. Same concept as text embeddings in RAG.</li>
+                    <li><strong>KNN:</strong> Embarrassingly simple, perfect for few-shot.</li>
+                    <li><strong>Browser ML:</strong> Viable for privacy, offline, prototypes.</li>
+                    <li><strong>Side Projects:</strong> Best way to learn. Follow your curiosity.</li>
+                </ol>
+                <h3>Transition</h3>
+                <p>"Questions?"</p>
+            </div>
+        </div>
+
+        <!-- Slide 23: Questions -->
+        <div class="slide conclusion-slide">
+            <h1>Questions?</h1>
+            <div style="text-align: center; margin-top: 60px;">
+                <p style="font-size: 1.5em;">Sri Panyam</p>
+                <p style="font-size: 1.2em; opacity: 0.8; margin-top: 20px;">
+                    buildmage.com<br>
+                    linkedin.com/in/panyam<br>
+                    github.com/panyam
+                </p>
+                <p style="font-size: 1.3em; margin-top: 60px; font-style: italic; opacity: 0.9;">
+                    "Yes, KNN stands for K-Nearest Neighbors,<br>
+                    not Kool Neural Networks"
+                </p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Q&A Tips</h3>
+                <h3>Likely Questions</h3>
+                <ul>
+                    <li><strong>"How accurate is it?"</strong> - With ~50 examples, very accurate for this use case. Would need more for complex real-world tasks.</li>
+                    <li><strong>"Could this work for X?"</strong> - If you can describe it as "find visually similar things and classify", probably yes.</li>
+                    <li><strong>"Why not use a cloud API?"</strong> - Cost, privacy, latency, offline capability. Cloud APIs are great when you need them.</li>
+                    <li><strong>"What about model updates?"</strong> - KNN "model" is just stored examples. Export/import as JSON.</li>
+                    <li><strong>"Performance on mobile?"</strong> - MobileNet was designed for this. Works well on modern phones.</li>
+                </ul>
+                <h3>Closing</h3>
+                <p>Thank the audience. Mention you're happy to chat after.</p>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button class="nav-button" onclick="changeSlide(-1)" id="prevBtn">&#10094; Previous</button>
+            <button class="nav-button" onclick="changeSlide(1)" id="nextBtn">Next &#10095;</button>
+        </div>
+    </div>
+
+    <script src="weemap-presentation.js"></script>
+</body>
+</html>
