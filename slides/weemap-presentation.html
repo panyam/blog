@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ML in the Browser: From Game Nostalgia to Production Patterns</title>
+    <title>ML in the Browser: For Fun and Profit</title>
     <link rel="stylesheet" href="presentation.css">
     <link rel="stylesheet" href="weemap-presentation.css">
     <style>
@@ -14,7 +14,7 @@
     <div class="controls-bar">
         <button class="presenter-mode-btn" onclick="openNotesWindow()">&#128221; Notes</button>
         <div class="slide-counter">
-            <span id="slideNum">1</span> / <span id="totalSlides">23</span>
+            <span id="slideNum">1</span> / <span id="totalSlides">25</span>
         </div>
     </div>
 
@@ -23,13 +23,12 @@
         <!-- Slide 1: Title -->
         <div class="slide active title-slide">
             <h1>ML in the Browser</h1>
-            <h2>From Game Nostalgia to Production Patterns</h2>
+            <h2>For Fun and Profit</h2>
             <p style="font-size: 1.3em; margin-top: 40px; opacity: 0.9;">
                 Or: How I accidentally learned transfer learning<br>while procrastinating
             </p>
             <div style="margin-top: 80px;">
                 <p style="font-size: 1.2em;">Sri Panyam</p>
-                <p style="opacity: 0.8;">buildmage.com</p>
             </div>
             <div class="speaker-notes">
                 <h3>Opening (1-2 minutes)</h3>
@@ -118,9 +117,9 @@
             </div>
         </div>
 
-        <!-- Slide 4: The Problem -->
+        <!-- Slide 4: Problem Statement -->
         <div class="slide">
-            <h1>The Problem</h1>
+            <h1>Problem Statement</h1>
             <h2>Screenshot &#8594; Structured Data</h2>
             <div class="code-block">
 [{
@@ -220,22 +219,33 @@
 
         <!-- Slide 6: The Insight -->
         <div class="slide">
-            <h1>The Insight</h1>
+            <h1>Great Engineers Steal</h1>
             <div class="emoji-big">&#128161;</div>
             <h2 style="text-align: center;">
                 What if we could borrow "visual understanding"<br>from a model that's already seen millions of images?
             </h2>
-            <div class="highlight" style="margin-top: 50px; text-align: center;">
+            <div class="highlight" style="margin-top: 40px; text-align: center;">
                 <h3>This is called Transfer Learning</h3>
                 <p>Take a pre-trained model, reuse its learned representations, add your own task on top</p>
             </div>
+            <div class="phase-box" style="margin-top: 20px;">
+                <h3 style="margin-top: 0;">"Wait, isn't that what LLMs do?"</h3>
+                <p style="margin-bottom: 0;"><strong><center>Sort of!</center></strong><!-- LLMs use the same idea - GPT was pre-trained, then fine-tuned or prompted for specific tasks. The difference: we're not fine-tuning at all. We freeze MobileNet completely and just use its embeddings as input to a simple classifier. Zero training.--></p>
+            </div>
             <div class="speaker-notes">
-                <h3>The Aha Moment (1-2 minutes)</h3>
+                <h3>The Aha Moment (2-3 minutes)</h3>
                 <p><strong>This is the conceptual breakthrough. Let it breathe.</strong></p>
                 <ul>
                     <li>What if we could use a model that already "understands" images?</li>
                     <li>Not trained on our specific task, but on general visual concepts</li>
                     <li>This is called Transfer Learning</li>
+                </ul>
+                <h3>LLM Connection</h3>
+                <ul>
+                    <li>LLMs also use transfer learning - GPT is pre-trained then fine-tuned or prompted</li>
+                    <li>Key difference: we don't fine-tune MobileNet at all - weights are frozen</li>
+                    <li>We just use it as a "feature extractor" and add KNN on top</li>
+                    <li>This is sometimes called "feature extraction" vs "fine-tuning"</li>
                 </ul>
                 <h3>Transition</h3>
                 <p>"Let me explain what that actually means..."</p>
@@ -249,41 +259,55 @@
                 <thead>
                     <tr>
                         <th>Traditional ML</th>
-                        <th>Transfer Learning</th>
+                        <th>LLM Fine-tuning</th>
+                        <th style="background: #27ae60;">Feature Extraction (Us)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>Train from scratch</td>
-                        <td>Use pre-trained model</td>
+                        <td>Start pre-trained, fine-tune</td>
+                        <td class="good">Pre-trained, frozen</td>
                     </tr>
                     <tr>
                         <td>Need massive dataset</td>
-                        <td>Need handful of examples</td>
+                        <td>Need moderate dataset</td>
+                        <td class="good">Need handful of examples</td>
                     </tr>
                     <tr>
                         <td>Weeks of GPU time</td>
-                        <td>Instant</td>
+                        <td>Hours of GPU time</td>
+                        <td class="good">Instant</td>
                     </tr>
                     <tr>
                         <td>$$$ compute costs</td>
-                        <td>Free (runs in browser)</td>
+                        <td>$$ compute costs</td>
+                        <td class="good">Free (runs in browser)</td>
+                    </tr>
+                    <tr>
+                        <td>Full flexibility</td>
+                        <td>Good flexibility</td>
+                        <td>Limited to embeddings</td>
                     </tr>
                 </tbody>
             </table>
             <div class="highlight">
-                <p><strong>Key Idea:</strong> Someone else already trained a model on millions of images. We just reuse their work.</p>
+                <p><strong>Key Idea:</strong> We're on the far right - maximum reuse, minimum effort. Trade-off: less flexibility, but perfect for few-shot classification.</p>
             </div>
             <div class="speaker-notes">
                 <h3>The Concept (2-3 minutes)</h3>
                 <ul>
-                    <li>Walk through the comparison table</li>
-                    <li>Emphasize: someone else spent millions training on millions of images</li>
-                    <li>We just reuse their work - stand on the shoulders of giants</li>
-                    <li>This is how most practical ML works now - very few people train from scratch</li>
+                    <li>Walk through the three columns left to right</li>
+                    <li>Traditional ML: what people think of - train from scratch, need huge data</li>
+                    <li>LLM fine-tuning: the middle ground - start pre-trained, still need to train</li>
+                    <li>Feature extraction (us): the far right - freeze everything, just use embeddings</li>
                 </ul>
-                <h3>Industry Note</h3>
-                <p>Transfer learning is how GPT fine-tuning works, how BERT is used, etc. Same concept, different modality.</p>
+                <h3>Cost Emphasis</h3>
+                <ul>
+                    <li>Cost is a HUGE factor - fine-tuning GPT or running cloud APIs adds up fast</li>
+                    <li>For a hobby project or MVP, you want to be on the far right</li>
+                    <li>Trade-off: less flexibility, but perfect for classification tasks</li>
+                </ul>
                 <h3>Transition</h3>
                 <p>"The specific model I used is called MobileNet..."</p>
             </div>
@@ -393,6 +417,11 @@
             <div class="highlight">
                 <p><strong>All running client-side, offline-capable, zero API costs</strong></p>
             </div>
+            <ul style="margin-top: 20px;">
+                <li><strong>Need to scale?</strong> Move to backend with same ImageNet embeddings</li>
+                <li>Your labeled examples transfer - no retraining needed</li>
+                <li>Start browser-first, graduate to server when volume demands it</li>
+            </ul>
             <div class="speaker-notes">
                 <h3>Real Applications (2 minutes)</h3>
                 <ul>
@@ -403,6 +432,13 @@
                 </ul>
                 <h3>Key Point</h3>
                 <p>All of this runs client-side. No data leaves the device. No API costs. Works offline.</p>
+                <h3>Scale-Up Path</h3>
+                <ul>
+                    <li>This isn't a dead end - if you need to scale, the same approach works server-side</li>
+                    <li>ImageNet embeddings are standardized - your browser examples work in Python/PyTorch</li>
+                    <li>Export your KNN examples, import into a backend service</li>
+                    <li>Great for MVPs: validate in browser, scale when you have real users</li>
+                </ul>
                 <h3>Transition</h3>
                 <p>"So we have embeddings. How do we go from embedding to label?"</p>
             </div>
@@ -411,23 +447,36 @@
         <!-- Slide 11: KNN -->
         <div class="slide">
             <h1>K-Nearest Neighbors (KNN)</h1>
-            <h2>The "Kindergarten Algorithm"</h2>
-            <div class="phase-box">
-                <h3>How it works:</h3>
-                <ol style="margin-left: 20px;">
-                    <li>Store labeled examples (embedding + label)</li>
-                    <li>When classifying: find K closest stored examples</li>
-                    <li>Majority vote wins</li>
-                </ol>
+            <div style="display: flex; gap: 40px; align-items: flex-start;">
+                <!-- Left: Visual diagram -->
+                <div style="flex: 1;">
+                    <img src="./images/knn-diagram.svg" alt="KNN diagram showing points in space" style="width: 100%; max-width: 350px;">
+                    <p style="text-align: center; font-size: 0.95em; color: #7f8c8d; margin-top: 10px;">
+                        K=3: Find 3 nearest → 3 Grass → <strong style="color: #27ae60;">Grass wins!</strong>
+                    </p>
+                </div>
+
+                <!-- Right: Explanation -->
+                <div style="flex: 1;">
+                    <h2 style="margin-top: 0;">The "Kindergarten Algorithm"</h2>
+                    <div class="phase-box" style="margin-top: 15px;">
+                        <h3 style="margin-top: 0;">How it works:</h3>
+                        <ol style="margin-left: 20px; margin-bottom: 0;">
+                            <li>Store labeled examples</li>
+                            <li>Find K closest stored examples</li>
+                            <li>Majority vote wins</li>
+                        </ol>
+                    </div>
+                    <h3 style="margin-top: 20px;">That's it. Seriously.</h3>
+                    <ul style="margin-bottom: 0;">
+                        <li>No gradient descent</li>
+                        <li>No backpropagation</li>
+                        <li>No training loop</li>
+                    </ul>
+                </div>
             </div>
-            <h2>That's it. Seriously.</h2>
-            <ul>
-                <li>No gradient descent</li>
-                <li>No backpropagation</li>
-                <li>No training loop</li>
-            </ul>
-            <div class="highlight">
-                <p><strong>You show it an example, it remembers it. You ask it to classify, it finds similar things and votes.</strong></p>
+            <div class="highlight" style="margin-top: 20px;">
+                <p style="margin-bottom: 0;"><strong>You show it an example, it remembers it. You ask it to classify, it finds similar things and votes.</strong></p>
             </div>
             <div class="speaker-notes">
                 <h3>The Algorithm (3 minutes)</h3>
@@ -496,9 +545,53 @@
             </div>
         </div>
 
-        <!-- Slide 13: The Secret Sauce -->
+        <!-- Slide 13: The Problem -->
         <div class="slide">
-            <h1>The Secret Sauce</h1>
+            <h1>The Multi-Label Problem</h1>
+            <h2>A tile has multiple properties...</h2>
+            <div style="display: flex; gap: 30px; align-items: flex-start; margin-top: 20px;">
+                <div style="flex: 1;">
+                    <div class="phase-box">
+                        <h3 style="margin-top: 0;">Option 1: Single Classifier</h3>
+                        <p>Label: "Red Tank on Forest"</p>
+                        <p style="color: #e74c3c; margin-bottom: 0;"><strong>Problem:</strong> 10 terrains × 30 units × 10 colors = <strong>3,000 classes!</strong></p>
+                    </div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="phase-box">
+                        <h3 style="margin-top: 0;">Option 2: Multi-output Labels</h3>
+                        <p>Store: (embedding, [terrain, unit, color])</p>
+                        <p style="color: #e74c3c;"><strong>Problem:</strong> KNN votes on one label at a time</p>
+                        <p style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 0;">Neighbors might agree on terrain but disagree on unit  -  how do you vote?</p>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight" style="margin-top: 25px;">
+                <h3 style="margin-top: 0;">What we want:</h3>
+                <ul style="margin-bottom: 0;">
+                    <li>Keep using simple KNN (no training)</li>
+                    <li>Avoid combinatorial explosion of labels</li>
+                    <li>Learn "Blue" once, apply it everywhere</li>
+                </ul>
+            </div>
+            <div class="speaker-notes">
+                <h3>The Problem Setup (2 minutes)</h3>
+                <p><strong>Set up the problem before revealing the solution.</strong></p>
+                <ul>
+                    <li><strong>Option 1 - Single classifier:</strong> Need a class for every combination. "Red Tank Forest" is different from "Blue Tank Forest". Exponential explosion.</li>
+                    <li><strong>Option 2 - Multi-output labels:</strong> Store [terrain, unit, color] with each example. But KNN finds K nearest neighbors and votes  -  what if neighbors agree on "Forest" but disagree on "Tank" vs "Infantry"? You'd need separate voting per property anyway.</li>
+                    <li>We want the simplicity of KNN but the flexibility of multi-label.</li>
+                </ul>
+                <h3>Key Insight</h3>
+                <p>KNN voting is inherently single-label. To get independent votes per property, you need independent classifiers.</p>
+                <h3>Transition</h3>
+                <p>"Here's the trick that makes it work..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 14: The Secret Sauce -->
+        <div class="slide">
+            <h1>Parallelize it!!</h1>
             <h2>5 Independent Classifiers, 1 Embedding</h2>
             <div class="architecture-flow" style="flex-direction: column; align-items: center;">
                 <div class="flow-box" style="background: #9b59b6;">Image &#8594; MobileNet &#8594; Embedding</div>
@@ -519,16 +612,21 @@
                 <strong>Instead of 3,000 combinations, learn ~60 concepts</strong>
             </p>
             <div class="speaker-notes">
-                <h3>The Innovation (3-4 minutes)</h3>
-                <p><strong>This is the part I'm most proud of. Take time here.</strong></p>
+                <h3>The Solution (2-3 minutes)</h3>
+                <p><strong>This is the key insight. Let it land.</strong></p>
                 <ul>
-                    <li>A tile has multiple properties: terrain, unit, owner, etc.</li>
-                    <li>If we train ONE classifier for "Red Tank on Forest", we need every combination</li>
-                    <li>10 terrains x 30 units x 10 colors = 3,000 combinations!</li>
-                    <li>Solution: 5 independent classifiers, all using the SAME embedding</li>
+                    <li>Same embedding feeds 5 separate KNN classifiers</li>
+                    <li>Each classifier only knows its own labels (Terrain knows "Forest", "Grass", etc.)</li>
+                    <li>They vote independently - no coordination needed</li>
                 </ul>
                 <h3>Compositional Generalization</h3>
                 <p>See "Blue Mech on Mountain" even if you've never seen that exact combo - as long as you've seen Blue, Mech, and Mountain separately.</p>
+                <h3>Why This Works</h3>
+                <ul>
+                    <li>MobileNet embedding captures ALL visual features</li>
+                    <li>Each classifier finds what it needs in the same embedding</li>
+                    <li>~60 concepts instead of 3,000 combinations</li>
+                </ul>
                 <h3>Transition</h3>
                 <p>"This pattern applies way beyond games..."</p>
             </div>
@@ -640,7 +738,7 @@
                 </p>
             </div>
             <p style="text-align: center; font-size: 1.2em;">
-                <strong>buildmage.com/demos/weemap-scanner/</strong>
+            <strong><a href="https://buildmage.com/demos/weemap-scanner/" target="_blank">Demo</a></strong>
             </p>
             <div class="speaker-notes">
                 <h3>Demo Flow (8-10 minutes)</h3>
@@ -721,7 +819,7 @@ embedding.<span class="keyword">dispose</span>();  <span class="comment">// CRIT
             </div>
             <div class="phase-box">
                 <h3>3. Cold Start</h3>
-                <p>Need initial examples. Design your UX for the "teach first" flow.</p>
+                <p>Need initial examples. Design your UX for the "teach first" flow.  Synthetic data helps</p>
             </div>
             <div class="speaker-notes">
                 <h3>Practical Issues (3 minutes)</h3>
@@ -729,7 +827,7 @@ embedding.<span class="keyword">dispose</span>();  <span class="comment">// CRIT
                 <ul>
                     <li><strong>Memory:</strong> TensorFlow.js tensors live on GPU. MUST call .dispose() or you leak memory. This is like manual memory management in C.</li>
                     <li><strong>Load time:</strong> 15MB model takes a few seconds. Show a loading indicator.</li>
-                    <li><strong>Cold start:</strong> Need initial examples. Design UX for "teach first" flow.</li>
+                    <li><strong>Cold start:</strong> Need initial examples. Design UX for "teach first" flow.  Or synthetic data</li>
                 </ul>
                 <h3>Transition</h3>
                 <p>"So when should you actually use this?"</p>
@@ -823,7 +921,66 @@ embedding.<span class="keyword">dispose</span>();  <span class="comment">// CRIT
             </div>
         </div>
 
-        <!-- Slide 21: Try It -->
+        <!-- Slide 21: Case Study -->
+        <div class="slide">
+            <h1>Case Study: "Decompiling" Rendered Data</h1>
+            <h2>Your sold your data back as images...</h2>
+            <div class="phase-box" style="margin-top: 20px;">
+                <h3 style="margin-top: 0;">The Scenario</h3>
+                <p>You might have millions of vehicles across years, trims, colors, options. A vendor provides inventory photos  -  but no structured metadata. Can we extract it?</p>
+            </div>
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <div style="flex: 1; text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <div style="font-size: 2.5em;">🚗</div>
+                    <p style="margin: 5px 0;"><strong>Photo</strong></p>
+                    <p style="font-size: 0.85em; color: #7f8c8d; margin: 0;">Image → MobileNet embedding</p>
+                </div>
+                <div style="flex: 1; text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <div style="font-size: 2.5em;">📄</div>
+                    <p style="margin: 5px 0;"><strong>PDF Description</strong></p>
+                    <p style="font-size: 0.85em; color: #7f8c8d; margin: 0;">Text → Sentence embedding</p>
+                </div>
+                <div style="flex: 0; display: flex; align-items: center; font-size: 1.5em;">→</div>
+                <div style="flex: 1.5;">
+                    <div class="code-block" style="font-size: 0.8em; padding: 10px;">
+{
+  "year": "2023",
+  "model": "Cadillac",
+  "trim": "XT6",
+  "color": "Blue"
+}
+                    </div>
+                </div>
+            </div>
+            <div class="highlight" style="margin-top: 15px;">
+                <p style="margin-bottom: 0;"><strong>Same pattern, different embeddings:</strong> Images use MobileNet, text uses sentence transformers. Same KNN classifiers on top. Even combine both for multimodal.</p>
+            </div>
+            <div class="speaker-notes">
+                <h3>Real Business Value (2-3 minutes)</h3>
+                <p><strong>This resonates with anyone who's dealt with vendor data quality issues.</strong></p>
+                <ul>
+                    <li><strong>The problem:</strong> You gave a vendor your inventory data. They rendered it into photos/PDFs. Now you need the structured data back but they only have images or unstructured text.</li>
+                    <li><strong>Why this approach works:</strong>
+                        <ul>
+                            <li>Cars are compositional: Year + Model + Trim + Color + Options</li>
+                            <li>Same multi-classifier pattern - label a few of each property</li>
+                            <li>Generalizes across combinations you haven't seen</li>
+                        </ul>
+                    </li>
+                </ul>
+                <h3>Text/PDF Extension</h3>
+                <ul>
+                    <li><strong>Same pattern, different embedding:</strong> Instead of MobileNet for images, use sentence transformers (e.g., all-MiniLM) for text</li>
+                    <li>Extract text from PDF, embed it, run same KNN classifiers</li>
+                    <li><strong>Multimodal:</strong> Concatenate image + text embeddings for richer signal</li>
+                    <li>Sentence transformers also run in browser via Transformers.js</li>
+                </ul>
+                <h3>Transition</h3>
+                <p>"If you want to try this pattern yourself..."</p>
+            </div>
+        </div>
+
+        <!-- Slide 22: Try It -->
         <div class="slide">
             <h1>Try It Yourself</h1>
             <div class="stats-grid" style="margin-top: 50px;">
