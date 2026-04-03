@@ -1,0 +1,44 @@
+<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect x="0" y="0" width="300" height="220" fill="#f8f9fa" rx="10"/>
+
+    <!-- Grass points (green) -->
+    <circle cx="60" cy="60" r="12" fill="#27ae60"/>
+    <circle cx="90" cy="80" r="12" fill="#27ae60"/>
+    <circle cx="70" cy="110" r="12" fill="#27ae60"/>
+    <circle cx="100" cy="50" r="12" fill="#27ae60"/>
+    <circle cx="50" cy="90" r="12" fill="#27ae60"/>
+
+    <!-- Water points (blue) -->
+    <circle cx="220" cy="150" r="12" fill="#3498db"/>
+    <circle cx="250" cy="170" r="12" fill="#3498db"/>
+    <circle cx="240" cy="130" r="12" fill="#3498db"/>
+    <circle cx="200" cy="180" r="12" fill="#3498db"/>
+
+    <!-- Forest points (dark green) -->
+    <circle cx="180" cy="50" r="12" fill="#16a085"/>
+    <circle cx="210" cy="70" r="12" fill="#16a085"/>
+    <circle cx="230" cy="40" r="12" fill="#16a085"/>
+
+    <!-- Unknown point with question mark -->
+    <circle cx="130" cy="100" r="16" fill="#e74c3c" stroke="#c0392b" stroke-width="3"/>
+    <text x="130" y="106" text-anchor="middle" fill="white" font-size="18" font-weight="bold">?</text>
+
+    <!-- Dashed circle showing K=3 radius -->
+    <circle cx="130" cy="100" r="55" fill="none" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,5"/>
+
+    <!-- Lines to 3 nearest neighbors -->
+    <line x1="130" y1="100" x2="90" y2="80" stroke="#e74c3c" stroke-width="2" opacity="0.6"/>
+    <line x1="130" y1="100" x2="70" y2="110" stroke="#e74c3c" stroke-width="2" opacity="0.6"/>
+    <line x1="130" y1="100" x2="100" y2="50" stroke="#e74c3c" stroke-width="2" opacity="0.6"/>
+
+    <!-- Legend -->
+    <circle cx="20" cy="200" r="8" fill="#27ae60"/>
+    <text x="35" y="204" font-size="12" fill="#2c3e50">Grass</text>
+    <circle cx="90" cy="200" r="8" fill="#3498db"/>
+    <text x="105" y="204" font-size="12" fill="#2c3e50">Water</text>
+    <circle cx="160" cy="200" r="8" fill="#16a085"/>
+    <text x="175" y="204" font-size="12" fill="#2c3e50">Forest</text>
+    <circle cx="240" cy="200" r="8" fill="#e74c3c"/>
+    <text x="255" y="204" font-size="12" fill="#2c3e50">New</text>
+</svg>
